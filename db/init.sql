@@ -38,6 +38,17 @@ CREATE TABLE IF NOT EXISTS user_timetable_sets (
     timetable_set_id UUID NOT NULL
 );
 
--- v0.1 - Add account_enabled column to users table
+-- v0.1.0 - Add account_enabled column to users table
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS account_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+
+-- v0.2.0 - Add user settings table
+CREATE TABLE IF NOT EXISTS user_settings (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID NOT NULL,
+    setting_key VARCHAR(255) NOT NULL,
+    setting_value TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT user_settings_user_key_unique UNIQUE (user_id, setting_key)
+);

@@ -297,3 +297,35 @@ export async function deleteBlock(id: string) {
     };
   }
 }
+
+export async function settingsSave(formData: FormData) {
+  const user_id = formData.get("userId") as string;
+  const start_time = formData.get("start_time") as string;
+  const end_time = formData.get("end_time") as string;
+  await updateSettings(user_id, "start_time", start_time);
+  await updateSettings(user_id, "end_time", end_time);
+  revalidatePath("/dashboard/settings");
+  redirect("/dashboard/settings");
+}
+
+export async function updateSettings(
+  user_id: string,
+  setting_key: string,
+  setting_value: string | number | boolean,
+) {
+  try {
+    await sql`
+            INSERT INTO user_settings (user_id, setting_key, setting_value)
+            VALUES (${user_id}, ${setting_key}, ${setting_value})
+            ON CONFLICT (user_id, setting_key)
+            DO UPDATE SET setting_value = EXCLUDED.setting_value
+        `;
+    console.log("Settings updated for user %s", user_id);
+  } catch (error) {
+    console.error("Error updating settings:", error);
+    return {
+      message: "Error updating settings",
+      error,
+    };
+  }
+}
