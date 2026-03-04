@@ -11,5 +11,5 @@ export default async function SettingsPage() {
   const endTime = (await getUserSettings(userId))?.["end_time"] ?? "17:00";
   const settings = (await getUserSettings(userId)) ?? null;
 
-  return <SettingsFormClient userId={userId} settings={settings} />;
+  return <SettingsFormClient settings={settings} />;
 }

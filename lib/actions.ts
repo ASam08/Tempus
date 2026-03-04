@@ -15,6 +15,7 @@ import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 import { SignupFormSchema, SignupFormState } from "./signupschema";
+import { Form } from "lucide-react";
 
 const sql = sqlConn;
 
@@ -184,7 +185,7 @@ export async function addTimetableBlock(
   }
   const set_id = await getTimetableSets(user_id);
   const validatedFields = createTimetableBlock.safeParse({
-    timetable_set_id: /*formData.get("timetable_set_id"),*/ set_id[0].id,
+    timetable_set_id: set_id[0].id,
     day: formData.get("day_of_week"),
     subject: formData.get("subject"),
     location: formData.get("location"),
@@ -298,28 +299,41 @@ export async function deleteBlock(id: string) {
   }
 }
 
-export async function settingsSave(formData: FormData) {
-  const user_id = formData.get("userId") as string;
-  const start_time = formData.get("start_time") as string;
-  const end_time = formData.get("end_time") as string;
-  await updateSettings(user_id, "start_time", start_time);
-  await updateSettings(user_id, "end_time", end_time);
+export async function settingsSave(
+  prevState: { message?: string },
+  formData: FormData,
+) {
+  const user_id = await getUserID();
+  if (!user_id) {
+    return { message: "User not authenticated." };
+  }
+
+  const data = Array.from(formData.entries());
+  await updateSettings(user_id, data);
+
   revalidatePath("/dashboard/settings");
   redirect("/dashboard/settings");
 }
 
 export async function updateSettings(
   user_id: string,
-  setting_key: string,
-  setting_value: string | number | boolean,
+  data: [string, FormDataEntryValue][],
 ) {
+  const ALLOWED_SETTINGS = new Set(["start_time", "end_time"]);
+
+  const rows = data
+    .filter(([key]) => ALLOWED_SETTINGS.has(key))
+    .map(([key, value]) => [user_id, key, String(value)]);
+
+  if (rows.length === 0) return;
   try {
     await sql`
-            INSERT INTO user_settings (user_id, setting_key, setting_value)
-            VALUES (${user_id}, ${setting_key}, ${setting_value})
-            ON CONFLICT (user_id, setting_key)
-            DO UPDATE SET setting_value = EXCLUDED.setting_value
-        `;
+    INSERT INTO user_settings (user_id, setting_key, setting_value)
+    VALUES ${sql(rows)}
+    ON CONFLICT (user_id, setting_key)
+    DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW()
+  `;
+
     console.log("Settings updated for user %s", user_id);
   } catch (error) {
     console.error("Error updating settings:", error);

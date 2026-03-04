@@ -19,21 +19,21 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { settingsSave } from "@/lib/actions";
 import Link from "next/link";
 import { LucideCircleQuestionMark } from "lucide-react";
+import { useActionState } from "react";
 
 export default function SettingsFormClient({
-  userId,
   settings,
 }: {
-  userId: string;
   settings: Record<string, string> | null;
 }) {
-  const initialState = { message: null, errors: {} };
+  const initialState = { message: "", errors: {} };
+  const [state, formAction] = useActionState(settingsSave, initialState);
+
   const startTime = settings?.["start_time"] ?? "09:00";
   const endTime = settings?.["end_time"] ?? "17:00";
 
   return (
-    <form action={settingsSave}>
-      <input type="hidden" name="userId" value={userId} />
+    <form action={formAction}>
       <div className="pb-4">
         <h1 className="mb-4 text-2xl font-bold text-gray-800 dark:text-gray-200">
           Update your settings
