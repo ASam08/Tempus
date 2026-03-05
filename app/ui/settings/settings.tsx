@@ -16,21 +16,32 @@ import {
   HoverCardContent,
 } from "@/components/ui/hover-card";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { settingsSave } from "@/lib/actions";
+import { settingsSave, SettingsState } from "@/lib/actions";
 import Link from "next/link";
 import { LucideCircleQuestionMark } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 export default function SettingsFormClient({
   settings,
 }: {
   settings: Record<string, string> | null;
 }) {
-  const initialState = { message: "", errors: {} };
+  const initialState: SettingsState = { message: null, errors: {} };
   const [state, formAction] = useActionState(settingsSave, initialState);
+  const [error, setError] = useState<string | null>(null);
 
   const startTime = settings?.["start_time"] ?? "09:00";
   const endTime = settings?.["end_time"] ?? "17:00";
+
+  const validateTimes = (start: string, end: string) => {
+    if (!start || !end) return;
+
+    if (end <= start) {
+      setError("End time must be after start time");
+    } else {
+      setError(null);
+    }
+  };
 
   return (
     <form action={formAction}>
@@ -54,16 +65,26 @@ export default function SettingsFormClient({
                 step="3600"
                 defaultValue={startTime}
                 className="bg-background appearance-none pr-4 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                onChange={(e) =>
+                  validateTimes(
+                    e.target.value,
+                    (
+                      document.getElementsByName(
+                        "end_time",
+                      )[0] as HTMLInputElement
+                    )?.value,
+                  )
+                }
               />
             </Field>
-            {/* <div id="start_time_error" aria-live="polite" aria-atomic="true">
+            <div id="start_time_error" aria-live="polite" aria-atomic="true">
               {state.errors?.start_time &&
                 state.errors.start_time.map((error: string) => (
                   <p className="text-sm text-red-500" key={error}>
                     {error}
                   </p>
                 ))}
-            </div> */}
+            </div>
           </div>
           <div className="flex flex-col gap-4">
             <Field className="flex">
@@ -75,22 +96,20 @@ export default function SettingsFormClient({
                 step="3600"
                 defaultValue={endTime}
                 className="bg-background appearance-none pr-4 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                onChange={(e) =>
+                  validateTimes(
+                    (
+                      document.getElementsByName(
+                        "start_time",
+                      )[0] as HTMLInputElement
+                    )?.value,
+                    e.target.value,
+                  )
+                }
               />
             </Field>
           </div>
-          {/* <div
-            className="grid items-center pt-5"
-            id="end_time_error"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {state.errors?.end_time &&
-              state.errors.end_time.map((error: string) => (
-                <p className="text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
-          </div> */}
+
           <div className="">
             <HoverCard openDelay={10} closeDelay={100}>
               <HoverCardTrigger asChild>
@@ -101,6 +120,24 @@ export default function SettingsFormClient({
                 timetable.
               </HoverCardContent>
             </HoverCard>
+            <div
+              className="grid items-center pt-5"
+              id="end_time_error"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {state.errors?.end_time &&
+                state.errors.end_time.map((error: string) => (
+                  <p className="text-sm text-red-500" key={error}>
+                    {error}
+                  </p>
+                ))}
+              {error && (
+                <p className="text-sm text-red-500" key={error}>
+                  {error}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -109,7 +146,9 @@ export default function SettingsFormClient({
         <Link href="/dashboard/timetable">
           <Button variant="outline">Cancel</Button>
         </Link>
-        <Button type="submit">Save changes</Button>
+        <Button type="submit" disabled={!!error}>
+          Save changes
+        </Button>
       </div>
     </form>
   );

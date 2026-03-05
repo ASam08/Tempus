@@ -15,9 +15,13 @@ import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 import { SignupFormSchema, SignupFormState } from "./signupschema";
-import { Form } from "lucide-react";
 
 const sql = sqlConn;
+
+const toMinutes = (time: string) => {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+};
 
 export async function authenticate(
   prevState: string | undefined,
@@ -299,13 +303,40 @@ export async function deleteBlock(id: string) {
   }
 }
 
+export type SettingsState = {
+  errors?: {
+    start_time?: string[];
+    end_time?: string[];
+  };
+  message?: string | null;
+};
+
+const settingsSchema = z
+  .object({
+    start_time: z.string().min(1, "Start time is required"),
+    end_time: z.string().min(1, "End time is required"),
+  })
+  .refine((data) => toMinutes(data.end_time) > toMinutes(data.start_time), {
+    path: ["end_time"],
+    message: "End time must be after start time",
+  });
+
 export async function settingsSave(
-  prevState: { message?: string },
+  prevState: SettingsState,
   formData: FormData,
-) {
+): Promise<SettingsState> {
   const user_id = await getUserID();
   if (!user_id) {
     return { message: "User not authenticated." };
+  }
+
+  const rawSettings = {
+    start_time: formData.get("start_time"),
+    end_time: formData.get("end_time"),
+  };
+  const validatedSettings = settingsSchema.safeParse(rawSettings);
+  if (!validatedSettings.success) {
+    return { errors: validatedSettings.error.flatten().fieldErrors };
   }
 
   const data = Array.from(formData.entries());
@@ -335,6 +366,7 @@ export async function updateSettings(
   `;
 
     console.log("Settings updated for user %s", user_id);
+    return { message: "success", errors: {} };
   } catch (error) {
     console.error("Error updating settings:", error);
     return {
