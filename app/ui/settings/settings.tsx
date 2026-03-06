@@ -45,18 +45,20 @@ export default function SettingsFormClient({
   };
 
   useEffect(() => {
-    if (state?.message === "success") {
+    if (!state) return;
+
+    if (state.message === "success") {
       toast.success("Settings saved successfully!", {
         position: "top-center",
         style: { backgroundColor: "forestgreen" },
       });
-    } else {
+    } else if (state.message && state.message !== "success") {
       toast.error("Failed to save settings.", {
         position: "top-center",
         style: { backgroundColor: "red" },
       });
     }
-  }, [state?.message]);
+  }, [state?.timestamp]);
 
   return (
     <form action={formAction}>

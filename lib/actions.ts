@@ -309,6 +309,7 @@ export type SettingsState = {
     end_time?: string[];
   };
   message?: string | null;
+  timestamp?: number;
 };
 
 const settingsSchema = z
@@ -343,7 +344,7 @@ export async function settingsSave(
   const result = await updateSettings(user_id, data);
 
   revalidatePath("/dashboard/settings");
-  return { message: result?.message };
+  return { message: result?.message, timestamp: Date.now() };
 }
 
 export async function updateSettings(
