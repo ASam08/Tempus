@@ -19,7 +19,8 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { settingsSave, SettingsState } from "@/lib/actions";
 import Link from "next/link";
 import { LucideCircleQuestionMark } from "lucide-react";
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
+import { toast } from "sonner";
 
 export default function SettingsFormClient({
   settings,
@@ -42,6 +43,20 @@ export default function SettingsFormClient({
       setError(null);
     }
   };
+
+  useEffect(() => {
+    if (state?.message === "success") {
+      toast.success("Settings saved successfully!", {
+        position: "top-center",
+        style: { backgroundColor: "forestgreen" },
+      });
+    } else {
+      toast.error("Failed to save settings.", {
+        position: "top-center",
+        style: { backgroundColor: "red" },
+      });
+    }
+  }, [state?.message]);
 
   return (
     <form action={formAction}>

@@ -340,10 +340,10 @@ export async function settingsSave(
   }
 
   const data = Array.from(formData.entries());
-  await updateSettings(user_id, data);
+  const result = await updateSettings(user_id, data);
 
   revalidatePath("/dashboard/settings");
-  redirect("/dashboard/settings");
+  return { message: result?.message };
 }
 
 export async function updateSettings(
