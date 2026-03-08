@@ -17,21 +17,27 @@ export async function testConnection() {
 }
 
 export async function getUserID() {
+  console.log("getUserID - AUTH_ON=", process.env.AUTH_ON);
+
   if (process.env.AUTH_ON === "true") {
     const session = await auth();
     const user_id = session?.user?.id;
     if (!user_id) return null;
     return user_id;
-  }
-  try {
-    const result = await sql<{ id: string }[]>`
+  } else {
+    try {
+      const result = await sql<{ id: string }[]>`
       SELECT DISTINCT owner_id AS id FROM timetable_sets
       LIMIT 1
     `;
-    return result[0]?.id ?? null;
-  } catch (error) {
-    console.error("Error retrieving user ID: ", error);
-    return null;
+      console.log("getUserID - SQL result:", result);
+      const id = result[0]?.id ?? null;
+      console.log("getUserID - resolved id:", id);
+      return id;
+    } catch (error) {
+      console.error("Error retrieving user ID: ", error);
+      return null;
+    }
   }
 }
 
