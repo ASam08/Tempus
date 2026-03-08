@@ -17,7 +17,7 @@ export async function testConnection() {
 }
 
 export async function getUserID() {
-  console.warn("getUserID - AUTH_ON=", process.env.AUTH_ON);
+  console.log("getUserID - AUTH_ON=", process.env.AUTH_ON);
 
   if (process.env.AUTH_ON === "true") {
     const session = await auth();
@@ -30,9 +30,9 @@ export async function getUserID() {
       SELECT DISTINCT owner_id AS id FROM timetable_sets
       LIMIT 1
     `;
-      console.warn("getUserID - SQL result:", result);
+      console.log("getUserID - SQL result:", result);
       const id = result[0]?.id ?? null;
-      console.warn("getUserID - resolved id:", id);
+      console.log("getUserID - resolved id:", id);
       return id;
     } catch (error) {
       console.error("Error retrieving user ID: ", error);
