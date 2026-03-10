@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   HoverCard,
   HoverCardTrigger,
@@ -21,7 +22,7 @@ import Link from "next/link";
 import { LucideCircleQuestionMark } from "lucide-react";
 import { useActionState, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { defaultSettings } from "@/lib/defaults";
+import { defaultTimeSettings, defaultDaySettings } from "@/lib/defaults";
 
 export default function SettingsFormClient({
   settings,
@@ -32,8 +33,8 @@ export default function SettingsFormClient({
   const [state, formAction] = useActionState(settingsSave, initialState);
   const [error, setError] = useState<string | null>(null);
 
-  const startTime = settings?.["start_time"] ?? defaultSettings.start_time;
-  const endTime = settings?.["end_time"] ?? defaultSettings.end_time;
+  const startTime = settings?.["start_time"] ?? defaultTimeSettings.start_time;
+  const endTime = settings?.["end_time"] ?? defaultTimeSettings.end_time;
 
   const validateTimes = (start: string, end: string) => {
     if (!start || !end) return;
@@ -60,6 +61,16 @@ export default function SettingsFormClient({
       });
     }
   }, [state?.timestamp]);
+
+  const dow = [
+    { key: "monday", label: "Monday" },
+    { key: "tuesday", label: "Tuesday" },
+    { key: "wednesday", label: "Wednesday" },
+    { key: "thursday", label: "Thursday" },
+    { key: "friday", label: "Friday" },
+    { key: "saturday", label: "Saturday" },
+    { key: "sunday", label: "Sunday" },
+  ];
 
   return (
     <form action={formAction}>
@@ -157,6 +168,24 @@ export default function SettingsFormClient({
               )}
             </div>
           </div>
+        </div>
+      </div>
+      {/* this component will have a checkbox for each day of the week that will be set to the valie pulled from settings.{dow} */}
+      <div className="">
+        <div className="flex flex-col gap-2">
+          {dow.map((day) => (
+            <div key={day.key} className="flex flex-row gap-4">
+              <Checkbox
+                id={day.key}
+                defaultChecked={
+                  settings?.[day.key] !== undefined
+                    ? settings[day.key] === "true"
+                    : defaultDaySettings[day.key]
+                }
+              />
+              <Label htmlFor={day.key}>{day.label}</Label>
+            </div>
+          ))}
         </div>
       </div>
 

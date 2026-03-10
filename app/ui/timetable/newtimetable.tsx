@@ -6,7 +6,7 @@ import { LucideEdit2, LucideX } from "lucide-react";
 import { deleteBlock } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { defaultSettings } from "@/lib/defaults";
+import { defaultTimeSettings, defaultDaySettings } from "@/lib/defaults";
 
 const slotMinutes = 15;
 
@@ -42,10 +42,10 @@ export function TimetableGrid({
   const [width, setWidth] = useState(1200);
   const router = useRouter();
   const startHour = Number(
-    (settings?.["start_time"] ?? defaultSettings.start_time).slice(0, 2),
+    (settings?.["start_time"] ?? defaultTimeSettings.start_time).slice(0, 2),
   );
   const endHour = Number(
-    (settings?.["end_time"] ?? defaultSettings.end_time).slice(0, 2),
+    (settings?.["end_time"] ?? defaultTimeSettings.end_time).slice(0, 2),
   );
   const hoursCovered = endHour - startHour;
   const virtualRows = (hoursCovered * 60) / minSlotMinutes;
