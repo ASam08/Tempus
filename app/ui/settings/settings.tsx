@@ -26,6 +26,14 @@ import { defaultTimeSettings, defaultDaySettings } from "@/lib/defaults";
 import { dowKeyValue } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 
+function dowDefault(day: string, settings: Record<string, string> | null) {
+  const result =
+    settings?.[day] !== undefined
+      ? settings[day] === "true"
+      : defaultDaySettings[day];
+  return result;
+}
+
 export default function SettingsFormClient({
   settings,
 }: {
@@ -67,7 +75,7 @@ export default function SettingsFormClient({
   }, [state?.timestamp, router]);
 
   return (
-    <form action={formAction}>
+    <form action={formAction} key={state?.timestamp}>
       <div className="pb-4">
         <h1 className="mb-4 text-2xl font-bold text-gray-800 dark:text-gray-200">
           Update your settings
@@ -173,11 +181,7 @@ export default function SettingsFormClient({
                 id={day.key}
                 name={day.key}
                 value="true"
-                defaultChecked={
-                  settings?.[day.key] !== undefined
-                    ? settings[day.key] === "true"
-                    : defaultDaySettings[day.key]
-                }
+                defaultChecked={dowDefault(day.key, settings)}
               />
               <Label htmlFor={day.key}>{day.label}</Label>
             </div>
