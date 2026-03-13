@@ -36,14 +36,18 @@ export function TimetableGrid({
     (settings?.["end_time"] ?? defaultTimeSettings.end_time).slice(0, 2),
   );
 
-  const dowArray = dowShortened.filter((day) => {
-    const key = day.key;
-    const raw = settings?.[key];
-    if (raw === undefined) {
-      return !!defaultDaySettings[key];
-    }
-    return raw === "true";
-  });
+  const dowArray = useMemo(
+    () =>
+      dowShortened.filter((day) => {
+        const key = day.key;
+        const raw = settings?.[key];
+        if (raw === undefined) {
+          return !!defaultDaySettings[key];
+        }
+        return raw === "true";
+      }),
+    [settings],
+  );
 
   const dow = ["Time", ...dowArray.map((day) => day.label)];
   const middow = ["Time", ...dowArray.map((day) => day.mid)];
