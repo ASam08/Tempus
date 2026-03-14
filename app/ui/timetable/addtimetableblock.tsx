@@ -10,6 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { addTimetableBlock, BlockState } from "@/lib/actions";
 import Link from "next/link";
@@ -26,16 +36,14 @@ export default function AddTimetableBlock({
   const [state, formAction] = useActionState(addTimetableBlock, initialState);
   const [dowHidden, setDowHidden] = useState(false);
   const [day_of_week, setDayOfWeek] = useState("");
+  const [showDowDialog, setShowDowDialog] = useState(false);
 
   const dow = dowKeyValue;
 
   const checkDowHidden = (day: string) => {
-    console.log("Checking if day is hidden: ", day);
     const lowerDay = dow.filter((d) => String(d.dow) === day)[0]?.key;
     setDayOfWeek(dow.filter((d) => String(d.dow) === day)[0]?.label || "");
-    console.log("Lower Day: ", lowerDay);
     const daySettings = settings?.[lowerDay];
-    console.log("Day Settings: ", daySettings);
     if (daySettings === undefined) {
       setDowHidden(!defaultDaySettings[lowerDay]);
     }
@@ -186,6 +194,36 @@ export default function AddTimetableBlock({
         </Link>
         <Button type="submit">Save changes</Button>
       </div>
+      <Button onClick={() => setShowDowDialog(true)}>
+        Show Day of Week Dialog
+      </Button>
+      <Dialog open={showDowDialog} onOpenChange={setShowDowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{day_of_week} is hidden</DialogTitle>
+            <DialogDescription>
+              This day is currently hidden in your timetable settings. Would you
+              like to unhide it now?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                // changeDowSettings(day_of_week.toLowerCase(), "true");
+                setShowDowDialog(false);
+              }}
+            >
+              Yes, unhide it
+            </Button>
+            <Button
+              onClick={() => setShowDowDialog(false)}
+              variant={"secondary"}
+            >
+              No, leave it hidden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }
