@@ -19,7 +19,7 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { settingsSave, SettingsState } from "@/lib/actions";
 import Link from "next/link";
-import { LucideCircleQuestionMark } from "lucide-react";
+import { LucideCircleQuestionMark, TimerReset } from "lucide-react";
 import { useActionState, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { defaultTimeSettings, defaultDaySettings } from "@/lib/defaults";
@@ -42,10 +42,10 @@ export default function SettingsFormClient({
   const initialState: SettingsState = { message: null, errors: {} };
   const [state, formAction] = useActionState(settingsSave, initialState);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
   const startTime = settings?.["start_time"] ?? defaultTimeSettings.start_time;
   const endTime = settings?.["end_time"] ?? defaultTimeSettings.end_time;
+  const [times, setTimes] = useState({ start: startTime, end: endTime });
+  const router = useRouter();
 
   const validateTimes = (start: string, end: string) => {
     if (!start || !end) return;
@@ -96,16 +96,11 @@ export default function SettingsFormClient({
                 step="3600"
                 defaultValue={startTime}
                 className="bg-background appearance-none pr-4 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                onChange={(e) =>
-                  validateTimes(
-                    e.target.value,
-                    (
-                      document.getElementsByName(
-                        "end_time",
-                      )[0] as HTMLInputElement
-                    )?.value,
-                  )
-                }
+                onChange={(e) => {
+                  const start = e.target.value;
+                  setTimes({ ...times, start });
+                  validateTimes(start, times.end);
+                }}
               />
             </Field>
             <div id="start_time_error" aria-live="polite" aria-atomic="true">
@@ -127,16 +122,11 @@ export default function SettingsFormClient({
                 step="3600"
                 defaultValue={endTime}
                 className="bg-background appearance-none pr-4 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                onChange={(e) =>
-                  validateTimes(
-                    (
-                      document.getElementsByName(
-                        "start_time",
-                      )[0] as HTMLInputElement
-                    )?.value,
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => {
+                  const end = e.target.value;
+                  setTimes({ ...times, end });
+                  validateTimes(times.start, end);
+                }}
               />
             </Field>
           </div>
@@ -172,7 +162,6 @@ export default function SettingsFormClient({
           </div>
         </div>
       </div>
-      {/* this component will have a checkbox for each day of the week that will be set to the valie pulled from settings.{dow} */}
       <div className="">
         <div className="flex flex-col gap-2">
           {dowKeyValue.map((day) => (
