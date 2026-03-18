@@ -1,27 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RetreivedTimetableBlocks } from "@/lib/definitions";
 import { LucideEdit2, LucideX } from "lucide-react";
 import { deleteBlock } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { defaultSettings } from "@/lib/defaults";
+import { defaultTimeSettings, defaultDaySettings } from "@/lib/defaults";
+import { dowKeyValue, dowShortened } from "@/lib/constants";
 
 const slotMinutes = 15;
-
-const dow = [
-  "Time",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
-const middow = ["Time", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const shortdow = ["Time", "M", "Tu", "W", "Th", "F", "Sa", "Su"];
 
 const minSlotMinutes = 5; // Always use 5-minute resolution
 const visibleSlotInterval = slotMinutes / minSlotMinutes;
@@ -42,13 +30,38 @@ export function TimetableGrid({
   const [width, setWidth] = useState(1200);
   const router = useRouter();
   const startHour = Number(
-    (settings?.["start_time"] ?? defaultSettings.start_time).slice(0, 2),
+    (settings?.["start_time"] ?? defaultTimeSettings.start_time).slice(0, 2),
   );
   const endHour = Number(
-    (settings?.["end_time"] ?? defaultSettings.end_time).slice(0, 2),
+    (settings?.["end_time"] ?? defaultTimeSettings.end_time).slice(0, 2),
   );
+
+  const dowArray = useMemo(
+    () =>
+      dowShortened.filter((day) => {
+        const key = day.key;
+        const raw = settings?.[key];
+        if (raw === undefined) {
+          return !!defaultDaySettings[key];
+        }
+        return raw === "true";
+      }),
+    [settings],
+  );
+
+  const dow = ["Time", ...dowArray.map((day) => day.label)];
+  const middow = ["Time", ...dowArray.map((day) => day.mid)];
+  const shortdow = ["Time", ...dowArray.map((day) => day.short)];
+
+  const dayColumnMap = useMemo(
+    () => Object.fromEntries(dowArray.map((day, i) => [day.dow, i + 2])),
+    [dowArray],
+  );
+
   const hoursCovered = endHour - startHour;
   const virtualRows = (hoursCovered * 60) / minSlotMinutes;
+  const columns: number = dow.length - 1;
+  console.log("Columns: ", columns);
 
   const handleDeleteBlock = async (id: string) => {
     if (!confirm("Delete this block?")) return;
@@ -89,8 +102,9 @@ export function TimetableGrid({
 
       <div className="max-h-100 overflow-auto border border-slate-400 xl:max-h-175 dark:border-slate-700">
         <div
-          className="grid min-w-175 grid-cols-[60px_repeat(7,1fr)]"
+          className="grid min-w-175"
           style={{
+            gridTemplateColumns: `60px repeat(${columns}, minmax(0, 1fr))`,
             gridTemplateRows: `40px repeat(${virtualRows}, 8px)`,
           }}
         >
@@ -136,13 +150,14 @@ export function TimetableGrid({
             const start = Math.max(0, timeToRow(e.start_time, startHour));
             const end = Math.min(virtualRows, timeToRow(e.end_time, startHour));
             const duration = end - start;
-            if (end <= 0 || start >= virtualRows) return null;
+            const dayIndex = dayColumnMap[e.day_of_week];
+            if (end <= 0 || start >= virtualRows || !dayIndex) return null;
             return (
               <div
                 key={e.id}
                 className={`m-[1px] flex h-full flex-col overflow-hidden rounded-lg border border-blue-100 px-1 py-0.5 text-xs text-white dark:border-blue-900 ${e.day_of_week == dayOfWeek ? "bg-blue-600" : "bg-blue-800"} `}
                 style={{
-                  gridColumn: +e.day_of_week + 1,
+                  gridColumn: dayIndex,
                   gridRow: `${start + 2} / ${end + 2}`,
                 }}
               >

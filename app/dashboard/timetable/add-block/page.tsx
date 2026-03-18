@@ -1,5 +1,5 @@
 import AddTimetableBlock from "@/app/ui/timetable/addtimetableblock";
-import { getUserID, getTimetableSets } from "@/lib/data";
+import { getUserID, getTimetableSets, getUserSettings } from "@/lib/data";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -15,9 +15,11 @@ export default async function addBlockPage() {
     redirect("/dashboard/timetable");
   }
 
+  const settings = await getUserSettings(user_id);
+
   return (
     <div className="flex h-full max-w-2xl flex-col px-3 py-4 md:px-2">
-      <AddTimetableBlock />
+      <AddTimetableBlock settings={settings} />
     </div>
   );
 }

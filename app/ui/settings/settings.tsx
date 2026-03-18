@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   HoverCard,
   HoverCardTrigger,
@@ -18,10 +19,20 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { settingsSave, SettingsState } from "@/lib/actions";
 import Link from "next/link";
-import { LucideCircleQuestionMark } from "lucide-react";
+import { LucideCircleQuestionMark, TimerReset } from "lucide-react";
 import { useActionState, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { defaultSettings } from "@/lib/defaults";
+import { defaultTimeSettings, defaultDaySettings } from "@/lib/defaults";
+import { dowKeyValue } from "@/lib/constants";
+import { useRouter } from "next/navigation";
+
+function dowDefault(day: string, settings: Record<string, string> | null) {
+  const result =
+    settings?.[day] !== undefined
+      ? settings[day] === "true"
+      : defaultDaySettings[day];
+  return result;
+}
 
 export default function SettingsFormClient({
   settings,
@@ -31,9 +42,10 @@ export default function SettingsFormClient({
   const initialState: SettingsState = { message: null, errors: {} };
   const [state, formAction] = useActionState(settingsSave, initialState);
   const [error, setError] = useState<string | null>(null);
-
-  const startTime = settings?.["start_time"] ?? defaultSettings.start_time;
-  const endTime = settings?.["end_time"] ?? defaultSettings.end_time;
+  const startTime = settings?.["start_time"] ?? defaultTimeSettings.start_time;
+  const endTime = settings?.["end_time"] ?? defaultTimeSettings.end_time;
+  const [times, setTimes] = useState({ start: startTime, end: endTime });
+  const router = useRouter();
 
   const validateTimes = (start: string, end: string) => {
     if (!start || !end) return;
@@ -59,10 +71,11 @@ export default function SettingsFormClient({
         style: { backgroundColor: "red" },
       });
     }
-  }, [state?.timestamp]);
+    router.refresh();
+  }, [state?.timestamp, router]);
 
   return (
-    <form action={formAction}>
+    <form action={formAction} key={state?.timestamp}>
       <div className="pb-4">
         <h1 className="mb-4 text-2xl font-bold text-gray-800 dark:text-gray-200">
           Update your settings
@@ -83,16 +96,11 @@ export default function SettingsFormClient({
                 step="3600"
                 defaultValue={startTime}
                 className="bg-background appearance-none pr-4 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                onChange={(e) =>
-                  validateTimes(
-                    e.target.value,
-                    (
-                      document.getElementsByName(
-                        "end_time",
-                      )[0] as HTMLInputElement
-                    )?.value,
-                  )
-                }
+                onChange={(e) => {
+                  const start = e.target.value;
+                  setTimes({ ...times, start });
+                  validateTimes(start, times.end);
+                }}
               />
             </Field>
             <div id="start_time_error" aria-live="polite" aria-atomic="true">
@@ -114,16 +122,11 @@ export default function SettingsFormClient({
                 step="3600"
                 defaultValue={endTime}
                 className="bg-background appearance-none pr-4 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                onChange={(e) =>
-                  validateTimes(
-                    (
-                      document.getElementsByName(
-                        "start_time",
-                      )[0] as HTMLInputElement
-                    )?.value,
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => {
+                  const end = e.target.value;
+                  setTimes({ ...times, end });
+                  validateTimes(times.start, end);
+                }}
               />
             </Field>
           </div>
@@ -157,6 +160,21 @@ export default function SettingsFormClient({
               )}
             </div>
           </div>
+        </div>
+      </div>
+      <div className="">
+        <div className="flex flex-col gap-2">
+          {dowKeyValue.map((day) => (
+            <div key={day.key} className="flex flex-row gap-4">
+              <Checkbox
+                id={day.key}
+                name={day.key}
+                value="true"
+                defaultChecked={dowDefault(day.key, settings)}
+              />
+              <Label htmlFor={day.key}>{day.label}</Label>
+            </div>
+          ))}
         </div>
       </div>
 
