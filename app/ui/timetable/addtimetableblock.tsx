@@ -27,15 +27,14 @@ import { useState, useActionState, useRef } from "react";
 import { dowKeyValue } from "@/lib/constants";
 import { defaultDaySettings } from "@/lib/defaults";
 import { unhideDow } from "@/lib/actions";
-import { RetreivedTimetableBlocks } from "@/lib/definitions";
 
 export default function AddTimetableBlock({
   settings,
 }: {
   settings: Record<string, string> | null;
 }) {
-  const initialState: BlockState = { message: null, conflicts: [], errors: {} };
-  const [state, formAction] = useActionState(addTimetableBlock, initialState);
+  const initialState: BlockState = { message: "", errors: {}, conflicts: [] };
+  const [state, formAction] = useActionState<BlockState, FormData>(addTimetableBlock, initialState);
   const [dowHidden, setDowHidden] = useState(false);
   const [day_of_week, setDayOfWeek] = useState("");
   const [showDowAlertDialog, setShowDowAlertDialog] = useState(false);
@@ -248,7 +247,7 @@ export default function AddTimetableBlock({
               <p className="text-sm text-red-500">
                 Conflict with:
               </p>)}
-            {state.conflicts?.map((c: RetreivedTimetableBlocks) => (
+            {state.conflicts?.map((c) => (
                 <p key={c.id} className="text-sm text-red-500">
                   {c.subject} ({c.start_time.slice(0, 5)} - {c.end_time.slice(0, 5)})
                 </p>

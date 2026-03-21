@@ -140,7 +140,7 @@ export async function createNewTimetableSet(
 }
 
 export type BlockState = {
-  errors?: {
+  errors: {
     timetable_set_id?: string[];
     day?: string[];
     subject?: string[];
@@ -148,14 +148,13 @@ export type BlockState = {
     start_time?: string[];
     end_time?: string[];
   };
-  conflicts?: {
+  conflicts: {
     id: string;
     subject: string;
     start_time: string;
     end_time: string;
   }[];
-  consoleLog?: any; 
-  message?: string | null;
+  message: string;
 };
 
 const originalTimetableBlockSchema = z.object({
@@ -195,6 +194,8 @@ export async function addTimetableBlock(
   if (!user_id) {
     return {
       message: "User not authenticated. Please log in.",
+      errors: {},
+      conflicts: [],
     };
   }
   const set_id = await getTimetableSets(user_id);
@@ -210,6 +211,7 @@ export async function addTimetableBlock(
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: "Missing fields. Failed to add timetable block.",
+      conflicts: [],
     };
   }
   const { timetable_set_id, day, subject, location, start_time, end_time } =
@@ -221,10 +223,18 @@ export async function addTimetableBlock(
     start_time,
     end_time
   );
+  if (conflicts === null) {
+    return {
+      message: "Error checking conflicts",
+      conflicts: [],
+      errors: {},
+    }
+  }
   if (conflicts.length > 0) {
       return {
-        error: "Time conflict with existing block(s)",
-        conflicts: conflicts
+        message: "Time conflict with existing block(s)",
+        conflicts,
+        errors: {},
       };
     }
   try {
@@ -239,11 +249,17 @@ export async function addTimetableBlock(
     console.error("Error creating timetable block:", error);
     return {
       message: "Error creating timetable block.",
-      error,
+      errors: {},
+      conflicts: [],
     };
   }
   revalidatePath("/dashboard/timetable");
   redirect("/dashboard/timetable");
+  return {
+    message: "success",
+    errors: {},
+    conflicts: [],
+  }
 }
 
 export async function fetchCurrentBlock(dayOfWeek: number, time: string) {

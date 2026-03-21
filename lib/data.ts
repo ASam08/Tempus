@@ -164,9 +164,6 @@ export async function blockConflictCheck(timetable_set_id: string, dayOfWeek: nu
     return result;
   } catch (error) {
     console.error("Error checking block conflicts:", error);
-    return {
-      errors: ["Database error during conflict check"],
-      result: null
-    };
+    return null;
   }
 }
