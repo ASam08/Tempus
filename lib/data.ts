@@ -1,6 +1,10 @@
 "use server";
 
-import { RetreivedTimetableBlocks } from "@/lib/definitions";
+import {
+  RetreivedTimetableBlocks,
+  UserSettings,
+  ConflictBlocks,
+} from "@/lib/definitions";
 import { sqlConn } from "@/lib/db";
 import { auth } from "@/auth";
 
@@ -136,16 +140,39 @@ export async function getNextBreak(
 
 export async function getUserSettings(user_id: string) {
   try {
-    const rows = await sql<{ setting_key: string; setting_value: string }[]>`
+    const rows = await sql<UserSettings[]>`
       SELECT setting_key, setting_value FROM user_settings
       WHERE user_id = ${user_id}
     `;
     const settings = Object.fromEntries(
-      rows.map((row) => [row.setting_key, row.setting_value]),
+      rows.map((row: UserSettings) => [row.setting_key, row.setting_value]),
     );
     return settings ?? null;
   } catch (error) {
     console.error("Error fetching user settings:", error);
+    return null;
+  }
+}
+
+export async function blockConflictCheck(
+  timetable_set_id: string,
+  dayOfWeek: number,
+  start_time: string,
+  end_time: string,
+) {
+  try {
+    const result = await sql<ConflictBlocks[]>`
+      SELECT id, subject, start_time, end_time FROM timetable_blocks
+      WHERE timetable_set_id = ${timetable_set_id}
+        AND day_of_week = ${dayOfWeek}
+        AND (
+          (start_time < ${end_time}::time AND end_time > ${start_time}::time)
+        )
+      ORDER BY start_time
+    `;
+    return result;
+  } catch (error) {
+    console.error("Error checking block conflicts:", error);
     return null;
   }
 }

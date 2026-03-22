@@ -27,15 +27,14 @@ import { useState, useActionState, useRef } from "react";
 import { dowKeyValue } from "@/lib/constants";
 import { defaultDaySettings } from "@/lib/defaults";
 import { unhideDow } from "@/lib/actions";
-import { set } from "zod";
 
 export default function AddTimetableBlock({
   settings,
 }: {
   settings: Record<string, string> | null;
 }) {
-  const initialState: BlockState = { message: null, errors: {} };
-  const [state, formAction] = useActionState(addTimetableBlock, initialState);
+  const initialState: BlockState = { message: "", errors: {}, conflicts: [] };
+  const [state, formAction] = useActionState<BlockState, FormData>(addTimetableBlock, initialState);
   const [dowHidden, setDowHidden] = useState(false);
   const [day_of_week, setDayOfWeek] = useState("");
   const [showDowAlertDialog, setShowDowAlertDialog] = useState(false);
@@ -117,7 +116,7 @@ export default function AddTimetableBlock({
 
           <Select
             name="day_of_week"
-            onValueChange={(value) => checkDowHidden(value)}
+            onValueChange={(value: string) => checkDowHidden(value)}
             onOpenChange={() => clearClientErrors("day")}
           >
             <SelectTrigger className="w-full">
@@ -243,6 +242,17 @@ export default function AddTimetableBlock({
             {clientErrors.end_time && (
               <p className="text-sm text-red-500">{clientErrors.end_time}</p>
             )}
+
+            {state.conflicts?.length > 0 && (
+              <p className="text-sm text-red-500">
+                Conflict with:
+              </p>)}
+            {state.conflicts?.map((c) => (
+                <p key={c.id} className="text-sm text-red-500">
+                  {c.subject} ({c.start_time.slice(0, 5)} - {c.end_time.slice(0, 5)})
+                </p>
+              ))
+            }
           </div>
         </div>
       </div>

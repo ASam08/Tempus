@@ -9,6 +9,7 @@ import {
   getNextBlock,
   getUserID,
   getNextBreak,
+  blockConflictCheck,
 } from "@/lib/data";
 import { sqlConn } from "@/lib/db";
 import { signIn } from "@/auth";
@@ -16,6 +17,7 @@ import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 import { SignupFormSchema, SignupFormState } from "./signupschema";
 import { dow } from "@/lib/constants";
+import { RetreivedTimetableBlocks, ConflictBlocks } from "./definitions";
 
 const sql = sqlConn;
 
@@ -138,7 +140,7 @@ export async function createNewTimetableSet(
 }
 
 export type BlockState = {
-  errors?: {
+  errors: {
     timetable_set_id?: string[];
     day?: string[];
     subject?: string[];
@@ -146,7 +148,8 @@ export type BlockState = {
     start_time?: string[];
     end_time?: string[];
   };
-  message?: string | null;
+  conflicts: ConflictBlocks[];
+  message: string;
 };
 
 const originalTimetableBlockSchema = z.object({
@@ -186,6 +189,8 @@ export async function addTimetableBlock(
   if (!user_id) {
     return {
       message: "User not authenticated. Please log in.",
+      errors: {},
+      conflicts: [],
     };
   }
   const set_id = await getTimetableSets(user_id);
@@ -201,12 +206,32 @@ export async function addTimetableBlock(
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: "Missing fields. Failed to add timetable block.",
-      consoleLog: console.log(validatedFields.error),
+      conflicts: [],
     };
   }
   const { timetable_set_id, day, subject, location, start_time, end_time } =
     validatedFields.data;
 
+  const conflicts = await blockConflictCheck(
+    timetable_set_id,
+    day,
+    start_time,
+    end_time,
+  );
+  if (conflicts === null) {
+    return {
+      message: "Error checking conflicts",
+      conflicts: [],
+      errors: {},
+    };
+  }
+  if (conflicts.length > 0) {
+    return {
+      message: "Time conflict with existing block(s)",
+      conflicts: conflicts,
+      errors: {},
+    };
+  }
   try {
     await sql`
             INSERT INTO timetable_blocks (timetable_set_id, day_of_week, subject, location, start_time, end_time)
@@ -219,11 +244,17 @@ export async function addTimetableBlock(
     console.error("Error creating timetable block:", error);
     return {
       message: "Error creating timetable block.",
-      error,
+      errors: {},
+      conflicts: [],
     };
   }
   revalidatePath("/dashboard/timetable");
   redirect("/dashboard/timetable");
+  return {
+    message: "success",
+    errors: {},
+    conflicts: [],
+  };
 }
 
 export async function fetchCurrentBlock(dayOfWeek: number, time: string) {
