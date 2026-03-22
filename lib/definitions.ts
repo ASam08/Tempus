@@ -69,3 +69,10 @@ export type UserSettings = {
   setting_key: string;
   setting_value: string;
 };
+
+export type ConflictBlocks = {
+  id: string;
+  subject: string;
+  start_time: string;
+  end_time: string;
+};

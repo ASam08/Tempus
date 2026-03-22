@@ -1,6 +1,10 @@
 "use server";
 
-import { RetreivedTimetableBlocks, UserSettings } from "@/lib/definitions";
+import {
+  RetreivedTimetableBlocks,
+  UserSettings,
+  ConflictBlocks,
+} from "@/lib/definitions";
 import { sqlConn } from "@/lib/db";
 import { auth } from "@/auth";
 
@@ -150,9 +154,14 @@ export async function getUserSettings(user_id: string) {
   }
 }
 
-export async function blockConflictCheck(timetable_set_id: string, dayOfWeek: number, start_time: string, end_time: string) {
+export async function blockConflictCheck(
+  timetable_set_id: string,
+  dayOfWeek: number,
+  start_time: string,
+  end_time: string,
+) {
   try {
-    const result = await sql<{ id: string }[]>`
+    const result = await sql<ConflictBlocks[]>`
       SELECT id, subject, start_time, end_time FROM timetable_blocks
       WHERE timetable_set_id = ${timetable_set_id}
         AND day_of_week = ${dayOfWeek}

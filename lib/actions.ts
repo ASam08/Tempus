@@ -17,7 +17,7 @@ import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 import { SignupFormSchema, SignupFormState } from "./signupschema";
 import { dow } from "@/lib/constants";
-import { RetreivedTimetableBlocks } from "./definitions";
+import { RetreivedTimetableBlocks, ConflictBlocks } from "./definitions";
 
 const sql = sqlConn;
 
@@ -148,12 +148,7 @@ export type BlockState = {
     start_time?: string[];
     end_time?: string[];
   };
-  conflicts: {
-    id: string;
-    subject: string;
-    start_time: string;
-    end_time: string;
-  }[];
+  conflicts: ConflictBlocks[];
   message: string;
 };
 
@@ -221,22 +216,22 @@ export async function addTimetableBlock(
     timetable_set_id,
     day,
     start_time,
-    end_time
+    end_time,
   );
   if (conflicts === null) {
     return {
       message: "Error checking conflicts",
       conflicts: [],
       errors: {},
-    }
+    };
   }
   if (conflicts.length > 0) {
-      return {
-        message: "Time conflict with existing block(s)",
-        conflicts,
-        errors: {},
-      };
-    }
+    return {
+      message: "Time conflict with existing block(s)",
+      conflicts: conflicts,
+      errors: {},
+    };
+  }
   try {
     await sql`
             INSERT INTO timetable_blocks (timetable_set_id, day_of_week, subject, location, start_time, end_time)
@@ -259,7 +254,7 @@ export async function addTimetableBlock(
     message: "success",
     errors: {},
     conflicts: [],
-  }
+  };
 }
 
 export async function fetchCurrentBlock(dayOfWeek: number, time: string) {
