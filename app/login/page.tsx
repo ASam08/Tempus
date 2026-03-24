@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { LoginForm } from "@/components/ui/login/login-form";
 import { redirect } from "next/navigation";
-import TempusLogo from "@/components/branding/tempuslogo";
+import TempusLogoBrand from "@/components/branding/tempuslogobrand";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -16,7 +16,7 @@ export default function LoginPage() {
           href="#"
           className="flex items-center gap-2 self-center font-medium"
         >
-          <TempusLogo width={340} height={105} />
+          <TempusLogoBrand width={340} height={105} />
         </Link>
         <Suspense>
           <LoginForm />

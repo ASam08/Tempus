@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { SignupForm } from "@/components/ui/signup/signup-form";
 import { redirect } from "next/navigation";
-import TempusLogo from "@/components/branding/tempuslogo";
 import Link from "next/link";
+import TempusLogoBrand from "@/components/branding/tempuslogobrand";
 
 export default function SignUpPage() {
   const authOn = process.env.AUTH_ON?.toLowerCase() === "true";
@@ -16,7 +16,7 @@ export default function SignUpPage() {
           href="#"
           className="flex items-center gap-2 self-center font-medium"
         >
-          <TempusLogo width={340} height={105} />
+          <TempusLogoBrand width={340} height={105} />
         </Link>
         <Suspense>
           <SignupForm />
