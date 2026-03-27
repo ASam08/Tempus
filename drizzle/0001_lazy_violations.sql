@@ -1,0 +1,1 @@
+ALTER TABLE "timetable_blocks" ALTER COLUMN "day_of_week" SET DATA TYPE integer USING day_of_week::integer;

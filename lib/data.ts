@@ -5,20 +5,13 @@ import {
   UserSettings,
   ConflictBlocks,
 } from "@/lib/definitions";
-import { sqlConn } from "@/lib/db";
+import { sqlConn, newsqlConn } from "@/lib/db";
 import { auth } from "@/auth";
+import * as schema from "@/db/schema";
+import { eq } from "drizzle-orm";
 
-const sql = sqlConn;
-
-export async function testConnection() {
-  try {
-    const data = await sql`SELECT version()`;
-    console.log("Database connection successful:", data);
-    return data;
-  } catch (error) {
-    console.error("Database connection failed:", error);
-  }
-}
+const oldsql = sqlConn;
+const sql = newsqlConn;
 
 export async function getUserID() {
   console.log("getUserID - AUTH_ON=", process.env.AUTH_ON);
@@ -30,10 +23,9 @@ export async function getUserID() {
     return user_id;
   } else {
     try {
-      const result = await sql<{ id: string }[]>`
-      SELECT DISTINCT owner_id AS id FROM timetable_sets
-      LIMIT 1
-    `;
+      const result = await sql
+        .selectDistinct({ id: schema.timetableSets.ownerId })
+        .from(schema.timetableSets);
       console.log("getUserID - SQL result:", result);
       const id = result[0]?.id ?? null;
       console.log("getUserID - resolved id:", id);
@@ -47,12 +39,11 @@ export async function getUserID() {
 
 export async function getTimetableSets(user_id: string) {
   try {
-    const result = await sql<{ id: string }[]>`
-      SELECT id FROM timetable_sets
-      WHERE owner_id = ${user_id}
-      LIMIT 1
-    `;
-
+    const result = await sql
+      .select({ id: schema.timetableSets.id })
+      .from(schema.timetableSets)
+      .where(eq(schema.timetableSets.ownerId, user_id))
+      .limit(1);
     return result;
   } catch (error) {
     console.error("Error fetching timetable sets:", error);
@@ -62,10 +53,22 @@ export async function getTimetableSets(user_id: string) {
 
 export async function getTimetableBlocks(timetable_set_id: string) {
   try {
-    const blocks = await sql<RetreivedTimetableBlocks[]>`
-    SELECT id, start_time, end_time, day_of_week, subject, location FROM timetable_blocks
-    WHERE timetable_set_id = ${timetable_set_id}
-    `;
+    // const blocks = await oldsql<RetreivedTimetableBlocks[]>`
+    // SELECT id, start_time, end_time, day_of_week, subject, location FROM timetable_blocks
+    // WHERE timetable_set_id = ${timetable_set_id}
+    // `;
+    const blocks: RetreivedTimetableBlocks[] = await sql
+      .select({
+        id: schema.timetableBlocks.id,
+        start_time: schema.timetableBlocks.startTime,
+        end_time: schema.timetableBlocks.endTime,
+        day_of_week: schema.timetableBlocks.dayOfWeek,
+        subject: schema.timetableBlocks.subject,
+        location: schema.timetableBlocks.location,
+      })
+      .from(schema.timetableBlocks)
+      .where(eq(schema.timetableBlocks.timetableSetId, timetable_set_id));
+
     return blocks;
   } catch (error) {
     console.error("Error fetching timetable blocks:", error);
@@ -78,7 +81,7 @@ export async function getCurrentBlock(
   dayOfWeek: number,
   time: string,
 ): Promise<RetreivedTimetableBlocks | null> {
-  const result = await sql<RetreivedTimetableBlocks[]>`
+  const result = await oldsql<RetreivedTimetableBlocks[]>`
     SELECT id, start_time, end_time, day_of_week, subject, location
     FROM timetable_blocks
     WHERE timetable_set_id = ${timetable_set_id}
@@ -96,7 +99,7 @@ export async function getNextBlock(
   dayOfWeek: number,
   time: string,
 ): Promise<RetreivedTimetableBlocks | null> {
-  const result = await sql<RetreivedTimetableBlocks[]>`
+  const result = await oldsql<RetreivedTimetableBlocks[]>`
     SELECT id, start_time, end_time, day_of_week, subject, location
     FROM timetable_blocks
     WHERE timetable_set_id = ${timetable_set_id}
@@ -114,7 +117,7 @@ export async function getNextBreak(
   dayOfWeek: number,
   time: string,
 ): Promise<RetreivedTimetableBlocks | null> {
-  const result = await sql<RetreivedTimetableBlocks[]>`
+  const result = await oldsql<RetreivedTimetableBlocks[]>`
     SELECT 
       t1.subject AS subject,
       t1.start_time AS start_time,
@@ -140,7 +143,7 @@ export async function getNextBreak(
 
 export async function getUserSettings(user_id: string) {
   try {
-    const rows = await sql<UserSettings[]>`
+    const rows = await oldsql<UserSettings[]>`
       SELECT setting_key, setting_value FROM user_settings
       WHERE user_id = ${user_id}
     `;
@@ -161,7 +164,7 @@ export async function blockConflictCheck(
   end_time: string,
 ) {
   try {
-    const result = await sql<ConflictBlocks[]>`
+    const result = await oldsql<ConflictBlocks[]>`
       SELECT id, subject, start_time, end_time FROM timetable_blocks
       WHERE timetable_set_id = ${timetable_set_id}
         AND day_of_week = ${dayOfWeek}
