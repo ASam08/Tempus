@@ -32,9 +32,6 @@ importers:
       drizzle-orm:
         specifier: ^0.45.1
         version: 0.45.1(@types/pg@8.20.0)(pg@8.20.0)(postgres@3.4.8)
-      esbuild:
-        specifier: ^0.27.4
-        version: 0.27.4
       lodash:
         specifier: ^4.17.23
         version: 4.17.23
