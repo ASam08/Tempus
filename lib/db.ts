@@ -15,5 +15,4 @@ if (!POSTGRES_USER || !POSTGRES_PASSWORD) {
 
 export const DATABASE_URL = `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`;
 
-export const sqlConn = postgres(DATABASE_URL, { ssl: false });
-export const newsqlConn = drizzle(DATABASE_URL);
+export const sqlConn = drizzle(DATABASE_URL);

@@ -5,13 +5,11 @@ import {
   UserSettings,
   ConflictBlocks,
 } from "@/lib/definitions";
-import { newsqlConn } from "@/lib/db";
+import { sqlConn } from "@/lib/db";
 import { auth } from "@/auth";
 import * as schema from "@/db/schema";
 import { sql, and, eq, gt, gte, lt, lte, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-
-const sqlConn = newsqlConn;
 
 export async function getUserID() {
   console.log("getUserID - AUTH_ON=", process.env.AUTH_ON);

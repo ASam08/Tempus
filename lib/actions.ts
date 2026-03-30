@@ -11,7 +11,7 @@ import {
   getNextBreak,
   blockConflictCheck,
 } from "@/lib/data";
-import { newsqlConn } from "@/lib/db";
+import { sqlConn } from "@/lib/db";
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
@@ -20,8 +20,6 @@ import { dow } from "@/lib/constants";
 import { ConflictBlocks } from "./definitions";
 import * as schema from "@/db/schema";
 import { sql, eq } from "drizzle-orm";
-
-const sqlConn = newsqlConn;
 
 const toMinutes = (time: string) => {
   const [hours, minutes] = time.split(":").map(Number);

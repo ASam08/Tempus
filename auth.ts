@@ -4,12 +4,10 @@ import { authConfig } from "./auth.config";
 import { z } from "zod";
 import type { User } from "@/lib/definitions";
 import bcrypt from "bcryptjs";
-import { newsqlConn } from "@/lib/db";
+import { sqlConn } from "@/lib/db";
 import { AuthError } from "next-auth";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-
-const sqlConn = newsqlConn;
 
 async function getUser(email: string): Promise<User | undefined> {
   try {
