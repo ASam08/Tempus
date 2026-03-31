@@ -7,18 +7,9 @@ import {
 } from "@/lib/definitions";
 import { sqlConn } from "@/lib/db";
 import { auth } from "@/auth";
-
-const sql = sqlConn;
-
-export async function testConnection() {
-  try {
-    const data = await sql`SELECT version()`;
-    console.log("Database connection successful:", data);
-    return data;
-  } catch (error) {
-    console.error("Database connection failed:", error);
-  }
-}
+import * as schema from "@/db/schema";
+import { sql, and, eq, gt, gte, lt, lte, isNull } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 export async function getUserID() {
   console.log("getUserID - AUTH_ON=", process.env.AUTH_ON);
@@ -30,10 +21,9 @@ export async function getUserID() {
     return user_id;
   } else {
     try {
-      const result = await sql<{ id: string }[]>`
-      SELECT DISTINCT owner_id AS id FROM timetable_sets
-      LIMIT 1
-    `;
+      const result = await sqlConn
+        .selectDistinct({ id: schema.timetableSets.ownerId })
+        .from(schema.timetableSets);
       console.log("getUserID - SQL result:", result);
       const id = result[0]?.id ?? null;
       console.log("getUserID - resolved id:", id);
@@ -47,12 +37,11 @@ export async function getUserID() {
 
 export async function getTimetableSets(user_id: string) {
   try {
-    const result = await sql<{ id: string }[]>`
-      SELECT id FROM timetable_sets
-      WHERE owner_id = ${user_id}
-      LIMIT 1
-    `;
-
+    const result = await sqlConn
+      .select({ id: schema.timetableSets.id })
+      .from(schema.timetableSets)
+      .where(eq(schema.timetableSets.ownerId, user_id))
+      .limit(1);
     return result;
   } catch (error) {
     console.error("Error fetching timetable sets:", error);
@@ -62,10 +51,18 @@ export async function getTimetableSets(user_id: string) {
 
 export async function getTimetableBlocks(timetable_set_id: string) {
   try {
-    const blocks = await sql<RetreivedTimetableBlocks[]>`
-    SELECT id, start_time, end_time, day_of_week, subject, location FROM timetable_blocks
-    WHERE timetable_set_id = ${timetable_set_id}
-    `;
+    const blocks: RetreivedTimetableBlocks[] = await sqlConn
+      .select({
+        id: schema.timetableBlocks.id,
+        start_time: schema.timetableBlocks.startTime,
+        end_time: schema.timetableBlocks.endTime,
+        day_of_week: schema.timetableBlocks.dayOfWeek,
+        subject: schema.timetableBlocks.subject,
+        location: schema.timetableBlocks.location,
+      })
+      .from(schema.timetableBlocks)
+      .where(eq(schema.timetableBlocks.timetableSetId, timetable_set_id));
+
     return blocks;
   } catch (error) {
     console.error("Error fetching timetable blocks:", error);
@@ -78,16 +75,25 @@ export async function getCurrentBlock(
   dayOfWeek: number,
   time: string,
 ): Promise<RetreivedTimetableBlocks | null> {
-  const result = await sql<RetreivedTimetableBlocks[]>`
-    SELECT id, start_time, end_time, day_of_week, subject, location
-    FROM timetable_blocks
-    WHERE timetable_set_id = ${timetable_set_id}
-      AND day_of_week = ${dayOfWeek}
-      AND start_time <= ${time}::time
-      AND end_time > ${time}::time
-    LIMIT 1
-  `;
-
+  const result: RetreivedTimetableBlocks[] = await sqlConn
+    .select({
+      id: schema.timetableBlocks.id,
+      start_time: schema.timetableBlocks.startTime,
+      end_time: schema.timetableBlocks.endTime,
+      day_of_week: schema.timetableBlocks.dayOfWeek,
+      subject: schema.timetableBlocks.subject,
+      location: schema.timetableBlocks.location,
+    })
+    .from(schema.timetableBlocks)
+    .where(
+      and(
+        eq(schema.timetableBlocks.timetableSetId, timetable_set_id),
+        eq(schema.timetableBlocks.dayOfWeek, dayOfWeek),
+        lte(schema.timetableBlocks.startTime, sql`${time}::time`),
+        gt(schema.timetableBlocks.endTime, sql`${time}::time`),
+      ),
+    )
+    .limit(1);
   return result[0] ?? null;
 }
 
@@ -96,16 +102,25 @@ export async function getNextBlock(
   dayOfWeek: number,
   time: string,
 ): Promise<RetreivedTimetableBlocks | null> {
-  const result = await sql<RetreivedTimetableBlocks[]>`
-    SELECT id, start_time, end_time, day_of_week, subject, location
-    FROM timetable_blocks
-    WHERE timetable_set_id = ${timetable_set_id}
-      AND day_of_week = ${dayOfWeek}
-      AND start_time > ${time}::time
-    ORDER BY start_time
-    LIMIT 1
-  `;
-
+  const result: RetreivedTimetableBlocks[] = await sqlConn
+    .select({
+      id: schema.timetableBlocks.id,
+      start_time: schema.timetableBlocks.startTime,
+      end_time: schema.timetableBlocks.endTime,
+      day_of_week: schema.timetableBlocks.dayOfWeek,
+      subject: schema.timetableBlocks.subject,
+      location: schema.timetableBlocks.location,
+    })
+    .from(schema.timetableBlocks)
+    .where(
+      and(
+        eq(schema.timetableBlocks.timetableSetId, timetable_set_id),
+        eq(schema.timetableBlocks.dayOfWeek, dayOfWeek),
+        gt(schema.timetableBlocks.startTime, sql`${time}::time`),
+      ),
+    )
+    .orderBy(schema.timetableBlocks.startTime)
+    .limit(1);
   return result[0] ?? null;
 }
 
@@ -114,36 +129,45 @@ export async function getNextBreak(
   dayOfWeek: number,
   time: string,
 ): Promise<RetreivedTimetableBlocks | null> {
-  const result = await sql<RetreivedTimetableBlocks[]>`
-    SELECT 
-      t1.subject AS subject,
-      t1.start_time AS start_time,
-      t1.end_time AS end_time,
-      t2.subject AS next_subject,
-      t2.start_time AS next_start_time,
-      t2.end_time AS next_end_time 
-    FROM timetable_blocks AS t1 
-    LEFT JOIN timetable_blocks AS t2 
-    ON t1.end_time = t2.start_time 
-      AND t1.day_of_week = t2.day_of_week
-    WHERE t1.timetable_set_id = ${timetable_set_id}
-      AND t1.day_of_week = ${dayOfWeek} 
-      AND t2.id IS NULL 
-      AND t1.start_time <= ${time}::time
-      AND t1.end_time > ${time}::time
-    ORDER BY t1.start_time
-    LIMIT 1
-    `;
-
+  const t1 = alias(schema.timetableBlocks, "t1");
+  const t2 = alias(schema.timetableBlocks, "t2");
+  const result: RetreivedTimetableBlocks[] = await sqlConn
+    .select({
+      id: t1.id,
+      start_time: t1.startTime,
+      end_time: t1.endTime,
+      day_of_week: t1.dayOfWeek,
+      subject: t1.subject,
+      location: t1.location,
+    })
+    .from(t1)
+    .leftJoin(
+      t2,
+      and(eq(t1.endTime, t2.startTime), eq(t1.dayOfWeek, t2.dayOfWeek)),
+    )
+    .where(
+      and(
+        eq(t1.timetableSetId, timetable_set_id),
+        eq(t1.dayOfWeek, dayOfWeek),
+        isNull(t2.id),
+        lte(t1.startTime, sql`${time}::time`),
+        gt(t1.endTime, sql`${time}::time`),
+      ),
+    )
+    .orderBy(t1.startTime)
+    .limit(1);
   return result[0] ?? null;
 }
 
 export async function getUserSettings(user_id: string) {
   try {
-    const rows = await sql<UserSettings[]>`
-      SELECT setting_key, setting_value FROM user_settings
-      WHERE user_id = ${user_id}
-    `;
+    const rows: UserSettings[] = await sqlConn
+      .select({
+        setting_key: schema.userSettings.settingKey,
+        setting_value: schema.userSettings.settingValue,
+      })
+      .from(schema.userSettings)
+      .where(eq(schema.userSettings.userId, user_id));
     const settings = Object.fromEntries(
       rows.map((row: UserSettings) => [row.setting_key, row.setting_value]),
     );
@@ -161,15 +185,23 @@ export async function blockConflictCheck(
   end_time: string,
 ) {
   try {
-    const result = await sql<ConflictBlocks[]>`
-      SELECT id, subject, start_time, end_time FROM timetable_blocks
-      WHERE timetable_set_id = ${timetable_set_id}
-        AND day_of_week = ${dayOfWeek}
-        AND (
-          (start_time < ${end_time}::time AND end_time > ${start_time}::time)
-        )
-      ORDER BY start_time
-    `;
+    const result: ConflictBlocks[] = await sqlConn
+      .select({
+        id: schema.timetableBlocks.id,
+        subject: schema.timetableBlocks.subject,
+        start_time: schema.timetableBlocks.startTime,
+        end_time: schema.timetableBlocks.endTime,
+      })
+      .from(schema.timetableBlocks)
+      .where(
+        and(
+          eq(schema.timetableBlocks.timetableSetId, timetable_set_id),
+          eq(schema.timetableBlocks.dayOfWeek, dayOfWeek),
+          lt(schema.timetableBlocks.startTime, sql`${end_time}::time`),
+          gt(schema.timetableBlocks.endTime, sql`${start_time}::time`),
+        ),
+      )
+      .orderBy(schema.timetableBlocks.startTime);
     return result;
   } catch (error) {
     console.error("Error checking block conflicts:", error);

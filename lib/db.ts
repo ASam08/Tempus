@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
 
 const POSTGRES_HOST = process.env.POSTGRES_HOST ?? "db";
 const POSTGRES_PORT = process.env.POSTGRES_PORT ?? "5432";
@@ -12,8 +13,6 @@ if (!POSTGRES_USER || !POSTGRES_PASSWORD) {
   );
 }
 
-const DATABASE_URL = `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`;
+export const DATABASE_URL = `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`;
 
-export const sqlConn = postgres(DATABASE_URL, {
-  ssl: false, // Docker local network
-});
+export const sqlConn = drizzle(DATABASE_URL);

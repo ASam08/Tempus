@@ -6,12 +6,16 @@ import type { User } from "@/lib/definitions";
 import bcrypt from "bcryptjs";
 import { sqlConn } from "@/lib/db";
 import { AuthError } from "next-auth";
-
-const sql = sqlConn;
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 async function getUser(email: string): Promise<User | undefined> {
   try {
-    const user = await sql<User[]>`SELECT * FROM users WHERE email=${email}`;
+    // const user = await sql<User[]>`SELECT * FROM users WHERE email=${email}`;
+    const user: User[] = await sqlConn
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
     return user[0];
   } catch (error) {
     console.error("Failed to fetch user:", error);
@@ -39,7 +43,7 @@ export const { auth, signIn, signOut } = NextAuth({
             return null;
           }
 
-          if (user.account_enabled === false) {
+          if (user.accountEnabled === false) {
             console.warn(`Account for ${email} is not enabled yet.`);
             throw new Error("ACCOUNT_NOT_ENABLED", {
               cause: { type: "AccountNotEnabled" },

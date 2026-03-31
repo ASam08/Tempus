@@ -3,9 +3,9 @@ export type User = {
   name: string;
   email: string;
   password: string;
-  created_at: string;
-  updated_at: string;
-  account_enabled: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
+  accountEnabled: boolean;
 };
 
 export type TimetableSet = {

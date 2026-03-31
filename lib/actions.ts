@@ -17,9 +17,9 @@ import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 import { SignupFormSchema, SignupFormState } from "./signupschema";
 import { dow } from "@/lib/constants";
-import { RetreivedTimetableBlocks, ConflictBlocks } from "./definitions";
-
-const sql = sqlConn;
+import { ConflictBlocks } from "./definitions";
+import * as schema from "@/db/schema";
+import { sql, eq } from "drizzle-orm";
 
 const toMinutes = (time: string) => {
   const [hours, minutes] = time.split(":").map(Number);
@@ -81,10 +81,12 @@ export async function signup(
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
-    await sql`
-      INSERT INTO users (name, email, password, account_enabled)
-      VALUES (${name}, ${email}, ${hashedPassword}, ${accountEnabled})
-    `;
+    await sqlConn.insert(schema.users).values({
+      name: name,
+      email: email,
+      password: hashedPassword,
+      accountEnabled: accountEnabled,
+    });
   } catch {
     return { message: "Failed to create account." };
   }
@@ -122,10 +124,11 @@ export async function createNewTimetableSet(
   const { owner_id, title, description } = validatedFields.data;
 
   try {
-    await sql`
-            INSERT INTO timetable_sets (owner_id, title, description)
-            VALUES (${owner_id}, ${title}, ${description ?? null})
-        `;
+    await sqlConn.insert(schema.timetableSets).values({
+      ownerId: owner_id,
+      title: title,
+      description: description ?? null,
+    });
     console.log(`Timetable set ${title} created successfully`);
   } catch (error) {
     console.error("Error creating timetable set:", error);
@@ -233,10 +236,14 @@ export async function addTimetableBlock(
     };
   }
   try {
-    await sql`
-            INSERT INTO timetable_blocks (timetable_set_id, day_of_week, subject, location, start_time, end_time)
-            VALUES (${timetable_set_id}, ${day}, ${subject}, ${location}, ${start_time}, ${end_time})
-        `;
+    await sqlConn.insert(schema.timetableBlocks).values({
+      timetableSetId: timetable_set_id,
+      dayOfWeek: day,
+      subject: subject,
+      location: location,
+      startTime: start_time,
+      endTime: end_time,
+    });
     console.log(
       `Timetable block for ${subject} on ${day} created successfully`,
     );
@@ -250,11 +257,6 @@ export async function addTimetableBlock(
   }
   revalidatePath("/dashboard/timetable");
   redirect("/dashboard/timetable");
-  return {
-    message: "success",
-    errors: {},
-    conflicts: [],
-  };
 }
 
 export async function fetchCurrentBlock(dayOfWeek: number, time: string) {
@@ -319,10 +321,9 @@ export async function deleteBlock(id: string) {
   const blockId = id;
 
   try {
-    await sql`
-            DELETE FROM timetable_blocks
-            WHERE id = ${blockId}
-            `;
+    await sqlConn
+      .delete(schema.timetableBlocks)
+      .where(eq(schema.timetableBlocks.id, blockId));
     console.log("Block %a deleted", blockId);
     revalidatePath("/dashboard/timetable");
   } catch (error) {
@@ -421,17 +422,24 @@ export async function updateSettings(
 
   const rows = data
     .filter(([key, value]) => ALLOWED_SETTINGS.has(key) && value !== null)
-    .map(([key, value]) => [user_id, key, String(value)]);
+    .map(([key, value]) => ({
+      userId: user_id,
+      settingKey: key,
+      settingValue: String(value),
+    }));
 
   if (rows.length === 0) return;
   try {
-    await sql`
-    INSERT INTO user_settings (user_id, setting_key, setting_value)
-    VALUES ${sql(rows)}
-    ON CONFLICT (user_id, setting_key)
-    DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW()
-  `;
-
+    await sqlConn
+      .insert(schema.userSettings)
+      .values(rows)
+      .onConflictDoUpdate({
+        target: [schema.userSettings.userId, schema.userSettings.settingKey],
+        set: {
+          settingValue: sql`EXCLUDED.setting_value`,
+          updatedAt: sql`NOW()`,
+        },
+      });
     console.log("Settings updated for user %s", user_id);
     return { message: "success", errors: {} };
   } catch (error) {
