@@ -10,6 +10,7 @@ import { auth } from "@/auth";
 import * as schema from "@/db/schema";
 import { sql, and, eq, gt, gte, lt, lte, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import crypto from "crypto";
 
 export async function getUserID() {
   console.log("getUserID - AUTH_ON=", process.env.AUTH_ON);
@@ -25,7 +26,7 @@ export async function getUserID() {
         .selectDistinct({ id: schema.timetableSets.ownerId })
         .from(schema.timetableSets);
       console.log("getUserID - SQL result:", result);
-      const id = result[0]?.id ?? null;
+      const id = result[0]?.id ?? crypto.randomUUID();
       console.log("getUserID - resolved id:", id);
       return id;
     } catch (error) {
