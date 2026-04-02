@@ -107,7 +107,13 @@ export async function createNewTimetableSet(
   prevState: any,
   formData: FormData,
 ) {
-  const user_id = await getUserID();
+  const retrieved_user_id = await getUserID();
+  let user_id;
+  if (retrieved_user_id === null && process.env.AUTH_ON !== "true") {
+    user_id = crypto.randomUUID();
+  } else {
+    user_id = retrieved_user_id;
+  }
   const validatedFields = createTimetableSet.safeParse({
     owner_id: user_id,
     title: formData.get("title"),

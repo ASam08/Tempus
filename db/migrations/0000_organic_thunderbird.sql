@@ -2,7 +2,7 @@
 -- If you want to run this migration please uncomment this code before executing migrations
 
 CREATE TABLE "timetable_sets" (
-	"id" uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"owner_id" uuid NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"description" text,
@@ -11,13 +11,13 @@ CREATE TABLE "timetable_sets" (
 );
 --> statement-breakpoint
 CREATE TABLE "user_timetable_sets" (
-	"id" uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"timetable_set_id" uuid NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"email" text NOT NULL,
 	"password" text NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE "users" (
 );
 --> statement-breakpoint
 CREATE TABLE "user_settings" (
-	"id" uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"setting_key" varchar(255) NOT NULL,
 	"setting_value" text NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE "user_settings" (
 );
 --> statement-breakpoint
 CREATE TABLE "timetable_blocks" (
-	"id" uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"timetable_set_id" uuid NOT NULL,
 	"start_time" time NOT NULL,
 	"end_time" time NOT NULL,

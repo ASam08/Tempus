@@ -12,8 +12,6 @@ import { sql, and, eq, gt, gte, lt, lte, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 export async function getUserID() {
-  console.log("getUserID - AUTH_ON=", process.env.AUTH_ON);
-
   if (process.env.AUTH_ON === "true") {
     const session = await auth();
     const user_id = session?.user?.id;
@@ -24,9 +22,7 @@ export async function getUserID() {
       const result = await sqlConn
         .selectDistinct({ id: schema.timetableSets.ownerId })
         .from(schema.timetableSets);
-      console.log("getUserID - SQL result:", result);
       const id = result[0]?.id ?? null;
-      console.log("getUserID - resolved id:", id);
       return id;
     } catch (error) {
       console.error("Error retrieving user ID: ", error);

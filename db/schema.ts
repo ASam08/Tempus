@@ -12,10 +12,7 @@ import {
 import { sql } from "drizzle-orm";
 
 export const timetableSets = pgTable("timetable_sets", {
-  id: uuid()
-    .default(sql`uuid_generate_v4()`)
-    .primaryKey()
-    .notNull(),
+  id: uuid().defaultRandom().primaryKey().notNull(),
   ownerId: uuid("owner_id").notNull(),
   title: varchar({ length: 255 }).notNull(),
   description: text(),
@@ -28,10 +25,7 @@ export const timetableSets = pgTable("timetable_sets", {
 });
 
 export const userTimetableSets = pgTable("user_timetable_sets", {
-  id: uuid()
-    .default(sql`uuid_generate_v4()`)
-    .primaryKey()
-    .notNull(),
+  id: uuid().defaultRandom().primaryKey().notNull(),
   userId: uuid("user_id").notNull(),
   timetableSetId: uuid("timetable_set_id").notNull(),
 });
@@ -39,10 +33,7 @@ export const userTimetableSets = pgTable("user_timetable_sets", {
 export const users = pgTable(
   "users",
   {
-    id: uuid()
-      .default(sql`uuid_generate_v4()`)
-      .primaryKey()
-      .notNull(),
+    id: uuid().defaultRandom().primaryKey().notNull(),
     name: varchar({ length: 255 }).notNull(),
     email: text().notNull(),
     password: text().notNull(),
@@ -60,10 +51,7 @@ export const users = pgTable(
 export const userSettings = pgTable(
   "user_settings",
   {
-    id: uuid()
-      .default(sql`uuid_generate_v4()`)
-      .primaryKey()
-      .notNull(),
+    id: uuid().defaultRandom().primaryKey().notNull(),
     userId: uuid("user_id").notNull(),
     settingKey: varchar("setting_key", { length: 255 }).notNull(),
     settingValue: text("setting_value").notNull(),
@@ -80,10 +68,7 @@ export const userSettings = pgTable(
 );
 
 export const timetableBlocks = pgTable("timetable_blocks", {
-  id: uuid()
-    .default(sql`uuid_generate_v4()`)
-    .primaryKey()
-    .notNull(),
+  id: uuid().defaultRandom().primaryKey().notNull(),
   timetableSetId: uuid("timetable_set_id").notNull(),
   startTime: time("start_time").notNull(),
   endTime: time("end_time").notNull(),
