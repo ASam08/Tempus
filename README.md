@@ -34,7 +34,7 @@ A simple, self-hostable weekly timetable app. Whether you're a student keeping t
 
 ![Add Block](./public/screenshots/add-block.png)
 
-> Add a new class or event with a subject, location, and time. Simple form, no fuss.
+> Add a new class or event with a subject, location, and time.
 
 ### Settings
 
@@ -51,6 +51,7 @@ A simple, self-hostable weekly timetable app. Whether you're a student keeping t
 | Framework  | [Next.js](https://nextjs.org) (App Router)        |
 | Language   | TypeScript                                        |
 | Database   | PostgreSQL                                        |
+| ORM        | [Drizzle](https://orm.drizzle.team/)              |
 | Auth       | [Auth.js (NextAuth)](https://authjs.dev)          |
 | UI         | [shadcn/ui](https://ui.shadcn.com) + Tailwind CSS |
 | Deployment | Docker + Docker Compose                           |
@@ -87,19 +88,31 @@ AUTH_TRUST_HOST: true
 APPROVE_SIGNUPS: false # Change to true to stop auto-approving new user sign-ups. Not recommended, see note below.
 ```
 
-_Note - if you disable auto-approving new user sign-ups, you will currently have to approve users in the database itself manually. Change the "account_enabled" field to true in the users table for the relevant user. This will be addressed in a future release_
+_<a name="auto_approve_note"></a>Note - if you disable auto-approving new user sign-ups, you will currently have to approve users in the database itself manually. Change the "account_enabled" field to true in the users table for the relevant user. This will be addressed in a future release._
 
 **3. Start the app**
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
-> The database schema is set up automatically as part of the Docker build, no manual SQL required.
+> The database schema is set up automatically as part of the Docker build.
 
 **4. Open the app**
 
 Visit [http://localhost:3000](http://localhost:3000) and create your account.
+
+---
+
+## Environment Variables
+
+The following environnment variables are available:
+| Variable | Required? | Default | Notes |
+| -------- | --------- | ------- | ----- |
+| `AUTH_ON` | No | FALSE | Adding auth allows for multiple users|
+| `AUTH_SECRET`| Yes | - | Run `openssl rand -base64 32` to generate|
+| `APPROVE_SIGNUPS`| No | FALSE | Changing to true will stop new users signing in until their account is approved. Currently a manual process, see [the auto approve note above](#auto_approve_note)|
+|`AUTH_TRUST_HOST`| No (recommended) | - | Required when deploying behind a reverse proxy to avoid untrusted errors |
 
 ---
 
@@ -110,8 +123,8 @@ Visit [http://localhost:3000](http://localhost:3000) and create your account.
 **1. Clone the repo**
 
 ```bash
-git clone https://github.com/ASam08/timetable-app.git
-cd timetable-app
+git clone https://github.com/ASam08/tempus.git
+cd tempus
 ```
 
 **2. Install dependencies**
