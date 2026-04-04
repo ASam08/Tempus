@@ -1,33 +1,32 @@
 services:
-  timetable_web:
-    build: .
-    container_name: timetable_web
+  tempus_web:
+    image: ghcr.io/asam08/tempus:latest
+    container_name: tempus_web
     ports:
       - "3000:3000"
     depends_on:
-      - timetable_db
+      - tempus_db
     environment:
       NODE_ENV: production
-      POSTGRES_USER: timetable # Replace this with your user
-      POSTGRES_PASSWORD: timetable # Replace this with your user password
-      POSTGRES_DB: timetable
+      POSTGRES_USER: tempus # Replace this with your user
+      POSTGRES_PASSWORD: tempus # Replace this with your user password
+      POSTGRES_DB: tempus
       POSTGRES_PORT: 5432
-      POSTGRES_HOST: timetable_db
+      POSTGRES_HOST: tempus_db
       AUTH_SECRET: # Run: openssl rand -base64 32
       AUTH_ON: true # Change to false to remove auth, single user only
       AUTH_TRUST_HOST: true # Change to false to stop auto-approving new user sign-ups
     restart: unless-stopped
 
-  timetable_db:
+  tempus_db:
     image: postgres:16-alpine
-    container_name: timetable_db
+    container_name: tempus_db
     environment:
-      POSTGRES_USER: timetable # Replace this with your user
-      POSTGRES_PASSWORD: timetable # Replace this with your user password
-      POSTGRES_DB: timetable
+      POSTGRES_USER: tempus # Replace this with your user
+      POSTGRES_PASSWORD: tempus # Replace this with your user password
+      POSTGRES_DB: tempus
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     restart: unless-stopped
