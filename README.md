@@ -67,26 +67,51 @@ An `example-compose.yaml` is included to get you up and running.
 
 **1. Copy the example config**
 
-```bash
-cp example-compose.yaml compose.yaml
+Create a compose.yaml file in your project folder, using the below template
+
+```yaml
+services:
+  tempus_web:
+    image: ghcr.io/asam08/tempus:latest
+    container_name: tempus_web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - tempus_db
+    environment:
+      NODE_ENV: production
+      POSTGRES_USER: tempus # Replace this with your user
+      POSTGRES_PASSWORD: tempus # Replace this with your user password
+      POSTGRES_DB: tempus
+      POSTGRES_PORT: 5432
+      POSTGRES_HOST: tempus_db
+      AUTH_SECRET: # Run: openssl rand -base64 32
+      AUTH_ON: true # Change to false to remove auth, single user only
+      AUTH_TRUST_HOST: true # Change to false to stop auto-approving new user sign-ups
+    restart: unless-stopped
+
+  tempus_db:
+    image: postgres:16-alpine
+    container_name: tempus_db
+    environment:
+      POSTGRES_USER: tempus # Replace this with your user
+      POSTGRES_PASSWORD: tempus # Replace this with your user password
+      POSTGRES_DB: tempus
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
 ```
 
 **2. Fill in your environment variables**
 
-Open `compose.yaml` and set the following:
+Open `compose.yaml` and adjust the environment variables. See [the enviornment variables](#enviroment-variables) section for more details.
 
-```yaml
-NODE_ENV: production
-POSTGRES_USER: timetable # Replace this with your user
-POSTGRES_PASSWORD: timetable # Replace this with your user password
-POSTGRES_DB: timetable
-POSTGRES_PORT: 5432
-POSTGRES_HOST: timetable_db
-AUTH_SECRET: # Run: openssl rand -base64 32
-AUTH_ON: true # Change to false to remove auth, single user only
-AUTH_TRUST_HOST: true
-APPROVE_SIGNUPS: false # Change to true to stop auto-approving new user sign-ups. Not recommended, see note below.
-```
+Please remember to change the password from "Tempus".
 
 _<a name="auto_approve_note"></a>Note - if you disable auto-approving new user sign-ups, you will currently have to approve users in the database itself manually. Change the "account_enabled" field to true in the users table for the relevant user. This will be addressed in a future release._
 
