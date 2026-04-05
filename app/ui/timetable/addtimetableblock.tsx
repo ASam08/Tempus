@@ -34,7 +34,10 @@ export default function AddTimetableBlock({
   settings: Record<string, string> | null;
 }) {
   const initialState: BlockState = { message: "", errors: {}, conflicts: [] };
-  const [state, formAction] = useActionState<BlockState, FormData>(addTimetableBlock, initialState);
+  const [state, formAction] = useActionState<BlockState, FormData>(
+    addTimetableBlock,
+    initialState,
+  );
   const [dowHidden, setDowHidden] = useState(false);
   const [day_of_week, setDayOfWeek] = useState("");
   const [showDowAlertDialog, setShowDowAlertDialog] = useState(false);
@@ -49,8 +52,7 @@ export default function AddTimetableBlock({
     const daySettings = settings?.[lowerDay];
     if (daySettings === undefined) {
       setDowHidden(!defaultDaySettings[lowerDay]);
-    }
-    if (daySettings === "true") {
+    } else if (daySettings === "true") {
       setDowHidden(false);
     } else {
       setDowHidden(true);
@@ -197,7 +199,10 @@ export default function AddTimetableBlock({
                 step="300"
                 defaultValue="09:30"
                 className="bg-background appearance-none pr-4 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                onChange={() => { clearClientErrors("start_time"); clearClientErrors("end_time")}}
+                onChange={() => {
+                  clearClientErrors("start_time");
+                  clearClientErrors("end_time");
+                }}
               />
             </Field>
             <div id="start_time_error" aria-live="polite" aria-atomic="true">
@@ -208,7 +213,9 @@ export default function AddTimetableBlock({
                   </p>
                 ))}
               {clientErrors.start_time && (
-                <p className="text-sm text-red-500">{clientErrors.start_time}</p>
+                <p className="text-sm text-red-500">
+                  {clientErrors.start_time}
+                </p>
               )}
             </div>
           </div>
@@ -225,7 +232,6 @@ export default function AddTimetableBlock({
                 onChange={() => clearClientErrors("end_time")}
               />
             </Field>
-
           </div>
           <div
             className="grid items-center pt-5"
@@ -244,15 +250,14 @@ export default function AddTimetableBlock({
             )}
 
             {state.conflicts?.length > 0 && (
-              <p className="text-sm text-red-500">
-                Conflict with:
-              </p>)}
+              <p className="text-sm text-red-500">Conflict with:</p>
+            )}
             {state.conflicts?.map((c) => (
-                <p key={c.id} className="text-sm text-red-500">
-                  {c.subject} ({c.start_time.slice(0, 5)} - {c.end_time.slice(0, 5)})
-                </p>
-              ))
-            }
+              <p key={c.id} className="text-sm text-red-500">
+                {c.subject} ({c.start_time.slice(0, 5)} -{" "}
+                {c.end_time.slice(0, 5)})
+              </p>
+            ))}
           </div>
         </div>
       </div>
