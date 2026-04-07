@@ -7,7 +7,7 @@ import { auth } from "@/auth";
 
 export default async function DashboardPage() {
   const session = await auth();
-  console.log("SESSION:", session);
+  // console.log("SESSION:", session);
 
   return (
     <div className="flex h-full max-w-screen flex-col px-3 py-4 md:px-2">

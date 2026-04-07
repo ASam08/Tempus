@@ -6,9 +6,9 @@ jest.mock("next/navigation", () => ({
   useSearchParams: jest.fn(() => ({ get: jest.fn(() => null) })),
 }));
 
-jest.mock("@/components/ui/login/login-form", () => ({
+jest.mock("@/components/ui/signup/signup-form", () => ({
   __esModule: true,
-  LoginForm: () => <div>Login Form</div>,
+  SignupForm: () => <div>SignUp Form</div>,
 }));
 
 jest.mock("@/components/branding/tempuslogobrand", () => ({
@@ -25,9 +25,9 @@ jest.mock("@/lib/db", () => ({
   sqlConn: {},
 }));
 
-import LoginPage from "../app/login/page";
+import SignUpPage from "../app/signup/page";
 
-describe("LoginPage", () => {
+describe("SignUpPage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -35,14 +35,14 @@ describe("LoginPage", () => {
   it("redirects to dashboard when auth is off", () => {
     const { redirect } = require("next/navigation");
     process.env.AUTH_ON = "false";
-    render(<LoginPage />);
+    render(<SignUpPage />);
     expect(redirect).toHaveBeenCalledWith("/dashboard");
   });
 
   it("does not redirect when auth is on", () => {
     const { redirect } = require("next/navigation");
     process.env.AUTH_ON = "true";
-    render(<LoginPage />);
+    render(<SignUpPage />);
     expect(redirect).not.toHaveBeenCalled();
   });
 });
