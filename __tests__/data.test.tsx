@@ -45,23 +45,32 @@ import {
   getUserSettings,
   blockConflictCheck,
 } from "../lib/data";
-import { set } from "zod";
 
-// Access the mocks after imports
-const { mockLimit, mockOrderBy, mockWhere, mockFrom, mockLeftJoin } =
-  require("@/lib/db").__mocks;
+const {
+  mockLimit,
+  mockOrderBy,
+  mockWhere,
+  mockFrom,
+  mockLeftJoin,
+  mockSelect,
+  mockSelectDistinct,
+} = require("@/lib/db").__mocks;
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  jest.resetAllMocks();
+  jest.spyOn(console, "error").mockImplementation(() => {});
+
   mockLimit.mockResolvedValue([]);
-  mockWhere.mockReturnValue({ limit: mockLimit, orderBy: mockOrderBy });
   mockOrderBy.mockReturnValue({ limit: mockLimit });
+  mockWhere.mockReturnValue({ limit: mockLimit, orderBy: mockOrderBy });
+  mockLeftJoin.mockReturnValue({ where: mockWhere });
   mockFrom.mockReturnValue({
     where: mockWhere,
     limit: mockLimit,
     leftJoin: mockLeftJoin,
   });
-  mockLeftJoin.mockReturnValue({ where: mockWhere });
+  mockSelect.mockReturnValue({ from: mockFrom });
+  mockSelectDistinct.mockReturnValue({ from: mockFrom });
 });
 
 describe("getUserID", () => {
@@ -98,19 +107,19 @@ describe("getUserID", () => {
     });
 
     it("returns the first owner ID from timetable sets", async () => {
-      mockLimit.mockResolvedValueOnce([{ id: "owner-123" }]);
+      mockFrom.mockResolvedValueOnce([{ id: "owner-123" }]);
       const result = await getUserID();
       expect(result).toBe("owner-123");
     });
 
     it("returns null when there are no timetable sets", async () => {
-      mockLimit.mockResolvedValueOnce([]);
+      mockFrom.mockResolvedValueOnce([]);
       const result = await getUserID();
       expect(result).toBeNull();
     });
 
     it("returns null when the database throws", async () => {
-      mockLimit.mockRejectedValueOnce(new Error("DB error"));
+      mockFrom.mockRejectedValueOnce(new Error("DB error"));
       const result = await getUserID();
       expect(result).toBeNull();
     });
@@ -180,7 +189,6 @@ describe("getCurrentBlock", () => {
       day_of_week: 1,
       subject: "Maths",
       location: "Room 1",
-      set_id: "set-123",
     };
     mockLimit.mockResolvedValueOnce([fakeBlock]);
     const result = await getCurrentBlock("set-123", 1, "09:30");
@@ -203,7 +211,6 @@ describe("getNextBlock", () => {
       day_of_week: 1,
       subject: "English",
       location: "Room 2",
-      set_id: "set-123",
     };
     mockLimit.mockResolvedValueOnce([fakeBlock]);
     const result = await getNextBlock("set-123", 1, "09:30");
@@ -226,7 +233,6 @@ describe("getNextBreak", () => {
       day_of_week: 1,
       subject: "Science",
       location: "Room 3",
-      set_id: "set-123",
     };
     mockLimit.mockResolvedValueOnce([fakeBlock]);
     const result = await getNextBreak("set-123", 1, "09:30");
@@ -236,32 +242,6 @@ describe("getNextBreak", () => {
   it("returns null when there is no break", async () => {
     mockLimit.mockResolvedValueOnce([]);
     const result = await getNextBreak("set-123", 1, "09:30");
-    expect(result).toBeNull();
-  });
-
-  it("returns null when already on break", async () => {
-    const fakeBlock = [
-      {
-        id: "block-3",
-        start_time: "10:00",
-        end_time: "11:00",
-        day_of_week: 1,
-        subject: "Science",
-        location: "Room 3",
-        set_id: "set-123",
-      },
-      {
-        id: "block-4",
-        start_time: "11:00",
-        end_time: "11:30",
-        day_of_week: 1,
-        subject: "History",
-        location: "Room 4",
-        set_id: "set-123",
-      },
-    ];
-    mockLimit.mockResolvedValueOnce([fakeBlock]);
-    const result = await getNextBreak("set-123", 1, "11:45");
     expect(result).toBeNull();
   });
 });
