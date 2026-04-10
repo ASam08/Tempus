@@ -27,7 +27,7 @@ jest.mock("react", () => ({
   ]),
 }));
 
-import { LoginForm } from "../components/ui/login/login-form";
+import { LoginForm } from "@/components/ui/login/login-form";
 
 beforeEach(() => {
   jest.clearAllMocks();

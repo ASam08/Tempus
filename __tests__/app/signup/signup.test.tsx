@@ -25,7 +25,7 @@ jest.mock("@/lib/db", () => ({
   sqlConn: {},
 }));
 
-import SignUpPage from "../app/signup/page";
+import SignUpPage from "@/app/signup/page";
 
 describe("SignUpPage", () => {
   beforeEach(() => {

@@ -44,7 +44,7 @@ import {
   getNextBreak,
   getUserSettings,
   blockConflictCheck,
-} from "../lib/data";
+} from "@/lib/data";
 
 const {
   mockLimit,

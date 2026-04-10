@@ -57,7 +57,7 @@ jest.mock("@/app/ui/darkmode", () => ({
 
 const mockedAuth = require("@/auth").auth;
 
-import DashboardPage from "../app/dashboard/page";
+import DashboardPage from "@/app/dashboard/page";
 
 describe("DashboardPage", () => {
   beforeEach(() => {
