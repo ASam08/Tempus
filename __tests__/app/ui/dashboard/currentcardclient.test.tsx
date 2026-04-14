@@ -57,4 +57,30 @@ describe("CurrentCardClient", () => {
     expect(screen.getByText("Room 314")).toBeInTheDocument();
     expect(screen.getByText("Finishes at 14:30")).toBeInTheDocument();
   });
+
+  it("refetches when block has started", async () => {
+    const { fetchCurrentBlock } = require("@/lib/actions");
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-01-15T10:29:00").getTime());
+
+    fetchCurrentBlock.mockResolvedValue({
+      subject: "Maths",
+      location: "Room 314",
+      start_time: "10:30:00",
+      end_time: "10:30:00",
+    });
+
+    await act(async () => {
+      render(<CurrentCardClient />);
+    });
+
+    // Advance time past the block start
+    await act(async () => {
+      jest.setSystemTime(new Date("2026-01-15T10:31:00").getTime());
+      jest.advanceTimersByTime(1000);
+    });
+
+    expect(fetchCurrentBlock).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
+  });
 });

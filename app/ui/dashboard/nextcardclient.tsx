@@ -4,12 +4,7 @@ import { useEffect, useState } from "react";
 import { fetchNextBlock } from "@/lib/actions";
 import { RetreivedTimetableBlocks } from "@/lib/definitions";
 import { LucideSkipForward } from "lucide-react";
-
-function timeToMinutes(time?: string | null): number | null {
-  if (!time) return null;
-  const [h, m] = time.slice(0, 5).split(":").map(Number);
-  return h * 60 + m;
-}
+import { timeToMinutes } from "@/lib/utils";
 
 export default function NextCardClient() {
   const [block, setBlock] = useState<RetreivedTimetableBlocks | null>(null);
