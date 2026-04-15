@@ -20,11 +20,7 @@ export default function NextBreakCardClient() {
     const time = now.toTimeString().slice(0, 8);
 
     const next = await fetchNextBreak(dayOfWeek, time);
-    // Distinguish the "no user" sentinel from a valid response of "no next break"
-    if (
-      next &&
-      ((next as any).reason === "no-user" || (next as any).reason === "no-set")
-    ) {
+    if (next && "reason" in next) {
       setFoundUserId(false);
       setLoading(false);
       return;
@@ -40,16 +36,9 @@ export default function NextBreakCardClient() {
     }
 
     // At this point `next` is a valid block
-    setBlock(next as RetreivedTimetableBlocks);
+    setBlock(next);
 
-    if ((next as RetreivedTimetableBlocks).start_time) {
-      setStartMinutes(
-        timeToMinutes((next as RetreivedTimetableBlocks).end_time),
-      );
-    } else {
-      setStartMinutes(null);
-      setMinutesUntilNext(null);
-    }
+    setStartMinutes(timeToMinutes(next.end_time));
 
     setLoading(false);
   };

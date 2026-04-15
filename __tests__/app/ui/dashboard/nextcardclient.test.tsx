@@ -2,82 +2,83 @@ import "@testing-library/jest-dom";
 import { act, render, screen } from "@testing-library/react";
 
 jest.mock("@/lib/actions", () => ({
-  fetchNextBreak: jest.fn(),
+  fetchNextBlock: jest.fn(),
 }));
 
 jest.mock("lucide-react", () => ({
-  LucidePause: () => <svg data-testid="pause-icon" />,
+  LucideSkipForward: () => <svg data-testid="skip-forward-icon" />,
 }));
 
-import NextBreakCardClient from "@/app/ui/dashboard/nextbreakcardclient";
+import NextCardClient from "@/app/ui/dashboard/nextcardclient";
 
-describe("NextBreakCardClient", () => {
+describe("NextCardClient", () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
 
   it("renders loading state", () => {
-    const { fetchNextBreak } = require("@/lib/actions");
-    fetchNextBreak.mockImplementation(() => new Promise(() => {}));
-    render(<NextBreakCardClient />);
+    const { fetchNextBlock } = require("@/lib/actions");
+    fetchNextBlock.mockImplementation(() => new Promise(() => {}));
+    render(<NextCardClient />);
     expect(screen.getByText("Loading…")).toBeInTheDocument();
   });
 
   it("renders nothing when no user is found", async () => {
-    const { fetchNextBreak } = require("@/lib/actions");
-    fetchNextBreak.mockResolvedValue({ reason: "no-user" });
+    const { fetchNextBlock } = require("@/lib/actions");
+    fetchNextBlock.mockResolvedValue({ reason: "no-user" });
     await act(async () => {
-      render(<NextBreakCardClient />);
+      render(<NextCardClient />);
     });
     expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
     expect(document.body.firstChild).toBeEmptyDOMElement();
   });
 
   it("renders nothing when no timetable set is found", async () => {
-    const { fetchNextBreak } = require("@/lib/actions");
-    fetchNextBreak.mockResolvedValue({ reason: "no-set" });
+    const { fetchNextBlock } = require("@/lib/actions");
+    fetchNextBlock.mockResolvedValue({ reason: "no-set" });
     await act(async () => {
-      render(<NextBreakCardClient />);
+      render(<NextCardClient />);
     });
     expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
     expect(document.body.firstChild).toBeEmptyDOMElement();
   });
 
-  it("renders currently on break message", async () => {
-    const { fetchNextBreak } = require("@/lib/actions");
-    fetchNextBreak.mockResolvedValue(null);
+  it("renders nothing else today message", async () => {
+    const { fetchNextBlock } = require("@/lib/actions");
+    fetchNextBlock.mockResolvedValue(null);
     await act(async () => {
-      render(<NextBreakCardClient />);
+      render(<NextCardClient />);
     });
     expect(
-      screen.getByText("Looks like you're already on break!"),
+      screen.getByText("Looks like you're free for the rest of the day!"),
     ).toBeInTheDocument();
   });
 
-  it("renders next break info", async () => {
-    const { fetchNextBreak } = require("@/lib/actions");
+  it("renders next block info", async () => {
+    const { fetchNextBlock } = require("@/lib/actions");
     jest.useFakeTimers();
     jest.setSystemTime(new Date("2026-01-15T09:00:00").getTime());
-    fetchNextBreak.mockResolvedValue({
+    fetchNextBlock.mockResolvedValue({
       subject: "Maths",
       location: "Room 314",
       start_time: "10:00:00",
       end_time: "10:30:00",
     });
     await act(async () => {
-      render(<NextBreakCardClient />);
+      render(<NextCardClient />);
     });
-    expect(screen.getByText("Next Break")).toBeInTheDocument();
-    expect(screen.getByText(/at 10:30/)).toBeInTheDocument();
+    expect(screen.getByText(/Maths/)).toBeInTheDocument();
+    expect(screen.getByText(/Room 314/)).toBeInTheDocument();
+    expect(screen.getByText(/Finishes at 10:30/)).toBeInTheDocument();
     jest.useRealTimers();
   });
 
   it("refetches when block has started", async () => {
-    const { fetchNextBreak } = require("@/lib/actions");
+    const { fetchNextBlock } = require("@/lib/actions");
     jest.useFakeTimers();
     jest.setSystemTime(new Date("2026-01-15T10:29:00").getTime());
 
-    fetchNextBreak.mockResolvedValue({
+    fetchNextBlock.mockResolvedValue({
       subject: "Maths",
       location: "Room 314",
       start_time: "10:30:00",
@@ -85,7 +86,7 @@ describe("NextBreakCardClient", () => {
     });
 
     await act(async () => {
-      render(<NextBreakCardClient />);
+      render(<NextCardClient />);
     });
 
     // Advance time past the block start
@@ -94,30 +95,30 @@ describe("NextBreakCardClient", () => {
       jest.advanceTimersByTime(1000);
     });
 
-    expect(fetchNextBreak).toHaveBeenCalledTimes(2);
+    expect(fetchNextBlock).toHaveBeenCalledTimes(2);
     jest.useRealTimers();
   });
 
   it("maps Sunday (JS day 0) to day 7 for the data call", async () => {
-    const { fetchNextBreak } = require("@/lib/actions");
+    const { fetchNextBlock } = require("@/lib/actions");
     jest.useFakeTimers();
     // 2026-01-18 is a Sunday
     jest.setSystemTime(new Date("2026-01-18T09:00:00").getTime());
 
-    fetchNextBreak.mockResolvedValue(null);
+    fetchNextBlock.mockResolvedValue(null);
 
     await act(async () => {
-      render(<NextBreakCardClient />);
+      render(<NextCardClient />);
     });
 
-    // The important assertion: fetchNextBreak should have been called with 7, not 0
-    expect(fetchNextBreak).toHaveBeenCalledWith(7, expect.any(String));
+    // The important assertion: fetchNextBlock should have been called with 7, not 0
+    expect(fetchNextBlock).toHaveBeenCalledWith(7, expect.any(String));
 
     jest.useRealTimers();
   });
 });
 
-describe("Next break countdown display", () => {
+describe("Next block countdown display", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -127,16 +128,16 @@ describe("Next break countdown display", () => {
   });
 
   const renderWithEndTime = async (endTime: string, currentTime: string) => {
-    const { fetchNextBreak } = require("@/lib/actions");
+    const { fetchNextBlock } = require("@/lib/actions");
     jest.setSystemTime(new Date(`2026-01-15T${currentTime}`).getTime());
-    fetchNextBreak.mockResolvedValue({
+    fetchNextBlock.mockResolvedValue({
       subject: "Maths",
       location: "Room 314",
       start_time: endTime,
       end_time: endTime,
     });
     await act(async () => {
-      render(<NextBreakCardClient />);
+      render(<NextCardClient />);
     });
   };
 

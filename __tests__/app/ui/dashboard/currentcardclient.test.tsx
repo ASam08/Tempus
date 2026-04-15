@@ -34,6 +34,17 @@ describe("CurrentCardClient", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders no timetable set message", async () => {
+    const { fetchCurrentBlock } = require("@/lib/actions");
+    fetchCurrentBlock.mockResolvedValue({ reason: "no-set" });
+    await act(async () => {
+      render(<CurrentCardClient />);
+    });
+    expect(
+      screen.getByText("Nothing to see here, add a timetable to get started!"),
+    ).toBeInTheDocument();
+  });
+
   it("renders no current block message", async () => {
     const { fetchCurrentBlock } = require("@/lib/actions");
     fetchCurrentBlock.mockResolvedValue(null);
@@ -81,6 +92,24 @@ describe("CurrentCardClient", () => {
     });
 
     expect(fetchCurrentBlock).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
+  });
+
+  it("maps Sunday (JS day 0) to day 7 for the data call", async () => {
+    const { fetchCurrentBlock } = require("@/lib/actions");
+    jest.useFakeTimers();
+    // 2026-01-18 is a Sunday
+    jest.setSystemTime(new Date("2026-01-18T09:00:00").getTime());
+
+    fetchCurrentBlock.mockResolvedValue(null);
+
+    await act(async () => {
+      render(<CurrentCardClient />);
+    });
+
+    // The important assertion: fetchCurrentBlock should have been called with 7, not 0
+    expect(fetchCurrentBlock).toHaveBeenCalledWith(7, expect.any(String));
+
     jest.useRealTimers();
   });
 });
