@@ -3,13 +3,6 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   HoverCard,
@@ -19,20 +12,13 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { settingsSave, SettingsState } from "@/lib/actions";
 import Link from "next/link";
-import { LucideCircleQuestionMark, TimerReset } from "lucide-react";
+import { LucideCircleQuestionMark } from "lucide-react";
 import { useActionState, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { defaultTimeSettings, defaultDaySettings } from "@/lib/defaults";
+import { defaultTimeSettings } from "@/lib/defaults";
 import { dowKeyValue } from "@/lib/constants";
 import { useRouter } from "next/navigation";
-
-function dowDefault(day: string, settings: Record<string, string> | null) {
-  const result =
-    settings?.[day] !== undefined
-      ? settings[day] === "true"
-      : defaultDaySettings[day];
-  return result;
-}
+import { dowDefault } from "@/lib/utils";
 
 export default function SettingsFormClient({
   settings,
@@ -58,8 +44,6 @@ export default function SettingsFormClient({
   };
 
   useEffect(() => {
-    if (!state) return;
-
     if (state.message === "success") {
       toast.success("Settings saved successfully!", {
         position: "top-center",
