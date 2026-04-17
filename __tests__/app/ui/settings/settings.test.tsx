@@ -118,6 +118,8 @@ jest.mock("@/lib/constants", () => ({
     { key: "wednesday", label: "Wednesday" },
     { key: "thursday", label: "Thursday" },
     { key: "friday", label: "Friday" },
+    { key: "saturday", label: "Saturday" },
+    { key: "sunday", label: "Sunday" },
   ],
 }));
 

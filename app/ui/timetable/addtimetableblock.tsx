@@ -21,12 +21,11 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { addTimetableBlock, BlockState } from "@/lib/actions";
+import { addTimetableBlock, BlockState, unhideDow } from "@/lib/actions";
 import Link from "next/link";
 import { useState, useActionState, useRef } from "react";
 import { dowKeyValue } from "@/lib/constants";
 import { defaultDaySettings } from "@/lib/defaults";
-import { unhideDow } from "@/lib/actions";
 
 export default function AddTimetableBlock({
   settings,
@@ -114,7 +113,7 @@ export default function AddTimetableBlock({
       </div>
       <div className="grid gap-4">
         <div className="grid gap-3">
-          <Label>Day</Label>
+          <Label htmlFor="day_of_week">Day</Label>
 
           <Select
             name="day_of_week"
@@ -147,7 +146,7 @@ export default function AddTimetableBlock({
           </div>
         </div>
         <div className="grid gap-3">
-          <Label>Subject</Label>
+          <Label htmlFor="subject">Subject</Label>
           <Input
             type="text"
             id="subject"
@@ -168,7 +167,7 @@ export default function AddTimetableBlock({
           </div>
         </div>
         <div className="grid gap-3">
-          <Label>Location</Label>
+          <Label htmlFor="location">Location</Label>
           <Input
             type="text"
             id="location"
