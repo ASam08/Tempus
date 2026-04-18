@@ -1,3 +1,4 @@
+import React from "react";
 import "@testing-library/jest-dom";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 
@@ -21,6 +22,12 @@ jest.mock("sonner", () => ({
     success: jest.fn(),
     error: jest.fn(),
   },
+}));
+
+jest.mock("@/components/ui/input", () => ({
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+    <input {...props} />
+  ),
 }));
 
 jest.mock("@/components/ui/hover-card", () => ({
@@ -51,12 +58,6 @@ jest.mock("@/components/ui/checkbox", () => ({
       name={name}
       defaultChecked={defaultChecked}
     />
-  ),
-}));
-
-jest.mock("@/components/ui/input", () => ({
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <input {...props} />
   ),
 }));
 
@@ -107,7 +108,10 @@ jest.mock("@/lib/actions", () => ({
   settingsSave: jest.fn(),
 }));
 
+// Fix: added cn to prevent crashes if any real shadcn component leaks through,
+// and kept dowDefault in the same mock (can't mock the same module twice)
 jest.mock("@/lib/utils", () => ({
+  cn: (...args: string[]) => args.filter(Boolean).join(" "),
   dowDefault: jest.fn().mockReturnValue(false),
 }));
 
@@ -139,8 +143,10 @@ const setupMocks = (stateOverrides = {}) => {
   const { useRouter } = require("next/navigation");
 
   useRouter.mockReturnValue({ refresh: mockRefresh });
+  // Fix: added explicit timestamp: undefined so the intent is clear and
+  // toast tests that pass a real timestamp value signal a genuine state change
   useActionState.mockReturnValue([
-    { message: null, errors: {}, ...stateOverrides },
+    { message: null, errors: {}, timestamp: undefined, ...stateOverrides },
     jest.fn(),
   ]);
 };
@@ -221,7 +227,8 @@ describe("SettingsFormClient", () => {
     it("calls dowDefault for each day to determine checkbox state", () => {
       const { dowDefault } = require("@/lib/utils");
       render(<SettingsFormClient settings={null} />);
-      expect(dowDefault).toHaveBeenCalledTimes(5);
+      // Fix: 7 days are defined in the mock, not 5
+      expect(dowDefault).toHaveBeenCalledTimes(7);
     });
   });
 
