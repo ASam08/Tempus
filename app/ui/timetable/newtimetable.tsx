@@ -7,7 +7,7 @@ import { deleteBlock } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { defaultTimeSettings, defaultDaySettings } from "@/lib/defaults";
-import { dowKeyValue, dowShortened } from "@/lib/constants";
+import { dowShortened } from "@/lib/constants";
 
 const slotMinutes = 15;
 
