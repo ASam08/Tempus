@@ -98,3 +98,15 @@ export type SettingsState = {
   message?: string | null;
   timestamp?: number;
 };
+
+export type SignupFormState =
+  | {
+      errors?: {
+        name?: string[];
+        email?: string[];
+        password?: string[];
+        confirmPassword?: string[];
+      };
+      message?: string;
+    }
+  | undefined;

@@ -71,12 +71,6 @@ jest.mock("@/lib/utils", () => ({
   }),
 }));
 
-jest.mock("@/lib/signupschema", () => ({
-  SignupFormSchema: {
-    safeParse: jest.fn(),
-  },
-}));
-
 import {
   authenticate,
   signup,
@@ -104,8 +98,6 @@ import {
   getNextBreak,
   blockConflictCheck,
 } from "@/lib/data";
-import { SignupFormSchema } from "@/lib/signupschema";
-
 const mockSignIn = signIn as jest.Mock;
 const mockRevalidatePath = revalidatePath as jest.Mock;
 const mockRedirect = redirect as jest.Mock;
@@ -115,14 +107,18 @@ const mockGetCurrentBlock = getCurrentBlock as jest.Mock;
 const mockGetNextBlock = getNextBlock as jest.Mock;
 const mockGetNextBreak = getNextBreak as jest.Mock;
 const mockBlockConflictCheck = blockConflictCheck as jest.Mock;
-const mockSignupFormSchema = SignupFormSchema as unknown as {
-  safeParse: jest.Mock;
-};
 
 function mockInsertChain(resolvedValue: unknown = undefined) {
   const valuesMethod = jest.fn().mockResolvedValue(resolvedValue);
+  (sqlConn.insert as jest.Mock).mockReturnValue({ values: valuesMethod });
+  return { valuesMethod };
+}
+
+function mockInsertWithConflictChain(resolvedValue: unknown = undefined) {
   const onConflictMethod = jest.fn().mockResolvedValue(resolvedValue);
-  valuesMethod.mockReturnValue({ onConflictDoUpdate: onConflictMethod });
+  const valuesMethod = jest
+    .fn()
+    .mockReturnValue({ onConflictDoUpdate: onConflictMethod });
   (sqlConn.insert as jest.Mock).mockReturnValue({ values: valuesMethod });
   return { valuesMethod, onConflictMethod };
 }
@@ -188,32 +184,32 @@ describe("ActionsTests", () => {
     const baseForm = makeFormData({
       name: "Alice",
       email: "alice@example.com",
-      password: "secure123",
-      confirmPassword: "secure123",
+      password: "Secure123!",
+      confirmPassword: "Secure123!",
     });
 
-    beforeEach(() => {
-      mockSignupFormSchema.safeParse.mockReturnValue({
-        success: true,
-        data: {
-          name: "Alice",
-          email: "alice@example.com",
-          password: "secure123",
-        },
+    it("returns validation errors when required fields are invalid", async () => {
+      const form = makeFormData({
+        name: "",
+        email: "not-an-email",
+        password: "short",
+        confirmPassword: "short",
       });
+      const result = await signup(undefined, form);
+      expect(result).toMatchObject({ errors: expect.any(Object) });
     });
 
-    it("returns validation errors when schema parse fails", async () => {
-      mockSignupFormSchema.safeParse.mockReturnValueOnce({
-        success: false,
-        error: {
-          flatten: () => ({
-            fieldErrors: { email: ["Invalid email"] },
-          }),
-        },
+    it("returns confirmPassword error when passwords do not match", async () => {
+      const form = makeFormData({
+        name: "Alice",
+        email: "alice@example.com",
+        password: "Secure123!",
+        confirmPassword: "Different1!",
       });
-      const result = await signup(undefined, baseForm);
-      expect(result).toEqual({ errors: { email: ["Invalid email"] } });
+      const result = await signup(undefined, form);
+      expect(result).toMatchObject({
+        errors: { confirmPassword: expect.any(Array) },
+      });
     });
 
     it("sets accountEnabled=false when APPROVE_SIGNUPS=true", async () => {
@@ -563,8 +559,7 @@ describe("ActionsTests", () => {
     });
 
     it("calls updateSettings and revalidates on success", async () => {
-      const { onConflictMethod } = mockInsertChain();
-      onConflictMethod.mockResolvedValueOnce(undefined);
+      const { onConflictMethod } = mockInsertWithConflictChain();
 
       const result = await settingsSave(initialState, makeSettingsForm());
 
@@ -585,8 +580,7 @@ describe("ActionsTests", () => {
 
     it("calls updateSettings with the correct day key set to true and revalidates", async () => {
       mockGetUserID.mockResolvedValueOnce("user-uuid");
-      const { onConflictMethod } = mockInsertChain();
-      onConflictMethod.mockResolvedValueOnce(undefined);
+      const { onConflictMethod } = mockInsertWithConflictChain();
 
       await unhideDow("wednesday");
 
@@ -614,8 +608,7 @@ describe("ActionsTests", () => {
     });
 
     it("upserts only allowed setting keys", async () => {
-      const { onConflictMethod } = mockInsertChain();
-      onConflictMethod.mockResolvedValueOnce(undefined);
+      const { onConflictMethod } = mockInsertWithConflictChain();
 
       const result = await updateSettings("user-uuid", [
         ["start_time", "08:00"],
@@ -652,8 +645,7 @@ describe("ActionsTests", () => {
     });
 
     it("accepts all seven day-of-week keys", async () => {
-      const { onConflictMethod } = mockInsertChain();
-      onConflictMethod.mockResolvedValueOnce(undefined);
+      const { onConflictMethod } = mockInsertWithConflictChain();
 
       const days: [string, string][] = [
         ["monday", "true"],
