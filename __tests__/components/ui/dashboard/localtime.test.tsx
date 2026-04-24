@@ -4,6 +4,10 @@ import LocalTimeDisplay from "@/components/ui/dashboard/localtime";
 
 describe("LocalTimeDisplay", () => {
   beforeEach(() => {
+    Object.defineProperty(navigator, "language", {
+      value: "en-NZ",
+      configurable: true,
+    });
     jest.useFakeTimers();
     jest.setSystemTime(new Date("2026-01-15").getTime());
   });
