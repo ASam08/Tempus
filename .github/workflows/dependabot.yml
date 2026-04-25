@@ -10,7 +10,7 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 15
-    assignees: 
+    assignees:
       - "ASam08"
     groups:
       minor-and-patch:
