@@ -18,6 +18,7 @@ import * as schema from "@/db/schema";
 import { sql, eq } from "drizzle-orm";
 import { timeToMinutes } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
+import { auth } from "@/lib/auth";
 
 export async function authenticate(
   prevState: string | undefined,
@@ -26,22 +27,22 @@ export async function authenticate(
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  const { error } = await authClient.signIn.email({
-    email,
-    password,
-    callbackURL: "/dashboard",
-  });
-
-  if (error) {
-    if (error.code === "INVALID_EMAIL_OR_PASSWORD") {
+  try {
+    await auth.api.signInEmail({
+      body: { email, password },
+    });
+  } catch (error: any) {
+    console.log("auth error:", error); //TODO: remove
+    if (error?.body?.code === "INVALID_EMAIL_OR_PASSWORD") {
       return "Invalid credentials.";
     }
-    if (error.code === "USER_BANNED") {
+    if (error?.body?.code === "BANNED_USER") {
       // The databaseHook in lib/auth.ts sets banned=true when APPROVE_SIGNUPS=true.
       return "Your account has not been approved yet. Please contact the administrator.";
     }
     return "Something went wrong.";
   }
+  redirect("/dashboard");
 }
 
 const SignupFormSchema = z
@@ -82,14 +83,13 @@ export async function signup(
 
   const { name, email, password } = validatedFields.data;
 
-  const { error } = await authClient.signUp.email({
-    name,
-    email,
-    password,
-  });
-
-  if (error) {
-    if (error.code === "USER_ALREADY_EXISTS") {
+  try {
+    await auth.api.signUpEmail({
+      body: { name, email, password },
+    });
+  } catch (error: any) {
+    console.log("signup error:", error);
+    if (error?.body?.code === "USER_ALREADY_EXISTS") {
       return { message: "An account with this email already exists." };
     }
     return { message: "Failed to create account." };

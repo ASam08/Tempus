@@ -4,7 +4,6 @@ import { admin } from "better-auth/plugins";
 import { sqlConn } from "@/lib/db";
 import * as schema from "@/db/schema";
 import bcrypt from "bcryptjs";
-import { eq, and } from "drizzle-orm";
 
 export const auth = betterAuth({
   database: drizzleAdapter(sqlConn, {
@@ -21,34 +20,10 @@ export const auth = betterAuth({
     enabled: true,
     password: {
       async hash(password) {
-        // Return undefined to use better-auth's default scrypt for new signups
-        return undefined as any;
+        return bcrypt.hash(password, 10);
       },
       async verify({ hash, password }) {
-        // Detect legacy bcrypt hashes by their prefix
-        if (hash.startsWith("$2b$") || hash.startsWith("$2a$")) {
-          const valid = await bcrypt.compare(password, hash);
-          if (valid) {
-            // Silently re-hash with scrypt and update the account table
-            // so this user gets a modern hash going forward
-            const { generateId } = await import("better-auth");
-            const newHash =
-              await auth.options.emailAndPassword!.password!.hash!(password);
-            await sqlConn
-              .update(schema.account)
-              .set({ password: newHash, updatedAt: new Date() })
-              .where(
-                and(
-                  eq(schema.account.providerId, "credential"),
-                  eq(schema.account.password, hash),
-                ),
-              );
-          }
-          return valid;
-        }
-        // Not a bcrypt hash, return undefined to fall through to
-        // better-auth's default scrypt verify
-        return undefined as any;
+        return bcrypt.compare(password, hash);
       },
     },
   },
