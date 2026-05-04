@@ -68,4 +68,56 @@ describe("utils", () => {
       expect(dowDefault("Thursday", null)).toBe(defaultDaySettings["Thursday"]);
     });
   });
+
+  describe("getPaginationItems", () => {
+    const { getPaginationItems } = require("@/lib/utils");
+
+    it("returns correct pagination items for middle page", () => {
+      expect(getPaginationItems(5, 10)).toEqual([
+        1,
+        "ellipsis",
+        4,
+        5,
+        6,
+        "ellipsis",
+        10,
+      ]);
+    });
+
+    it("returns correct pagination items for first page", () => {
+      expect(getPaginationItems(1, 5)).toEqual([1, 2, "ellipsis", 5]);
+    });
+
+    it("returns correct pagination items for last page", () => {
+      expect(getPaginationItems(5, 5)).toEqual([1, "ellipsis", 4, 5]);
+    });
+
+    it("returns all pages when totalPages is small", () => {
+      expect(getPaginationItems(2, 3)).toEqual([1, 2, 3]);
+    });
+
+    it("handles edge case of currentPage near start", () => {
+      expect(getPaginationItems(2, 10)).toEqual([1, 2, 3, "ellipsis", 10]);
+    });
+
+    it("handles edge case of currentPage near end", () => {
+      expect(getPaginationItems(9, 10)).toEqual([1, "ellipsis", 8, 9, 10]);
+    });
+
+    it("returns all pages when totalPages is 2", () => {
+      expect(getPaginationItems(1, 2)).toEqual([1, 2]);
+    });
+
+    it("returns all pages when on first page of 3", () => {
+      expect(getPaginationItems(1, 3)).toEqual([1, 2, 3]);
+    });
+
+    it("handles totalPages of 1", () => {
+      expect(getPaginationItems(1, 1)).toEqual([1]);
+    });
+
+    it("handles totalPages of 0", () => {
+      expect(getPaginationItems(1, 0)).toEqual([]);
+    });
+  });
 });

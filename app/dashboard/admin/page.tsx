@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -10,6 +9,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { getPaginationItems } from "@/lib/utils";
 
 export default async function AdminDashboard({
   searchParams,
@@ -36,7 +45,7 @@ export default async function AdminDashboard({
 
   const { page } = await searchParams;
   const currentPage = Number(page) || 1;
-  const pageSize = 10;
+  const pageSize = 1;
 
   const users = await auth.api.listUsers({
     query: {
@@ -113,28 +122,45 @@ export default async function AdminDashboard({
         </div>
 
         {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-            <p>
-              Page {currentPage} of {totalPages} — {totalUsers} users total
+          <div className="mt-4 flex flex-col items-center justify-between md:flex-row">
+            <p className="w-full text-center text-sm text-gray-600 md:w-1/4 md:max-w-32 md:text-left dark:text-gray-400">
+              Page {currentPage} of {totalPages}
+              <br />
+              {totalUsers} users total
             </p>
-            <div className="flex gap-2">
-              {currentPage > 1 && (
-                <Link
-                  href={"?page=" + (currentPage - 1)}
-                  className="rounded-lg border border-stone-400 px-3 py-1 hover:bg-stone-100 dark:border-gray-600 dark:hover:bg-gray-800"
-                >
-                  Previous
-                </Link>
-              )}
-              {currentPage < totalPages && (
-                <Link
-                  href={"?page=" + (currentPage + 1)}
-                  className="rounded-lg border border-stone-400 px-3 py-1 hover:bg-stone-100 dark:border-gray-600 dark:hover:bg-gray-800"
-                >
-                  Next
-                </Link>
-              )}
-            </div>
+            <Pagination>
+              <PaginationContent>
+                {currentPage > 1 && (
+                  <PaginationItem>
+                    <PaginationPrevious href={"?page=" + (currentPage - 1)} />
+                  </PaginationItem>
+                )}
+
+                {getPaginationItems(currentPage, totalPages).map((item, i) =>
+                  item === "ellipsis" ? (
+                    <PaginationItem key={"ellipsis-" + i}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={item}>
+                      <PaginationLink
+                        href={"?page=" + item}
+                        isActive={item === currentPage}
+                      >
+                        {item}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ),
+                )}
+
+                {currentPage < totalPages && (
+                  <PaginationItem>
+                    <PaginationNext href={"?page=" + (currentPage + 1)} />
+                  </PaginationItem>
+                )}
+              </PaginationContent>
+            </Pagination>
+            <p className="hidden w-1/4 max-w-32 text-right text-sm text-gray-600 md:flex dark:text-gray-400" />
           </div>
         )}
       </div>
