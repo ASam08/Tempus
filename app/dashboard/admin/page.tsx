@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { auth, User } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
@@ -19,6 +19,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { getPaginationItems } from "@/lib/utils";
+import AdminActions from "@/components/ui/dashboard/admin/adminactions";
 
 export default async function AdminDashboard({
   searchParams,
@@ -45,7 +46,7 @@ export default async function AdminDashboard({
 
   const { page } = await searchParams;
   const currentPage = Number(page) || 1;
-  const pageSize = 1;
+  const pageSize = 2;
 
   const users = await auth.api.listUsers({
     query: {
@@ -85,7 +86,7 @@ export default async function AdminDashboard({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.users.map((user) => (
+              {users.users.map((user: User) => (
                 <TableRow
                   key={user.id}
                   className="border-t border-stone-200 bg-white dark:border-gray-700 dark:bg-gray-900"
@@ -113,7 +114,7 @@ export default async function AdminDashboard({
                     {new Date(user.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    {/* Actions will go here */}
+                    <AdminActions {...user} />
                   </TableCell>
                 </TableRow>
               ))}
