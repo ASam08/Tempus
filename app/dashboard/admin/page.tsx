@@ -52,6 +52,7 @@ export default async function AdminDashboard({
     query: {
       limit: pageSize,
       offset: (currentPage - 1) * pageSize,
+      sortBy: "name",
     },
     headers: await headers(),
   });
@@ -94,7 +95,15 @@ export default async function AdminDashboard({
                   <TableCell className="px-4 py-3">{user.name}</TableCell>
                   <TableCell className="px-4 py-3">{user.email}</TableCell>
                   <TableCell className="px-4 py-3 capitalize">
-                    {user.role ?? "user"}
+                    {user.role === "admin" ? (
+                      <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                        Admin
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                        User
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="px-4 py-3">
                     {user.banned ? (

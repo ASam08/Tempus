@@ -12,3 +12,11 @@ export const defaultDaySettings: Record<string, boolean> = {
   saturday: true,
   sunday: true,
 };
+
+export const defaultBanReasons: string[] = [
+  "Account Not Yet Verified",
+  "Spamming",
+  "T&C Violation",
+  "Inappropriate Content",
+  "Fraudulent Activity",
+];
