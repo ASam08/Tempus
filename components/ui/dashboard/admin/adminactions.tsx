@@ -31,10 +31,12 @@ import { defaultBanReasons } from "@/lib/defaults";
 import { UserRole } from "@/lib/definitions";
 import { useState } from "react";
 
-export default function AdminActions(user: User) {
+export default function AdminActions(user: User & { currentUserId: string }) {
   const router = useRouter();
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [removeUserDialogOpen, setRemoveUserDialogOpen] = useState(false);
+
+  const isSelf = user.id === user.currentUserId;
 
   async function enableUser(userId: string) {
     await authClient.admin.unbanUser({
@@ -126,46 +128,51 @@ export default function AdminActions(user: User) {
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-36" align="end">
           <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Account Status</DropdownMenuLabel>
-            {user.banned ? (
-              <DropdownMenuItem onClick={() => enableUser(user.id)}>
-                Enable
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Ban</DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
-                    {defaultBanReasons.map((reason) => (
-                      <DropdownMenuItem
-                        key={reason}
-                        onClick={() => banUser(user.id, reason)}
-                      >
-                        {reason}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-            )}
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuLabel className="text-rose-600">
-              Danger Zone
-            </DropdownMenuLabel>
-            <DropdownMenuItem onSelect={() => setRoleDialogOpen(true)}>
-              {user.role === "admin" ? "Set as User" : "Set as Admin"}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={() => setRemoveUserDialogOpen(true)}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
+          {!isSelf && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Account Status</DropdownMenuLabel>
+                {user.banned ? (
+                  <DropdownMenuItem onClick={() => enableUser(user.id)}>
+                    Enable
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>Ban</DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        {defaultBanReasons.map((reason) => (
+                          <DropdownMenuItem
+                            key={reason}
+                            onClick={() => banUser(user.id, reason)}
+                          >
+                            {reason}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                )}
+              </DropdownMenuGroup>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="text-red-600">
+                  Danger Zone
+                </DropdownMenuLabel>
+                <DropdownMenuItem onSelect={() => setRoleDialogOpen(true)}>
+                  {user.role === "admin" ? "Set as User" : "Set as Admin"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setRemoveUserDialogOpen(true)}
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </>

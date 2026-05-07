@@ -44,6 +44,8 @@ export default async function AdminDashboard({
     redirect("/dashboard");
   }
 
+  const currentUserId = session.user.id;
+
   const { page } = await searchParams;
   const currentPage = Number(page) || 1;
   const pageSize = 2;
@@ -123,7 +125,7 @@ export default async function AdminDashboard({
                     {new Date(user.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    <AdminActions {...user} />
+                    <AdminActions {...user} currentUserId={currentUserId} />
                   </TableCell>
                 </TableRow>
               ))}
