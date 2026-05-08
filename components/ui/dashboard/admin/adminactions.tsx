@@ -31,7 +31,12 @@ import { defaultBanReasons } from "@/lib/defaults";
 import { UserRole } from "@/lib/definitions";
 import { useState } from "react";
 
-export default function AdminActions(user: User & { currentUserId: string }) {
+type AdminActionsProps = User & {
+  currentUserId: string;
+  trigger?: React.ReactNode;
+};
+
+export default function AdminActions({ trigger, ...user }: AdminActionsProps) {
   const router = useRouter();
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [removeUserDialogOpen, setRemoveUserDialogOpen] = useState(false);
@@ -66,6 +71,10 @@ export default function AdminActions(user: User & { currentUserId: string }) {
       userId: userId,
     });
     router.refresh();
+  }
+
+  async function editUser(userId: string) {
+    router.push(`/dashboard/admin/${userId}`);
   }
 
   return (
@@ -121,13 +130,17 @@ export default function AdminActions(user: User & { currentUserId: string }) {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="size-8">
-            <MoreHorizontalIcon />
-            <span className="sr-only">Open menu</span>
-          </Button>
+          {trigger ?? (
+            <Button variant="ghost" size="icon" className="size-8">
+              <MoreHorizontalIcon />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-36" align="end">
-          <DropdownMenuItem>Edit</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => editUser(user.id)}>
+            Edit
+          </DropdownMenuItem>
           {!isSelf && (
             <>
               <DropdownMenuSeparator />
