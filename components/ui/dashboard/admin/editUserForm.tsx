@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-type FormErrors = {
+type AdminEditUserFormErrors = {
   name?: string[];
   email?: string[];
 };
@@ -24,7 +24,7 @@ const EditUserFormSchema = z.object({
 export default function EditUserForm({ chosenUser }: { chosenUser: User }) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<AdminEditUserFormErrors>({});
   const [message, setMessage] = useState<string | undefined>();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -47,18 +47,36 @@ export default function EditUserForm({ chosenUser }: { chosenUser: User }) {
 
     const { name, email } = validated.data;
 
+    const existingEmail = await authClient.admin.listUsers({
+      query: {
+        searchValue: email,
+        searchField: "email",
+        limit: 1,
+      },
+    });
+
+    const duplicateEmail = existingEmail?.data?.users?.[0];
+    if (duplicateEmail && duplicateEmail.id !== chosenUser.id) {
+      setErrors({ email: ["An account with this email already exists."] });
+      setIsPending(false);
+      return;
+    }
+
     const { data, error } = await authClient.admin.updateUser({
       userId: chosenUser.id,
       data: { name, email },
     });
 
     if (error) {
-      if (error.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
-        setMessage("An account with this email already exists.");
-      } else {
-        setMessage("Failed to update user.");
-        console.log("edit user error:", error);
-      }
+      setMessage("Failed to update user.");
+      console.log("edit user error:", error);
+      toast.error("Failed to update user", {
+        position: "top-center",
+        description: "Please try again or contact support",
+        style: {
+          background: "darkred",
+        },
+      });
       setIsPending(false);
       return;
     }
@@ -92,6 +110,11 @@ export default function EditUserForm({ chosenUser }: { chosenUser: User }) {
               defaultValue={chosenUser.email}
               required
             />
+            {errors.email?.map((error) => (
+              <p className="text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
           </Field>
 
           <Field>
@@ -103,8 +126,8 @@ export default function EditUserForm({ chosenUser }: { chosenUser: User }) {
               >
                 Cancel
               </Button>
-              <Button className="flex-2/3" type="submit">
-                Update User
+              <Button className="flex-2/3" type="submit" disabled={isPending}>
+                {isPending ? "Updating..." : "Update User"}
               </Button>
             </div>
           </Field>

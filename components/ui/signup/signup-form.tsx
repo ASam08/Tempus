@@ -42,7 +42,7 @@ const SignupFormSchema = z
     path: ["confirmPassword"],
   });
 
-type FormErrors = {
+type SignInFormErrors = {
   name?: string[];
   email?: string[];
   password?: string[];
@@ -55,7 +55,7 @@ export function SignupForm({
 }: React.ComponentProps<"div">) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<SignInFormErrors>({});
   const [message, setMessage] = useState<string | undefined>();
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
