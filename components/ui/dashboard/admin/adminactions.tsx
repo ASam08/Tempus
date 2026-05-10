@@ -34,9 +34,14 @@ import { useState } from "react";
 type AdminActionsProps = User & {
   currentUserId: string;
   trigger?: React.ReactNode;
+  hideEdit?: boolean;
 };
 
-export default function AdminActions({ trigger, ...user }: AdminActionsProps) {
+export default function AdminActions({
+  trigger,
+  hideEdit = false,
+  ...user
+}: AdminActionsProps) {
   const router = useRouter();
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [removeUserDialogOpen, setRemoveUserDialogOpen] = useState(false);
@@ -74,7 +79,7 @@ export default function AdminActions({ trigger, ...user }: AdminActionsProps) {
   }
 
   async function editUser(userId: string) {
-    router.push(`/dashboard/admin/${userId}`);
+    router.push(`/dashboard/admin/edit/${userId}`);
   }
 
   return (
@@ -138,12 +143,14 @@ export default function AdminActions({ trigger, ...user }: AdminActionsProps) {
           )}
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-36" align="end">
-          <DropdownMenuItem onClick={() => editUser(user.id)}>
-            Edit
-          </DropdownMenuItem>
+          {hideEdit !== true && (
+            <DropdownMenuItem onClick={() => editUser(user.id)}>
+              Edit
+            </DropdownMenuItem>
+          )}
+          {hideEdit !== true && !isSelf && <DropdownMenuSeparator />}
           {!isSelf && (
             <>
-              <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuLabel>Account Status</DropdownMenuLabel>
                 {user.banned ? (

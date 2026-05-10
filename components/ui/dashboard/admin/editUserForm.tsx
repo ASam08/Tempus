@@ -98,6 +98,7 @@ export default function EditUserForm({ chosenUser }: { chosenUser: User }) {
             <div className="flex flex-row gap-2 pt-8">
               <Button
                 className="flex-1/3"
+                type="button"
                 onClick={() => router.push("/dashboard/admin")}
               >
                 Cancel

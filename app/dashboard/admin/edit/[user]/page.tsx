@@ -64,6 +64,7 @@ export default async function AdminUserPage({
                 More actions
               </Button>
             }
+            hideEdit={true}
           />
         </div>
       </div>
