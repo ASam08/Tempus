@@ -200,12 +200,11 @@ describe("AdminDashboard", () => {
       delete process.env.AUTH_ON;
     });
 
-    it("renders the admin dashboard heading and welcome message", async () => {
+    it("renders the admin dashboard heading", async () => {
       makeListUsers([baseUser], 1);
       const el = await AdminDashboard({ searchParams: makeSearchParams() });
       render(el);
-      expect(screen.getByText("Admin Dashboard")).toBeInTheDocument();
-      expect(screen.getByText(/Welcome, Admin User/)).toBeInTheDocument();
+      expect(screen.getByText("Admin - User Management")).toBeInTheDocument();
     });
 
     it("renders user table with correct columns", async () => {
@@ -326,16 +325,16 @@ describe("AdminDashboard", () => {
 
     it("renders page info and pagination when totalPages > 1", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
-      makeListUsers([baseUser], 4);
+      makeListUsers([baseUser], 11);
       const el = await AdminDashboard({ searchParams: makeSearchParams("1") });
       render(el);
       expect(screen.getByText(/Page 1 of 2/)).toBeInTheDocument();
-      expect(screen.getByText(/4 users total/)).toBeInTheDocument();
+      expect(screen.getByText(/11 users total/)).toBeInTheDocument();
     });
 
     it("does not render Previous link on first page", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
-      makeListUsers([baseUser], 4);
+      makeListUsers([baseUser], 11);
       const el = await AdminDashboard({ searchParams: makeSearchParams("1") });
       render(el);
       expect(screen.queryByText("Previous")).not.toBeInTheDocument();
@@ -343,7 +342,7 @@ describe("AdminDashboard", () => {
 
     it("renders Next link when currentPage < totalPages", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
-      makeListUsers([baseUser], 4);
+      makeListUsers([baseUser], 11);
       const el = await AdminDashboard({ searchParams: makeSearchParams("1") });
       render(el);
       const next = screen.getByText("Next");
@@ -353,7 +352,7 @@ describe("AdminDashboard", () => {
 
     it("renders Previous link when currentPage > 1", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
-      makeListUsers([baseUser], 4);
+      makeListUsers([baseUser], 11);
       const el = await AdminDashboard({ searchParams: makeSearchParams("2") });
       render(el);
       const prev = screen.getByText("Previous");
@@ -363,7 +362,7 @@ describe("AdminDashboard", () => {
 
     it("does not render Next link on last page", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
-      makeListUsers([baseUser], 4);
+      makeListUsers([baseUser], 11);
       const el = await AdminDashboard({ searchParams: makeSearchParams("2") });
       render(el);
       expect(screen.queryByText("Next")).not.toBeInTheDocument();
@@ -371,7 +370,7 @@ describe("AdminDashboard", () => {
 
     it("renders page number links", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
-      makeListUsers([baseUser], 4);
+      makeListUsers([baseUser], 11);
       const el = await AdminDashboard({ searchParams: makeSearchParams("1") });
       render(el);
       const pageOneLink = screen.getByRole("link", { name: "1" });
@@ -384,7 +383,7 @@ describe("AdminDashboard", () => {
 
     it("renders ellipsis items from getPaginationItems", async () => {
       mockGetPaginationItems.mockReturnValue([1, "ellipsis", 5]);
-      makeListUsers([baseUser], 10);
+      makeListUsers([baseUser], 50);
       const el = await AdminDashboard({ searchParams: makeSearchParams("1") });
       render(el);
       expect(screen.getByText("...")).toBeInTheDocument();
@@ -392,7 +391,7 @@ describe("AdminDashboard", () => {
 
     it("defaults to page 1 when no page param is provided", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
-      makeListUsers([baseUser], 4);
+      makeListUsers([baseUser], 11);
       const el = await AdminDashboard({ searchParams: makeSearchParams() });
       render(el);
       expect(screen.getByText(/Page 1 of 2/)).toBeInTheDocument();
@@ -400,18 +399,18 @@ describe("AdminDashboard", () => {
 
     it("passes correct offset to listUsers based on page", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
-      makeListUsers([baseUser], 4);
+      makeListUsers([baseUser], 11);
       await AdminDashboard({ searchParams: makeSearchParams("2") });
       expect(mockListUsers).toHaveBeenCalledWith(
         expect.objectContaining({
-          query: expect.objectContaining({ offset: 2 }),
+          query: expect.objectContaining({ offset: 10 }),
         }),
       );
     });
 
     it("renders both Previous and Next on a middle page", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2, 3]);
-      makeListUsers([baseUser], 6);
+      makeListUsers([baseUser], 21);
       const el = await AdminDashboard({ searchParams: makeSearchParams("2") });
       render(el);
       expect(screen.getByText("Previous")).toBeInTheDocument();

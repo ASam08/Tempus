@@ -48,7 +48,7 @@ export default async function AdminDashboard({
 
   const { page } = await searchParams;
   const currentPage = Number(page) || 1;
-  const pageSize = 2;
+  const pageSize = 10;
 
   const users = await auth.api.listUsers({
     query: {
@@ -64,22 +64,17 @@ export default async function AdminDashboard({
 
   return (
     <div className="flex h-full max-w-screen flex-col px-3 py-4 md:px-2">
-      <h1 className="flex flex-wrap text-2xl font-bold text-gray-800 md:mb-4 dark:text-gray-200">
-        Admin Dashboard
+      <h1 className="mb-4 flex flex-wrap text-xl font-bold text-gray-800 md:text-2xl dark:text-gray-200">
+        Admin - User Management
       </h1>
-      <p className="mb-6 text-gray-600 dark:text-gray-400">
-        Welcome, {session.user.name}. You can manage users here.
-      </p>
-
       <div>
-        <h2 className="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">
-          User Management
-        </h2>
-        <div className="overflow-x-auto rounded-xl border border-stone-300 dark:border-gray-700">
+        <div className="overflow-auto rounded-xl border border-stone-300 dark:border-gray-700">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="px-4 py-3">Name</TableHead>
+                <TableHead className="bg-background sticky left-0 z-10 px-4 py-3">
+                  Name
+                </TableHead>
                 <TableHead className="px-4 py-3">Email</TableHead>
                 <TableHead className="px-4 py-3">Role</TableHead>
                 <TableHead className="px-4 py-3">Status</TableHead>
@@ -94,7 +89,9 @@ export default async function AdminDashboard({
                   key={user.id}
                   className="border-t border-stone-200 bg-white dark:border-gray-700 dark:bg-gray-900"
                 >
-                  <TableCell className="px-4 py-3">{user.name}</TableCell>
+                  <TableCell className="sticky left-0 z-10 bg-white px-4 py-3 dark:bg-gray-900">
+                    {user.name}
+                  </TableCell>
                   <TableCell className="px-4 py-3">{user.email}</TableCell>
                   <TableCell className="px-4 py-3 capitalize">
                     {user.role === "admin" ? (

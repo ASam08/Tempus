@@ -251,6 +251,11 @@ jest.mock("@/components/ui/dropdown-menu", () => {
   };
 });
 
+const mockPush = jest.fn();
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: mockRefresh, push: mockPush }),
+}));
+
 const mockAuthClient = authClient as unknown as {
   admin: {
     unbanUser: jest.Mock;
@@ -483,5 +488,56 @@ describe("AdminActions", () => {
     await userEvent.click(screen.getByRole("menuitem", { name: /delete/i }));
     const deleteBtn = screen.getByRole("button", { name: /delete user/i });
     expect(deleteBtn).toHaveAttribute("data-variant", "destructive");
+  });
+
+  it("navigates to edit page when Edit is clicked", async () => {
+    render(<AdminActions {...baseUser} />);
+    await openDropdown();
+    await userEvent.click(screen.getByRole("menuitem", { name: /edit/i }));
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/admin/edit/user-1");
+  });
+
+  it("hides Edit item when hideEdit is true", async () => {
+    render(<AdminActions {...baseUser} hideEdit={true} />);
+    await openDropdown();
+    expect(
+      screen.queryByRole("menuitem", { name: /edit/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides separator when hideEdit is true", async () => {
+    render(<AdminActions {...baseUser} hideEdit={true} />);
+    await openDropdown();
+    expect(document.querySelectorAll("hr")).toHaveLength(1);
+  });
+
+  it("shows separator between Edit and account status when hideEdit is false", async () => {
+    render(<AdminActions {...baseUser} />);
+    await openDropdown();
+    expect(document.querySelectorAll("hr")).toHaveLength(2);
+  });
+
+  it("renders a custom trigger when provided", () => {
+    render(
+      <AdminActions
+        {...baseUser}
+        trigger={<button data-testid="custom-trigger">Custom</button>}
+      />,
+    );
+    expect(screen.getByTestId("custom-trigger")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /open menu/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the dropdown when a custom trigger is clicked", async () => {
+    render(
+      <AdminActions
+        {...baseUser}
+        trigger={<button data-testid="custom-trigger">Custom</button>}
+      />,
+    );
+    await userEvent.click(screen.getByTestId("custom-trigger"));
+    expect(screen.getByTestId("dropdown-content")).toBeInTheDocument();
   });
 });

@@ -51,10 +51,7 @@ export default async function AdminUserPage({
           Banned for: {chosenUser.banReason || "No reason provided"}
         </span>
       )}
-      <div className="flex flex-row gap-4">
-        <div className="w-full max-w-sm">
-          <EditUserForm chosenUser={chosenUser} />
-        </div>
+      <div className="flex flex-col gap-4 md:flex-row-reverse">
         <div className="pt-7.5">
           <AdminActions
             {...chosenUser}
@@ -66,6 +63,9 @@ export default async function AdminUserPage({
             }
             hideEdit={true}
           />
+        </div>
+        <div className="w-full max-w-sm">
+          <EditUserForm chosenUser={chosenUser} />
         </div>
       </div>
     </div>
