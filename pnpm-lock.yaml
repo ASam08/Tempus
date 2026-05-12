@@ -10117,8 +10117,6 @@ snapshots:
 
   jose@6.2.3: {}
 
-  jose@6.2.3: {}
-
   js-tokens@4.0.0: {}
 
   js-yaml@3.14.2:
@@ -10382,8 +10380,6 @@ snapshots:
       - '@types/node'
 
   mute-stream@3.0.0: {}
-
-  nanoid@3.3.12: {}
 
   nanoid@3.3.12: {}
 
