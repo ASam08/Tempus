@@ -32,16 +32,24 @@ export const auth = betterAuth({
     user: {
       create: {
         async before(user) {
-          if (process.env.APPROVE_SIGNUPS?.toLowerCase() === "true") {
-            return {
-              data: {
-                ...user,
-                banned: true,
-                banReason: "Pending admin approval",
-              },
-            };
-          }
-          // No modification, return undefined to proceed normally
+          const existingUsers = await sqlConn
+            .select({ id: schema.users.id })
+            .from(schema.users)
+            .limit(1);
+          const isFirstUser = existingUsers.length === 0;
+
+          const banned =
+            !isFirstUser &&
+            process.env.APPROVE_SIGNUPS?.toLowerCase() === "true";
+
+          return {
+            data: {
+              ...user,
+              role: isFirstUser ? "admin" : "user",
+              banned: banned,
+              banReason: banned ? "Pending admin approval" : null,
+            },
+          };
         },
       },
     },

@@ -110,3 +110,5 @@ export type SignupFormState =
       message?: string;
     }
   | undefined;
+
+export type UserRole = "user" | "admin";
