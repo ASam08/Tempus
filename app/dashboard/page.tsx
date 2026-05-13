@@ -5,6 +5,9 @@ import NextCardClient from "../ui/dashboard/nextcardclient";
 import NextBreakCardClient from "../ui/dashboard/nextbreakcardclient";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { LucideUser } from "lucide-react";
 
 export default async function DashboardPage() {
   const authOn = process.env.AUTH_ON?.toLowerCase() === "true";
@@ -14,6 +17,12 @@ export default async function DashboardPage() {
     session = await auth.api.getSession({
       headers: await headers(),
     });
+  }
+
+  let admin: boolean = false;
+
+  if (authOn && session?.user.role === "admin") {
+    admin = true;
   }
 
   return (
@@ -40,6 +49,15 @@ export default async function DashboardPage() {
         <NextBreakCardClient />
         <NextCardClient />
       </div>
+      {admin && (
+        <div className="my-4 flex">
+          <Button className="flex">
+            <Link className="flex" href="/dashboard/admin">
+              <LucideUser className="mr-2" /> Admin
+            </Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

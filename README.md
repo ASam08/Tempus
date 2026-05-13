@@ -43,6 +43,12 @@ A simple, self-hostable weekly timetable app. Whether you're a student keeping t
 
 > Set your timetable's start & end time and days of the week so the grid fits your actual week.
 
+### Admin User Management
+
+![Admin](./public/screenshots/admin.png)
+
+> Manage users access under the admin user management page.
+
 ---
 
 ## Tech Stack
