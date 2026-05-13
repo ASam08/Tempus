@@ -12,11 +12,12 @@ A simple, self-hostable weekly timetable app. Whether you're a student keeping t
 - **Customisable view** - set your own timetable start and end time, and days of the week in Settings so the grid only shows the hours and days that matter to you
 - **Dark mode** - easy on the eyes, day or night
 - **Per-user accounts** - each user has their own private timetable
+- **Admin Management** - for managing user access
 - **Fully self-hostable** - runs in Docker with a PostgreSQL database
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 ### Dashboard
 
@@ -113,8 +114,6 @@ Open `compose.yaml` and adjust the environment variables. See [the enviornment v
 
 Please remember to change the password from "Tempus".
 
-_<a name="auto_approve_note"></a>Note - if you disable auto-approving new user sign-ups, you will currently have to approve users in the database itself manually. Change the "banned" field to true in the users table for the relevant user. This will be addressed in a future release._
-
 **3. Start the app**
 
 ```bash
@@ -133,12 +132,12 @@ Visit [http://localhost:3000](http://localhost:3000) and create your account.
 
 The following environment variables are available:
 
-| Variable | Required? | Default | Notes |
-| -------- | --------- | ------- | ----- |
-| `AUTH_ON` | No | `false` | Set to `true` to enable authentication and multi-user support |
-| `BETTER_AUTH_SECRET` | Yes | - | Run `openssl rand -base64 32` to generate |
-| `BETTER_AUTH_URL` | Yes | - | Set to your app's base URL, e.g. `http://localhost:3000` |
-| `APPROVE_SIGNUPS` | No | `false` | Set to `true` to require admin approval before new users can sign in. To approve a user, set `banned = false` and `ban_reason = NULL` in the `users` table for the relevant user. A proper admin UI for this is planned for a future release. |
+| Variable             | Required? | Default | Notes                                                                |
+| -------------------- | --------- | ------- | -------------------------------------------------------------------- |
+| `AUTH_ON`            | No        | `false` | Set to `true` to enable authentication and multi-user support        |
+| `BETTER_AUTH_SECRET` | Yes       | -       | Run `openssl rand -base64 32` to generate                            |
+| `BETTER_AUTH_URL`    | Yes       | -       | Set to your app's base URL, e.g. `http://localhost:3000`             |
+| `APPROVE_SIGNUPS`    | No        | `false` | Set to `true` to require admin approval before new users can sign in |
 
 ---
 
