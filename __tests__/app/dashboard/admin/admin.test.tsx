@@ -8,6 +8,15 @@ const mockRedirect = jest.fn((url: string): never => {
 jest.mock("next/navigation", () => ({
   __esModule: true,
   redirect: (url: string) => mockRedirect(url),
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+  })),
+  useSearchParams: jest.fn(() => ({
+    get: jest.fn(() => null),
+    toString: jest.fn(() => ""),
+  })),
 }));
 
 const mockHeaders = jest.fn().mockResolvedValue({});
@@ -94,6 +103,29 @@ jest.mock("@/components/ui/pagination", () => ({
   PaginationEllipsis: () => <span>...</span>,
 }));
 
+jest.mock("@/components/ui/dashboard/admin/sortableheader", () => ({
+  __esModule: true,
+  default: ({
+    field,
+    label,
+    currentSortBy,
+    currentSortDirection,
+  }: {
+    field: string;
+    label: string;
+    currentSortBy: string;
+    currentSortDirection: string;
+  }) => (
+    <button
+      data-testid={`sort-${field}`}
+      data-active={currentSortBy === field}
+      data-direction={currentSortDirection}
+    >
+      {label}
+    </button>
+  ),
+}));
+
 import AdminDashboard from "@/app/dashboard/admin/page";
 
 const adminSession = {
@@ -105,8 +137,9 @@ const adminSession = {
   },
 };
 
-const makeSearchParams = (page?: string) =>
-  Promise.resolve(page ? { page } : {});
+const makeSearchParams = (
+  params: { page?: string; sortBy?: string; sortDirection?: string } = {},
+) => Promise.resolve(params);
 
 const baseUser = {
   id: "user-1",
@@ -311,6 +344,108 @@ describe("AdminDashboard", () => {
       expect(screen.queryByText("Previous")).not.toBeInTheDocument();
       expect(screen.queryByText("Next")).not.toBeInTheDocument();
     });
+
+    it("passes default sort params to listUsers when none provided", async () => {
+      makeListUsers([baseUser], 1);
+      await AdminDashboard({ searchParams: makeSearchParams() });
+      expect(mockListUsers).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: expect.objectContaining({
+            sortBy: "name",
+            sortDirection: "asc",
+          }),
+        }),
+      );
+    });
+
+    it("passes valid sortBy param to listUsers", async () => {
+      makeListUsers([baseUser], 1);
+      await AdminDashboard({
+        searchParams: makeSearchParams({ sortBy: "email" }),
+      });
+      expect(mockListUsers).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: expect.objectContaining({ sortBy: "email" }),
+        }),
+      );
+    });
+
+    it("falls back to name sort for invalid sortBy param", async () => {
+      makeListUsers([baseUser], 1);
+      await AdminDashboard({
+        searchParams: makeSearchParams({ sortBy: "invalid" }),
+      });
+      expect(mockListUsers).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: expect.objectContaining({ sortBy: "name" }),
+        }),
+      );
+    });
+
+    it("passes desc sortDirection to listUsers", async () => {
+      makeListUsers([baseUser], 1);
+      await AdminDashboard({
+        searchParams: makeSearchParams({
+          sortBy: "name",
+          sortDirection: "desc",
+        }),
+      });
+      expect(mockListUsers).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: expect.objectContaining({ sortDirection: "desc" }),
+        }),
+      );
+    });
+
+    it("falls back to asc for invalid sortDirection param", async () => {
+      makeListUsers([baseUser], 1);
+      await AdminDashboard({
+        searchParams: makeSearchParams({ sortDirection: "sideways" }),
+      });
+      expect(mockListUsers).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: expect.objectContaining({ sortDirection: "asc" }),
+        }),
+      );
+    });
+
+    it("renders SortableHeader for name, email, role, and createdAt columns", async () => {
+      makeListUsers([baseUser], 1);
+      const el = await AdminDashboard({ searchParams: makeSearchParams() });
+      render(el);
+      expect(screen.getByTestId("sort-name")).toBeInTheDocument();
+      expect(screen.getByTestId("sort-email")).toBeInTheDocument();
+      expect(screen.getByTestId("sort-role")).toBeInTheDocument();
+      expect(screen.getByTestId("sort-createdAt")).toBeInTheDocument();
+    });
+
+    it("marks the active sort field correctly", async () => {
+      makeListUsers([baseUser], 1);
+      const el = await AdminDashboard({
+        searchParams: makeSearchParams({ sortBy: "email" }),
+      });
+      render(el);
+      expect(screen.getByTestId("sort-email")).toHaveAttribute(
+        "data-active",
+        "true",
+      );
+      expect(screen.getByTestId("sort-name")).toHaveAttribute(
+        "data-active",
+        "false",
+      );
+    });
+
+    it("passes sortDirection to SortableHeader", async () => {
+      makeListUsers([baseUser], 1);
+      const el = await AdminDashboard({
+        searchParams: makeSearchParams({ sortDirection: "desc" }),
+      });
+      render(el);
+      expect(screen.getByTestId("sort-name")).toHaveAttribute(
+        "data-direction",
+        "desc",
+      );
+    });
   });
 
   describe("pagination", () => {
@@ -326,7 +461,9 @@ describe("AdminDashboard", () => {
     it("renders page info and pagination when totalPages > 1", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
       makeListUsers([baseUser], 11);
-      const el = await AdminDashboard({ searchParams: makeSearchParams("1") });
+      const el = await AdminDashboard({
+        searchParams: makeSearchParams({ page: "1" }),
+      });
       render(el);
       expect(screen.getByText(/Page 1 of 2/)).toBeInTheDocument();
       expect(screen.getByText(/11 users total/)).toBeInTheDocument();
@@ -335,7 +472,9 @@ describe("AdminDashboard", () => {
     it("does not render Previous link on first page", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
       makeListUsers([baseUser], 11);
-      const el = await AdminDashboard({ searchParams: makeSearchParams("1") });
+      const el = await AdminDashboard({
+        searchParams: makeSearchParams({ page: "1" }),
+      });
       render(el);
       expect(screen.queryByText("Previous")).not.toBeInTheDocument();
     });
@@ -343,7 +482,9 @@ describe("AdminDashboard", () => {
     it("renders Next link when currentPage < totalPages", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
       makeListUsers([baseUser], 11);
-      const el = await AdminDashboard({ searchParams: makeSearchParams("1") });
+      const el = await AdminDashboard({
+        searchParams: makeSearchParams({ page: "1" }),
+      });
       render(el);
       const next = screen.getByText("Next");
       expect(next).toBeInTheDocument();
@@ -353,7 +494,9 @@ describe("AdminDashboard", () => {
     it("renders Previous link when currentPage > 1", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
       makeListUsers([baseUser], 11);
-      const el = await AdminDashboard({ searchParams: makeSearchParams("2") });
+      const el = await AdminDashboard({
+        searchParams: makeSearchParams({ page: "2" }),
+      });
       render(el);
       const prev = screen.getByText("Previous");
       expect(prev).toBeInTheDocument();
@@ -363,7 +506,9 @@ describe("AdminDashboard", () => {
     it("does not render Next link on last page", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
       makeListUsers([baseUser], 11);
-      const el = await AdminDashboard({ searchParams: makeSearchParams("2") });
+      const el = await AdminDashboard({
+        searchParams: makeSearchParams({ page: "2" }),
+      });
       render(el);
       expect(screen.queryByText("Next")).not.toBeInTheDocument();
     });
@@ -371,7 +516,9 @@ describe("AdminDashboard", () => {
     it("renders page number links", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
       makeListUsers([baseUser], 11);
-      const el = await AdminDashboard({ searchParams: makeSearchParams("1") });
+      const el = await AdminDashboard({
+        searchParams: makeSearchParams({ page: "1" }),
+      });
       render(el);
       const pageOneLink = screen.getByRole("link", { name: "1" });
       expect(pageOneLink).toHaveAttribute("href", "?page=1");
@@ -384,7 +531,9 @@ describe("AdminDashboard", () => {
     it("renders ellipsis items from getPaginationItems", async () => {
       mockGetPaginationItems.mockReturnValue([1, "ellipsis", 5]);
       makeListUsers([baseUser], 50);
-      const el = await AdminDashboard({ searchParams: makeSearchParams("1") });
+      const el = await AdminDashboard({
+        searchParams: makeSearchParams({ page: "1" }),
+      });
       render(el);
       expect(screen.getByText("...")).toBeInTheDocument();
     });
@@ -400,7 +549,7 @@ describe("AdminDashboard", () => {
     it("passes correct offset to listUsers based on page", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2]);
       makeListUsers([baseUser], 11);
-      await AdminDashboard({ searchParams: makeSearchParams("2") });
+      await AdminDashboard({ searchParams: makeSearchParams({ page: "2" }) });
       expect(mockListUsers).toHaveBeenCalledWith(
         expect.objectContaining({
           query: expect.objectContaining({ offset: 10 }),
@@ -411,7 +560,9 @@ describe("AdminDashboard", () => {
     it("renders both Previous and Next on a middle page", async () => {
       mockGetPaginationItems.mockReturnValue([1, 2, 3]);
       makeListUsers([baseUser], 21);
-      const el = await AdminDashboard({ searchParams: makeSearchParams("2") });
+      const el = await AdminDashboard({
+        searchParams: makeSearchParams({ page: "2" }),
+      });
       render(el);
       expect(screen.getByText("Previous")).toBeInTheDocument();
       expect(screen.getByText("Next")).toBeInTheDocument();

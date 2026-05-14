@@ -20,11 +20,16 @@ import {
 } from "@/components/ui/pagination";
 import { getPaginationItems } from "@/lib/utils";
 import AdminActions from "@/components/ui/dashboard/admin/adminactions";
+import SortableHeader from "@/components/ui/dashboard/admin/sortableheader";
 
 export default async function AdminDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    sortBy?: string;
+    sortDirection?: string;
+  }>;
 }) {
   const authOn = process.env.AUTH_ON?.toLowerCase() === "true";
 
@@ -46,15 +51,26 @@ export default async function AdminDashboard({
 
   const currentUserId = session.user.id;
 
-  const { page } = await searchParams;
+  const { page, sortBy, sortDirection } = await searchParams;
   const currentPage = Number(page) || 1;
   const pageSize = 10;
+
+  const validSortFields = ["name", "email", "createdAt", "role"] as const;
+  type SortField = (typeof validSortFields)[number];
+
+  const resolvedSortBy: SortField = validSortFields.includes(
+    sortBy as SortField,
+  )
+    ? (sortBy as SortField)
+    : "name";
+  const resolvedSortDirection = sortDirection === "desc" ? "desc" : "asc";
 
   const users = await auth.api.listUsers({
     query: {
       limit: pageSize,
       offset: (currentPage - 1) * pageSize,
-      sortBy: "name",
+      sortBy: resolvedSortBy,
+      sortDirection: resolvedSortDirection,
     },
     headers: await headers(),
   });
@@ -72,14 +88,40 @@ export default async function AdminDashboard({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="bg-background sticky left-0 z-10 px-4 py-3">
-                  Name
+                <TableHead className="sticky left-0 z-10 bg-stone-50 px-4 py-3 dark:bg-gray-950">
+                  <SortableHeader
+                    field="name"
+                    label="Name"
+                    currentSortBy={resolvedSortBy}
+                    currentSortDirection={resolvedSortDirection}
+                  />
                 </TableHead>
-                <TableHead className="px-4 py-3">Email</TableHead>
-                <TableHead className="px-4 py-3">Role</TableHead>
+                <TableHead className="px-4 py-3">
+                  <SortableHeader
+                    field="email"
+                    label="Email"
+                    currentSortBy={resolvedSortBy}
+                    currentSortDirection={resolvedSortDirection}
+                  />
+                </TableHead>
+                <TableHead className="px-4 py-3">
+                  <SortableHeader
+                    field="role"
+                    label="Role"
+                    currentSortBy={resolvedSortBy}
+                    currentSortDirection={resolvedSortDirection}
+                  />
+                </TableHead>
                 <TableHead className="px-4 py-3">Status</TableHead>
                 <TableHead className="px-4 py-3">Status Reason</TableHead>
-                <TableHead className="px-4 py-3">Created</TableHead>
+                <TableHead className="px-4 py-3">
+                  <SortableHeader
+                    field="createdAt"
+                    label="Created"
+                    currentSortBy={resolvedSortBy}
+                    currentSortDirection={resolvedSortDirection}
+                  />
+                </TableHead>
                 <TableHead className="px-4 py-3">Actions</TableHead>
               </TableRow>
             </TableHeader>

@@ -112,3 +112,5 @@ export type SignupFormState =
   | undefined;
 
 export type UserRole = "user" | "admin";
+
+export type SortDirection = "asc" | "desc";
