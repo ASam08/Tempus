@@ -126,6 +126,30 @@ jest.mock("@/components/ui/dashboard/admin/sortableheader", () => ({
   ),
 }));
 
+jest.mock("@/components/ui/dashboard/admin/searchfilters", () => ({
+  __esModule: true,
+  default: ({
+    label,
+    field,
+    value,
+    operator,
+    currentFilter,
+  }: {
+    label: string;
+    field: string;
+    value: string;
+    operator: string;
+    currentFilter: string;
+  }) => (
+    <button
+      data-testid={`filter-${field}`}
+      data-active={currentFilter === `${field}--${value}--${operator}`}
+    >
+      {label}
+    </button>
+  ),
+}));
+
 import AdminDashboard from "@/app/dashboard/admin/page";
 
 const adminSession = {
@@ -138,7 +162,14 @@ const adminSession = {
 };
 
 const makeSearchParams = (
-  params: { page?: string; sortBy?: string; sortDirection?: string } = {},
+  params: {
+    page?: string;
+    sortBy?: string;
+    sortDirection?: string;
+    filterField?: string;
+    filterValue?: string;
+    filterOperator?: string;
+  } = {},
 ) => Promise.resolve(params);
 
 const baseUser = {
