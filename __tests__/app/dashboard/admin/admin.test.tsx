@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import React from "react";
 
 const mockRedirect = jest.fn((url: string): never => {
@@ -43,11 +43,13 @@ jest.mock("@/lib/utils", () => ({
   getPaginationItems: (...args: unknown[]) => mockGetPaginationItems(...args),
 }));
 
+const capturedAdminActionsProps: Record<string, unknown>[] = [];
 jest.mock("@/components/ui/dashboard/admin/adminactions", () => ({
   __esModule: true,
-  default: ({ id }: { id: string }) => (
-    <div data-testid={`admin-actions-${id}`} />
-  ),
+  default: (props: Record<string, unknown>) => {
+    capturedAdminActionsProps.push(props);
+    return <div data-testid={`admin-actions-${props.id}`} />;
+  },
 }));
 
 jest.mock("@/components/ui/table", () => ({
@@ -142,8 +144,9 @@ jest.mock("@/components/ui/dashboard/admin/searchfilters", () => ({
     currentFilter: string;
   }) => (
     <button
-      data-testid={`filter-${field}`}
-      data-active={currentFilter === `${field}--${value}--${operator}`}
+      data-testid={`filter-${field}-${value}`}
+      data-filteractive={currentFilter === `${field}--${value}--${operator}`}
+      data-value={value}
     >
       {label}
     </button>
@@ -187,6 +190,7 @@ const makeListUsers = (users: object[], total: number) =>
 
 beforeEach(() => {
   jest.resetAllMocks();
+  capturedAdminActionsProps.length = 0;
   mockRedirect.mockImplementation((url: string): never => {
     throw new Error(`NEXT_REDIRECT:${url}`);
   });
@@ -215,8 +219,6 @@ describe("AdminDashboard", () => {
     it("redirects to /dashboard when AUTH_ON is TRUE (case check)", async () => {
       process.env.AUTH_ON = "TRUE";
       mockGetSession.mockResolvedValue(null);
-      // AUTH_ON check is case-insensitive lowercased, "TRUE".toLowerCase() === "true" — passes
-      // so this actually proceeds past AUTH_ON; redirect happens on no session
       await expect(
         AdminDashboard({ searchParams: makeSearchParams() }),
       ).rejects.toThrow("NEXT_REDIRECT:/login?callbackUrl=/dashboard/admin");
@@ -288,7 +290,7 @@ describe("AdminDashboard", () => {
       makeListUsers([baseUser], 1);
       const el = await AdminDashboard({ searchParams: makeSearchParams() });
       render(el);
-      expect(screen.getByTestId("admin-actions-user-1")).toBeInTheDocument();
+      expect(screen.getByText("Alice")).toBeInTheDocument();
       expect(screen.getByText("alice@example.com")).toBeInTheDocument();
       expect(screen.getByText("Active")).toBeInTheDocument();
       expect(screen.getByText("-")).toBeInTheDocument();
@@ -318,8 +320,9 @@ describe("AdminDashboard", () => {
       makeListUsers([bannedUser], 1);
       const el = await AdminDashboard({ searchParams: makeSearchParams() });
       render(el);
-      expect(screen.getByText("Banned")).toBeInTheDocument();
-      expect(screen.getByText("Violation of ToS")).toBeInTheDocument();
+      const row = screen.getByText("Violation of ToS").closest("tr")!;
+      expect(within(row).getByText("Banned")).toBeInTheDocument();
+      expect(within(row).getByText("Violation of ToS")).toBeInTheDocument();
     });
 
     it("renders '-' when banReason is null", async () => {
@@ -342,6 +345,13 @@ describe("AdminDashboard", () => {
       const el = await AdminDashboard({ searchParams: makeSearchParams() });
       render(el);
       expect(screen.getByTestId("admin-actions-user-1")).toBeInTheDocument();
+    });
+
+    it("passes currentUserId to AdminActions", async () => {
+      makeListUsers([baseUser], 1);
+      const el = await AdminDashboard({ searchParams: makeSearchParams() });
+      render(el);
+      expect(capturedAdminActionsProps[0].currentUserId).toBe("admin-1");
     });
 
     it("renders multiple user rows", async () => {
@@ -440,6 +450,52 @@ describe("AdminDashboard", () => {
       );
     });
 
+    it("passes limit 10 to listUsers", async () => {
+      makeListUsers([baseUser], 1);
+      await AdminDashboard({ searchParams: makeSearchParams() });
+      expect(mockListUsers).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: expect.objectContaining({ limit: 10 }),
+        }),
+      );
+    });
+
+    it("passes filterField and filterValue to listUsers", async () => {
+      makeListUsers([baseUser], 1);
+      await AdminDashboard({
+        searchParams: makeSearchParams({
+          filterField: "role",
+          filterValue: "admin",
+          filterOperator: "eq",
+        }),
+      });
+      expect(mockListUsers).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: expect.objectContaining({
+            filterField: "role",
+            filterValue: "admin",
+            filterOperator: "eq",
+          }),
+        }),
+      );
+    });
+
+    it("passes undefined filterOperator to listUsers for invalid operator", async () => {
+      makeListUsers([baseUser], 1);
+      await AdminDashboard({
+        searchParams: makeSearchParams({
+          filterField: "role",
+          filterValue: "admin",
+          filterOperator: "invalid",
+        }),
+      });
+      expect(mockListUsers).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: expect.objectContaining({ filterOperator: undefined }),
+        }),
+      );
+    });
+
     it("renders SortableHeader for name, email, role, and createdAt columns", async () => {
       makeListUsers([baseUser], 1);
       const el = await AdminDashboard({ searchParams: makeSearchParams() });
@@ -476,6 +532,66 @@ describe("AdminDashboard", () => {
         "data-direction",
         "desc",
       );
+    });
+
+    it("renders all four SearchFilters", async () => {
+      makeListUsers([baseUser], 1);
+      const el = await AdminDashboard({ searchParams: makeSearchParams() });
+      render(el);
+      expect(screen.getByText("Admins Only")).toBeInTheDocument();
+      expect(screen.getByText("Users Only")).toBeInTheDocument();
+      expect(screen.getByText("Banned")).toBeInTheDocument();
+      expect(screen.getByText("New Users (Last 7 days)")).toBeInTheDocument();
+    });
+
+    it("passes none--none--none as currentFilter when no filter params provided", async () => {
+      makeListUsers([baseUser], 1);
+      const el = await AdminDashboard({ searchParams: makeSearchParams() });
+      render(el);
+      expect(screen.getByTestId("filter-role-admin")).toHaveAttribute(
+        "data-filteractive",
+        "false",
+      );
+      expect(screen.getByTestId("filter-role-user")).toHaveAttribute(
+        "data-filteractive",
+        "false",
+      );
+    });
+
+    it("marks the matching SearchFilter as active when filter params match", async () => {
+      makeListUsers([baseUser], 1);
+      const el = await AdminDashboard({
+        searchParams: makeSearchParams({
+          filterField: "role",
+          filterValue: "admin",
+          filterOperator: "eq",
+        }),
+      });
+      render(el);
+      expect(screen.getByTestId("filter-role-admin")).toHaveAttribute(
+        "data-filteractive",
+        "true",
+      );
+      expect(screen.getByTestId("filter-role-user")).toHaveAttribute(
+        "data-filteractive",
+        "false",
+      );
+    });
+
+    it("passes correct sevenDaysAgo date value to the createdAt SearchFilter", async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date("2024-03-15T00:00:00Z").getTime());
+      makeListUsers([baseUser], 1);
+      const el = await AdminDashboard({ searchParams: makeSearchParams() });
+      render(el);
+      const expected = new Date("2024-03-08T00:00:00Z").toLocaleDateString(
+        "en-NZ",
+        { year: "numeric", month: "2-digit", day: "2-digit" },
+      );
+      expect(
+        screen.getByTestId("filter-createdAt-" + expected),
+      ).toHaveAttribute("data-value", expected);
+      jest.useRealTimers();
     });
   });
 
