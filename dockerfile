@@ -3,7 +3,7 @@ FROM node:22.14.0-alpine AS base
 WORKDIR /app
 
 # Enable pnpm via corepack
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
 # ---- Dependencies ----
 FROM base AS deps
