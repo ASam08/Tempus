@@ -61,7 +61,6 @@ export function TimetableGrid({
   const hoursCovered = endHour - startHour;
   const virtualRows = (hoursCovered * 60) / minSlotMinutes;
   const columns: number = dow.length - 1;
-  console.log("Columns: ", columns);
 
   const handleDeleteBlock = async (id: string) => {
     if (!confirm("Delete this block?")) return;

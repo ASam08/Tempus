@@ -67,12 +67,15 @@ const mockedAuth = require("@/lib/auth").auth.api.getSession;
 import DashboardPage from "@/app/dashboard/page";
 
 describe("DashboardPage", () => {
-  beforeEach(() => {
+  const originalAuthOn = process.env.AUTH_ON;
+
+  afterEach(() => {
+    process.env.AUTH_ON = originalAuthOn;
     jest.clearAllMocks();
   });
 
   it("renders the Dashboard heading", async () => {
-    mockedAuth.mockResolvedValueOnce({ user: { name: "Test User" } });
+    process.env.AUTH_ON = "false";
     const result = await DashboardPage();
     render(result);
     expect(
@@ -80,26 +83,36 @@ describe("DashboardPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the dashboard page with user name", async () => {
-    mockedAuth.mockResolvedValueOnce({ user: { name: "Test User" } });
+  it("renders user name in greeting when auth is on and session has a name", async () => {
     process.env.AUTH_ON = "true";
+    mockedAuth.mockResolvedValueOnce({
+      user: { name: "Test User", role: "user" },
+    });
     const result = await DashboardPage();
     render(result);
-    expect(screen.getByText(/here's what's next/i)).toBeInTheDocument();
     expect(screen.getByText(/Test User/i)).toBeInTheDocument();
+    expect(screen.getByText(/here's what's next/i)).toBeInTheDocument();
   });
 
-  it("renders 'Here's' without a name when session has no user name", async () => {
-    mockedAuth.mockResolvedValueOnce({ user: { name: null } });
+  it("renders generic greeting when auth is off", async () => {
     process.env.AUTH_ON = "false";
     const result = await DashboardPage();
     render(result);
     expect(screen.getByText(/here's what's next/i)).toBeInTheDocument();
     expect(screen.queryByText(/Test User/i)).not.toBeInTheDocument();
+  });
+
+  it("renders generic greeting when session has no user name", async () => {
+    process.env.AUTH_ON = "true";
+    mockedAuth.mockResolvedValueOnce({ user: { name: null, role: "user" } });
+    const result = await DashboardPage();
+    render(result);
+    expect(screen.getByText(/here's what's next/i)).toBeInTheDocument();
     expect(screen.queryByText(/null/i)).not.toBeInTheDocument();
   });
 
-  it("handles missing session gracefully", async () => {
+  it("renders generic greeting when session is null", async () => {
+    process.env.AUTH_ON = "true";
     mockedAuth.mockResolvedValueOnce(null);
     const result = await DashboardPage();
     render(result);
@@ -107,11 +120,46 @@ describe("DashboardPage", () => {
   });
 
   it("renders all dashboard cards", async () => {
-    mockedAuth.mockResolvedValueOnce({ user: { name: "Test User" } });
+    process.env.AUTH_ON = "false";
     const result = await DashboardPage();
     render(result);
     expect(screen.getByText("CurrentCardClient")).toBeInTheDocument();
     expect(screen.getByText("NextBreakCardClient")).toBeInTheDocument();
     expect(screen.getByText("NextCardClient")).toBeInTheDocument();
+  });
+
+  it("renders the Admin button when user is admin", async () => {
+    process.env.AUTH_ON = "true";
+    mockedAuth.mockResolvedValueOnce({
+      user: { name: "Admin User", role: "admin" },
+    });
+    const result = await DashboardPage();
+    render(result);
+    expect(screen.getByRole("link", { name: /admin/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /admin/i })).toHaveAttribute(
+      "href",
+      "/dashboard/admin",
+    );
+  });
+
+  it("does not render the Admin button when user is not admin", async () => {
+    process.env.AUTH_ON = "true";
+    mockedAuth.mockResolvedValueOnce({
+      user: { name: "Regular User", role: "user" },
+    });
+    const result = await DashboardPage();
+    render(result);
+    expect(
+      screen.queryByRole("link", { name: /admin/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not render the Admin button when auth is off", async () => {
+    process.env.AUTH_ON = "false";
+    const result = await DashboardPage();
+    render(result);
+    expect(
+      screen.queryByRole("link", { name: /admin/i }),
+    ).not.toBeInTheDocument();
   });
 });

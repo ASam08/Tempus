@@ -20,11 +20,20 @@ import {
 } from "@/components/ui/pagination";
 import { getPaginationItems } from "@/lib/utils";
 import AdminActions from "@/components/ui/dashboard/admin/adminactions";
+import SortableHeader from "@/components/ui/dashboard/admin/sortableheader";
+import SearchFilters from "@/components/ui/dashboard/admin/searchfilters";
 
 export default async function AdminDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    sortBy?: string;
+    sortDirection?: string;
+    filterField?: string;
+    filterValue?: string;
+    filterOperator?: string;
+  }>;
 }) {
   const authOn = process.env.AUTH_ON?.toLowerCase() === "true";
 
@@ -46,15 +55,64 @@ export default async function AdminDashboard({
 
   const currentUserId = session.user.id;
 
-  const { page } = await searchParams;
+  const {
+    page,
+    sortBy,
+    sortDirection,
+    filterField,
+    filterValue,
+    filterOperator,
+  } = await searchParams;
   const currentPage = Number(page) || 1;
   const pageSize = 10;
+
+  const validSortFields = ["name", "email", "createdAt", "role"] as const;
+  type SortField = (typeof validSortFields)[number];
+
+  const resolvedSortBy: SortField = validSortFields.includes(
+    sortBy as SortField,
+  )
+    ? (sortBy as SortField)
+    : "name";
+  const resolvedSortDirection = sortDirection === "desc" ? "desc" : "asc";
+
+  const currentFilterArray: string[] = [
+    filterField ?? "none",
+    filterValue ?? "none",
+    filterOperator ?? "none",
+  ];
+  const currentFilter = currentFilterArray.join("--");
+
+  const validFilterOperators = [
+    "in",
+    "contains",
+    "starts_with",
+    "ends_with",
+    "eq",
+    "ne",
+    "gt",
+    "gte",
+    "lt",
+    "lte",
+    "not_in",
+  ] as const;
+
+  type FilterOperator = (typeof validFilterOperators)[number];
+
+  const resolvedFilterOperator: FilterOperator | undefined =
+    validFilterOperators.includes(filterOperator as FilterOperator)
+      ? (filterOperator as FilterOperator)
+      : undefined;
 
   const users = await auth.api.listUsers({
     query: {
       limit: pageSize,
       offset: (currentPage - 1) * pageSize,
-      sortBy: "name",
+      sortBy: resolvedSortBy,
+      sortDirection: resolvedSortDirection,
+      filterField: filterField,
+      filterValue: filterValue,
+      filterOperator: resolvedFilterOperator,
     },
     headers: await headers(),
   });
@@ -62,24 +120,88 @@ export default async function AdminDashboard({
   const totalUsers = users.total;
   const totalPages = Math.ceil(totalUsers / pageSize);
 
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenDaysAgoString = sevenDaysAgo.toLocaleDateString("en-NZ", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
   return (
     <div className="flex h-full max-w-screen flex-col px-3 py-4 md:px-2">
       <h1 className="mb-4 flex flex-wrap text-xl font-bold text-gray-800 md:text-2xl dark:text-gray-200">
         Admin - User Management
       </h1>
       <div>
+        <div className="mb-4 flex flex-col gap-4 whitespace-nowrap md:flex-row md:flex-wrap">
+          <SearchFilters
+            label="Admins Only"
+            field="role"
+            value="admin"
+            operator="eq"
+            currentFilter={currentFilter}
+          />
+          <SearchFilters
+            label="Users Only"
+            field="role"
+            value="user"
+            operator="eq"
+            currentFilter={currentFilter}
+          />
+          <SearchFilters
+            label="Banned"
+            field="banned"
+            value="true"
+            operator="eq"
+            currentFilter={currentFilter}
+          />
+          <SearchFilters
+            label="New Users (Last 7 days)"
+            field="createdAt"
+            value={sevenDaysAgoString}
+            operator="gte"
+            currentFilter={currentFilter}
+          />
+        </div>
         <div className="overflow-auto rounded-xl border border-stone-300 dark:border-gray-700">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="bg-background sticky left-0 z-10 px-4 py-3">
-                  Name
+                <TableHead className="sticky left-0 z-10 bg-stone-50 px-4 py-3 dark:bg-gray-950">
+                  <SortableHeader
+                    field="name"
+                    label="Name"
+                    currentSortBy={resolvedSortBy}
+                    currentSortDirection={resolvedSortDirection}
+                  />
                 </TableHead>
-                <TableHead className="px-4 py-3">Email</TableHead>
-                <TableHead className="px-4 py-3">Role</TableHead>
+                <TableHead className="px-4 py-3">
+                  <SortableHeader
+                    field="email"
+                    label="Email"
+                    currentSortBy={resolvedSortBy}
+                    currentSortDirection={resolvedSortDirection}
+                  />
+                </TableHead>
+                <TableHead className="px-4 py-3">
+                  <SortableHeader
+                    field="role"
+                    label="Role"
+                    currentSortBy={resolvedSortBy}
+                    currentSortDirection={resolvedSortDirection}
+                  />
+                </TableHead>
                 <TableHead className="px-4 py-3">Status</TableHead>
                 <TableHead className="px-4 py-3">Status Reason</TableHead>
-                <TableHead className="px-4 py-3">Created</TableHead>
+                <TableHead className="px-4 py-3">
+                  <SortableHeader
+                    field="createdAt"
+                    label="Created"
+                    currentSortBy={resolvedSortBy}
+                    currentSortDirection={resolvedSortDirection}
+                  />
+                </TableHead>
                 <TableHead className="px-4 py-3">Actions</TableHead>
               </TableRow>
             </TableHeader>
