@@ -35,9 +35,8 @@ export const users = pgTable(
 
 export const timetableSets = pgTable("timetable_sets", {
   id: uuid().defaultRandom().primaryKey().notNull(),
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  ownerId: uuid("owner_id").notNull(),
+  // .references(() => users.id, { onDelete: "cascade" })
   title: varchar({ length: 255 }).notNull(),
   description: text(),
   createdAt: timestamp("created_at", { mode: "string" }).default(
@@ -50,9 +49,8 @@ export const timetableSets = pgTable("timetable_sets", {
 
 export const userTimetableSets = pgTable("user_timetable_sets", {
   id: uuid().defaultRandom().primaryKey().notNull(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull(),
+  // .references(() => users.id, { onDelete: "cascade" })
   timetableSetId: uuid("timetable_set_id")
     .notNull()
     .references(() => timetableSets.id, { onDelete: "cascade" }),
@@ -62,9 +60,8 @@ export const userSettings = pgTable(
   "user_settings",
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull(),
+    // .references(() => users.id, { onDelete: "cascade" })
     settingKey: varchar("setting_key", { length: 255 }).notNull(),
     settingValue: text("setting_value").notNull(),
     createdAt: timestamp("created_at", { mode: "string" }).default(
