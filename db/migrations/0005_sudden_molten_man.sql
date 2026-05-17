@@ -1,5 +1,5 @@
 ALTER TABLE "timetable_blocks" ADD CONSTRAINT "timetable_blocks_timetable_set_id_timetable_sets_id_fk" FOREIGN KEY ("timetable_set_id") REFERENCES "public"."timetable_sets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "timetable_sets" ADD CONSTRAINT "timetable_sets_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_settings" ADD CONSTRAINT "user_settings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_timetable_sets" ADD CONSTRAINT "user_timetable_sets_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "timetable_sets" ADD CONSTRAINT "timetable_sets_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_settings" ADD CONSTRAINT "user_settings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_timetable_sets" ADD CONSTRAINT "user_timetable_sets_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_timetable_sets" ADD CONSTRAINT "user_timetable_sets_timetable_set_id_timetable_sets_id_fk" FOREIGN KEY ("timetable_set_id") REFERENCES "public"."timetable_sets"("id") ON DELETE cascade ON UPDATE no action;
