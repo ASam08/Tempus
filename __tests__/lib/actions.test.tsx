@@ -81,7 +81,7 @@ import {
   blockConflictCheck,
 } from "@/lib/data";
 const mockRevalidatePath = revalidatePath as jest.Mock;
-const mockRedirect = redirect as jest.Mock;
+const mockRedirect = redirect as any as jest.Mock;
 const mockGetUserID = getUserID as jest.Mock;
 const mockGetTimetableSets = getTimetableSets as jest.Mock;
 const mockGetCurrentBlock = getCurrentBlock as jest.Mock;
@@ -168,24 +168,6 @@ describe("ActionsTests", () => {
       const result = await createNewTimetableSet(undefined, form);
       expect(result).toMatchObject({ errors: expect.any(Object) });
       expect(sqlConn.insert).not.toHaveBeenCalled();
-    });
-
-    it("uses random UUID when getUserID returns null and AUTH_ON is not true", async () => {
-      const savedEnv = process.env.AUTH_ON;
-      process.env.AUTH_ON = "false";
-      mockGetUserID.mockResolvedValueOnce(null);
-      mockInsertChain();
-
-      await expect(createNewTimetableSet(undefined, validForm)).rejects.toThrow(
-        "NEXT_REDIRECT",
-      );
-
-      const insertMock = sqlConn.insert as jest.Mock;
-      const valuesCalled = insertMock.mock.results[0].value.values;
-      expect(valuesCalled).toHaveBeenCalledWith(
-        expect.objectContaining({ ownerId: expect.any(String) }),
-      );
-      process.env.AUTH_ON = savedEnv;
     });
 
     it("returns error object when DB insert throws", async () => {

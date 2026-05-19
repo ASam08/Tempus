@@ -13,25 +13,12 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
 export async function getUserID() {
-  if (process.env.AUTH_ON === "true") {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    const user_id = session?.user?.id;
-    if (!user_id) return null;
-    return user_id;
-  } else {
-    try {
-      const result = await sqlConn
-        .selectDistinct({ id: schema.timetableSets.ownerId })
-        .from(schema.timetableSets);
-      const id = result[0]?.id ?? null;
-      return id;
-    } catch (error) {
-      console.error("Error retrieving user ID: ", error);
-      return null;
-    }
-  }
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  const user_id = session?.user?.id;
+  if (!user_id) return null;
+  return user_id;
 }
 
 export async function getTimetableSets(user_id: string) {

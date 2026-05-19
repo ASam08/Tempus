@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
   redirect: jest.fn(),
@@ -32,17 +32,8 @@ describe("SignUpPage", () => {
     jest.clearAllMocks();
   });
 
-  it("redirects to dashboard when auth is off", () => {
-    const { redirect } = require("next/navigation");
-    process.env.AUTH_ON = "false";
+  it("renders the signup form", () => {
     render(<SignUpPage />);
-    expect(redirect).toHaveBeenCalledWith("/dashboard");
-  });
-
-  it("does not redirect when auth is on", () => {
-    const { redirect } = require("next/navigation");
-    process.env.AUTH_ON = "true";
-    render(<SignUpPage />);
-    expect(redirect).not.toHaveBeenCalled();
+    expect(screen.getByText(/signup form/i)).toBeInTheDocument();
   });
 });

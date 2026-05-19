@@ -3,13 +3,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
-  const authOn = process.env.AUTH_ON?.toLowerCase() === "true";
-
-  // AUTH_ON=false: bypass auth entirely
-  if (!authOn) {
-    return NextResponse.next();
-  }
-
   const isOnDashboard = request.nextUrl.pathname.startsWith("/dashboard");
   const isOnLogin = request.nextUrl.pathname.startsWith("/login");
 

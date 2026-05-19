@@ -73,29 +73,10 @@ describe("SideNav Component", () => {
     expect(getByText("LucideSettings")).toBeInTheDocument();
   });
 
-  it("renders logout button when auth is on", () => {
-    process.env.AUTH_ON = "true";
+  it("renders logout button correctly", () => {
     const { getByText } = render(<SideNav />);
     expect(getByText("LucideLogOut")).toBeInTheDocument();
     expect(getByText("Sign Out")).toBeInTheDocument();
-  });
-
-  it("does not render logout button when auth is off", () => {
-    process.env.AUTH_ON = "false";
-    const { queryByText } = render(<SideNav />);
-    expect(queryByText("LucideLogOut")).not.toBeInTheDocument();
-  });
-
-  it("does not render logout button when AUTH_ON is undefined", () => {
-    delete process.env.AUTH_ON;
-    const { queryByText } = render(<SideNav />);
-    expect(queryByText("LucideLogOut")).not.toBeInTheDocument();
-  });
-
-  it("treats AUTH_ON as case-insensitive", () => {
-    process.env.AUTH_ON = "TRUE";
-    const { getByText } = render(<SideNav />);
-    expect(getByText("LucideLogOut")).toBeInTheDocument();
   });
 
   it("links point to correct destinations", () => {
@@ -120,7 +101,6 @@ describe("SideNav Component", () => {
     const mockHeaders = new Headers();
     (headers as jest.Mock).mockResolvedValue(mockHeaders);
     (redirect as unknown as jest.Mock).mockImplementation(() => {});
-    process.env.AUTH_ON = "true";
 
     const { getByRole } = render(<SideNav />);
 

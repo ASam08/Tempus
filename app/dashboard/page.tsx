@@ -10,18 +10,13 @@ import { Button } from "@/components/ui/button";
 import { LucideUser } from "lucide-react";
 
 export default async function DashboardPage() {
-  const authOn = process.env.AUTH_ON?.toLowerCase() === "true";
-
-  let session = null;
-  if (authOn) {
-    session = await auth.api.getSession({
-      headers: await headers(),
-    });
-  }
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   let admin: boolean = false;
 
-  if (authOn && session?.user.role === "admin") {
+  if (session?.user.role === "admin") {
     admin = true;
   }
 
