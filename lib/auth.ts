@@ -71,6 +71,13 @@ export const auth = betterAuth({
       updatedAt: "updatedAt",
       emailVerified: "emailVerified",
     },
+    additionalFields: {
+      userMigrationSetupComplete: {
+        type: "boolean",
+        defaultValue: true,
+        fieldName: "userMigrationSetupComplete",
+      },
+    },
   },
 
   advanced: {

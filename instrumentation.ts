@@ -42,15 +42,15 @@ export async function register() {
 
           try {
             await db.execute(
-              sql`INSERT INTO users (id, name, email, email_verified, role, banned, created_at, updated_at)
-              VALUES (${existingOwnerId}::uuid, 'Admin', ${defaultEmail}, false, 'admin', false, NOW(), NOW())`,
+              sql`INSERT INTO users (id, name, email, email_verified, role, banned, user_migration_setup_complete, created_at, updated_at)
+      VALUES (${existingOwnerId}::uuid, 'Admin', ${defaultEmail}, false, 'admin', false, false, NOW(), NOW())`,
             );
 
             await db.insert(schema.account).values({
               id: crypto.randomUUID(),
-              accountId: existingOwnerId,
+              accountId: existingOwnerId as any,
               providerId: "credential",
-              userId: existingOwnerId,
+              userId: existingOwnerId as any,
               password: hashedPassword,
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -59,17 +59,15 @@ export async function register() {
             console.log("═══════════════════════════════════════════════════");
             console.log("  TEMPUS — SINGLE USER MIGRATION");
             console.log("═══════════════════════════════════════════════════");
-            console.log("  A user account has been created for your install.");
-            console.log(
-              "  Please log in and change your password immediately.",
-            );
+            console.log("  Visit your Tempus instance to complete setup.");
+            console.log("  Log in with the temporary credentials below,");
+            console.log("  then follow the prompts to set your details.");
             console.log("");
             console.log("  Email:    " + defaultEmail);
             console.log("  Password: " + tempPassword);
             console.log("");
-            console.log(
-              "  You can change your email and password in Settings.",
-            );
+            console.log("  You will be asked to set a new email and password");
+            console.log("  before you can access the dashboard.");
             console.log("═══════════════════════════════════════════════════");
           } catch (error) {
             console.error("Failed to migrate single-user install:", error);
