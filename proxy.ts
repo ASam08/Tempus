@@ -1,4 +1,7 @@
 import { auth } from "@/lib/auth";
+import { sqlConn } from "@/lib/db";
+import * as schema from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -13,21 +16,28 @@ export async function proxy(request: NextRequest) {
 
   const isLoggedIn = !!session;
 
-  // If setup is incomplete, only allow /usermigrationsetup
-  if (
-    isLoggedIn &&
-    session.user.userMigrationSetupComplete === false &&
-    !isOnSetup
-  ) {
-    return NextResponse.redirect(new URL("/usermigrationsetup", request.url));
+  if (isLoggedIn && session.user.email === "admin@tempus.local") {
+    const user = await sqlConn
+      .select({
+        userMigrationSetupComplete: schema.users.userMigrationSetupComplete,
+      })
+      .from(schema.users)
+      .where(eq(schema.users.id, session.user.id as any))
+      .limit(1);
+
+    const setupComplete = user[0]?.userMigrationSetupComplete ?? true;
+
+    if (!setupComplete && !isOnSetup) {
+      return NextResponse.redirect(new URL("/usermigrationsetup", request.url));
+    }
+
+    if (isOnSetup && setupComplete) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
   }
 
-  // Prevent accessing /usermigrationsetup once setup is complete
-  if (
-    isOnSetup &&
-    (!isLoggedIn || session.user.userMigrationSetupComplete !== false)
-  ) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  if (!isLoggedIn && isOnSetup) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   if (isOnDashboard && !isLoggedIn) {

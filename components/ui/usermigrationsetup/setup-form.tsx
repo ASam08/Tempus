@@ -21,6 +21,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { authClient } from "@/lib/auth-client";
+import { markSetupComplete } from "@/lib/actions";
 
 const SetupFormSchema = z
   .object({
@@ -96,7 +97,7 @@ export function SetupForm({
 
     const { error: updateError } = await authClient.admin.updateUser({
       userId,
-      data: { name, email, userMigrationSetupComplete: true },
+      data: { name, email },
     });
 
     if (updateError) {
@@ -118,6 +119,14 @@ export function SetupForm({
       setMessage(
         "Something went wrong setting your password. Please try again.",
       );
+      setIsPending(false);
+      return;
+    }
+
+    const result = await markSetupComplete(userId);
+
+    if (result?.error) {
+      setMessage(result.error);
       setIsPending(false);
       return;
     }

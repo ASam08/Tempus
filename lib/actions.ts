@@ -355,3 +355,18 @@ export async function updateSettings(
     };
   }
 }
+
+export async function markSetupComplete(
+  userId: string,
+): Promise<{ error?: string }> {
+  try {
+    await sqlConn
+      .update(schema.users)
+      .set({ userMigrationSetupComplete: true })
+      .where(eq(schema.users.id, userId as any));
+    return {};
+  } catch (error) {
+    console.error("Failed to mark setup complete:", error);
+    return { error: "Something went wrong. Please try again." };
+  }
+}
