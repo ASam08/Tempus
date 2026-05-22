@@ -14,70 +14,60 @@ export async function register() {
     await migrate(db, { migrationsFolder: "./db/migrations" });
     console.log("Migrations complete");
 
-    const migrationTag = "0006_remove_auth_on";
+    const existingUsers = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .limit(1);
 
-    const appliedMigrations = await db.execute(
-      sql`SELECT hash FROM drizzle.__drizzle_migrations 
-      WHERE hash = ${migrationTag} 
-      AND created_at > (EXTRACT(EPOCH FROM NOW()) * 1000 - 1800000)::bigint`,
-    );
-
-    if (appliedMigrations.length > 0) {
-      const existingUsers = await db
-        .select({ id: schema.users.id })
-        .from(schema.users)
+    if (existingUsers.length === 0) {
+      const existingSets = await db
+        .selectDistinct({ ownerId: schema.timetableSets.ownerId })
+        .from(schema.timetableSets)
         .limit(1);
 
-      if (existingUsers.length === 0) {
-        const existingSets = await db
-          .selectDistinct({ ownerId: schema.timetableSets.ownerId })
-          .from(schema.timetableSets)
-          .limit(1);
+      if (existingSets.length > 0) {
+        const existingOwnerId = existingSets[0].ownerId;
+        const tempPassword = generateTempPassword();
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+        const defaultEmail = "admin@tempus.local";
 
-        if (existingSets.length > 0) {
-          const existingOwnerId = existingSets[0].ownerId;
-          const tempPassword = generateTempPassword();
-          const hashedPassword = await bcrypt.hash(tempPassword, 10);
-          const defaultEmail = "admin@tempus.local";
-
-          try {
-            await db.execute(
-              sql`INSERT INTO users (id, name, email, email_verified, role, banned, user_migration_setup_complete, created_at, updated_at)
+        try {
+          await db.execute(
+            sql`INSERT INTO users (id, name, email, email_verified, role, banned, user_migration_setup_complete, created_at, updated_at)
       VALUES (${existingOwnerId}::uuid, 'Admin', ${defaultEmail}, false, 'admin', false, false, NOW(), NOW())`,
-            );
+          );
 
-            await db.insert(schema.account).values({
-              id: crypto.randomUUID(),
-              accountId: existingOwnerId as any,
-              providerId: "credential",
-              userId: existingOwnerId as any,
-              password: hashedPassword,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
+          await db.insert(schema.account).values({
+            id: crypto.randomUUID(),
+            accountId: existingOwnerId as any,
+            providerId: "credential",
+            userId: existingOwnerId as any,
+            password: hashedPassword,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
 
-            console.log("═══════════════════════════════════════════════════");
-            console.log("  TEMPUS — SINGLE USER MIGRATION");
-            console.log("═══════════════════════════════════════════════════");
-            console.log("  Visit your Tempus instance to complete setup.");
-            console.log("  Log in with the temporary credentials below,");
-            console.log("  then follow the prompts to set your details.");
-            console.log("");
-            console.log("  Email:    " + defaultEmail);
-            console.log("  Password: " + tempPassword);
-            console.log("");
-            console.log("  You will be asked to set a new email and password");
-            console.log("  before you can access the dashboard.");
-            console.log("═══════════════════════════════════════════════════");
-          } catch (error) {
-            console.error("Failed to migrate single-user install:", error);
-            throw error;
-          }
+          console.log("═══════════════════════════════════════════════════");
+          console.log("  TEMPUS — SINGLE USER MIGRATION");
+          console.log("═══════════════════════════════════════════════════");
+          console.log("  Visit your Tempus instance to complete setup.");
+          console.log("  Log in with the temporary credentials below,");
+          console.log("  then follow the prompts to set your details.");
+          console.log("");
+          console.log("  Email:    " + defaultEmail);
+          console.log("  Password: " + tempPassword);
+          console.log("");
+          console.log("  You will be asked to set a new email and password");
+          console.log("  before you can access the dashboard.");
+          console.log("═══════════════════════════════════════════════════");
+        } catch (error) {
+          console.error("Failed to migrate single-user install:", error);
+          throw error;
         }
-        // else: fresh install with no data — first signup handles everything
       }
-      // else: already has users — nothing to do
+      // else: fresh install with no data — first signup handles everything
     }
+    // else: already has users — nothing to do
   }
 }
 
