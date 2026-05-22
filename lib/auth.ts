@@ -82,6 +82,7 @@ export const auth = betterAuth({
 
   trustedOrigins: [process.env.BETTER_AUTH_URL ?? "http://localhost:3000"],
   baseURL: "http://localhost:3000",
+  // TODO: Update env variables so that TEMPUS_URL is used for the trusted origin and BETTER_AUTH_URL is used for the baseURL
 });
 
 export type Session = typeof auth.$Infer.Session;
