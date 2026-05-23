@@ -9,6 +9,23 @@ export async function register() {
     const { sql } = await import("drizzle-orm");
     const bcrypt = await import("bcryptjs");
 
+    const requiredEnvVars = ["BETTER_AUTH_SECRET", "TEMPUS_URL"];
+
+    const missing = requiredEnvVars.filter((key) => !process.env[key]);
+
+    if (missing.length > 0) {
+      console.error("═══════════════════════════════════════════════════");
+      console.error("  TEMPUS — MISSING REQUIRED ENVIRONMENT VARIABLES");
+      console.error("═══════════════════════════════════════════════════");
+      missing.forEach((key) => console.error(`  Missing: ${key}`));
+      console.error("");
+      console.error("  Please check your compose.yaml and restart.");
+      console.error("═══════════════════════════════════════════════════");
+      throw new Error(
+        `Missing required environment variables: ${missing.join(", ")}`,
+      );
+    }
+
     const db = drizzle(DATABASE_URL, { schema });
 
     await migrate(db, { migrationsFolder: "./db/migrations" });
