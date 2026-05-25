@@ -9,9 +9,14 @@ export async function register() {
     const { sql } = await import("drizzle-orm");
     const bcrypt = await import("bcryptjs");
 
-    const requiredEnvVars = ["BETTER_AUTH_SECRET", "TEMPUS_URL"];
+    const requiredEnvVars = ["BETTER_AUTH_SECRET"];
+
+    const warnEnvVars: [string, string][] = [
+      ["TEMPUS_URL", "http://localhost:3000"],
+    ];
 
     const missing = requiredEnvVars.filter((key) => !process.env[key]);
+    const warned = warnEnvVars.filter(([key]) => !process.env[key]);
 
     if (missing.length > 0) {
       console.error("═══════════════════════════════════════════════════");
@@ -24,6 +29,22 @@ export async function register() {
       throw new Error(
         `Missing required environment variables: ${missing.join(", ")}`,
       );
+    }
+
+    if (warned.length > 0) {
+      console.warn("═══════════════════════════════════════════════════");
+      console.warn("  TEMPUS — WARNING");
+      console.warn("═══════════════════════════════════════════════════");
+      warned.forEach(
+        ([key, defaultValue]) => (
+          console.warn(`  ${key} is not set,`),
+          console.warn(`  defaulting to ${defaultValue}`)
+        ),
+      );
+      console.warn("");
+      console.warn("  Tempus may not behave correctly if this variable");
+      console.warn("  is not set.");
+      console.warn("═══════════════════════════════════════════════════");
     }
 
     const db = drizzle(DATABASE_URL, { schema });
