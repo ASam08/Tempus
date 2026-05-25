@@ -14,10 +14,6 @@ export async function proxy(request: NextRequest) {
     headers: request.headers,
   });
 
-  console.log("proxy path:", request.nextUrl.pathname);
-  console.log("proxy session:", session?.user?.email ?? "null");
-  console.log("proxy cookies:", request.headers.get("cookie"));
-
   const isLoggedIn = !!session;
 
   if (isLoggedIn && session.user.email === "admin@tempus.local") {

@@ -168,8 +168,10 @@ pnpm install
 Create a `.env.local` file in the root:
 
 ```env
-AUTH_SECRET=your_secret_here
-DATABASE_URL=postgresql://user:password@localhost:5432/timetable
+BETTER_AUTH_SECRET: # Run: openssl rand -base64 32
+BETTER_AUTH_URL=http://localhost:3000 # Base URL of your app
+NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000 # Base URL of your app for client-side usage
+TEMPUS_URL=http://localhost:3000 # Base URL of your app
 ```
 
 **4. Start the dev server**
