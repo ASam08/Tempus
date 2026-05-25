@@ -6,9 +6,9 @@ jest.mock("next/navigation", () => ({
   useSearchParams: jest.fn(() => ({ get: jest.fn(() => null) })),
 }));
 
-jest.mock("@/components/ui/login/login-form", () => ({
+jest.mock("@/components/ui/usermigrationsetup/setup-form", () => ({
   __esModule: true,
-  LoginForm: () => <div>Login Form</div>,
+  SetupForm: () => <div>Setup Form</div>,
 }));
 
 jest.mock("@/components/branding/tempuslogobrand", () => ({
@@ -25,15 +25,15 @@ jest.mock("@/lib/db", () => ({
   sqlConn: {},
 }));
 
-import LoginPage from "@/app/login/page";
+import SetupPage from "@/app/usermigrationsetup/page";
 
-describe("LoginPage", () => {
+describe("SetupPage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("page renders login form", () => {
-    render(<LoginPage />);
-    expect(screen.getByText(/login form/i)).toBeInTheDocument();
+  it("renders the setup form", () => {
+    render(<SetupPage />);
+    expect(screen.getByText(/setup form/i)).toBeInTheDocument();
   });
 });

@@ -1,0 +1,1 @@
+-- No actual changes in this migration, it is a checkpoint for the conversion script from non-auth to auth.

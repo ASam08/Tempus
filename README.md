@@ -93,8 +93,7 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_HOST: tempus_db
       BETTER_AUTH_SECRET: # Run: openssl rand -base64 32
-      BETTER_AUTH_URL: # set to your applications URL
-      AUTH_ON: true # Change to false to remove auth, single user only
+      TEMPUS_URL: # set to your applications URL
     restart: unless-stopped
 
   tempus_db:
@@ -140,9 +139,9 @@ The following environment variables are available:
 
 | Variable             | Required? | Default | Notes                                                                |
 | -------------------- | --------- | ------- | -------------------------------------------------------------------- |
-| `AUTH_ON`            | No        | `false` | Set to `true` to enable authentication and multi-user support        |
 | `BETTER_AUTH_SECRET` | Yes       | -       | Run `openssl rand -base64 32` to generate                            |
-| `BETTER_AUTH_URL`    | Yes       | -       | Set to your app's base URL, e.g. `http://localhost:3000`             |
+| `TEMPUS_URL`         | Yes       | -       | Set to your app's base URL, e.g. `http://localhost:3000`             |
+| `NODE_ENV`           | Yes       | -       | set to true to ensure proper performance                             |
 | `APPROVE_SIGNUPS`    | No        | `false` | Set to `true` to require admin approval before new users can sign in |
 
 ---
@@ -169,9 +168,10 @@ pnpm install
 Create a `.env.local` file in the root:
 
 ```env
-AUTH_SECRET=your_secret_here
-DATABASE_URL=postgresql://user:password@localhost:5432/timetable
-AUTH_ON="true" # Set to 'true' to enable authentication
+BETTER_AUTH_SECRET: # Run: openssl rand -base64 32
+BETTER_AUTH_URL=http://localhost:3000 # Base URL of your app
+NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000 # Base URL of your app for client-side usage
+TEMPUS_URL=http://localhost:3000 # Base URL of your app
 ```
 
 **4. Start the dev server**

@@ -5,11 +5,115 @@ export async function register() {
     const { drizzle } = await import("drizzle-orm/postgres-js");
     const { migrate } = await import("drizzle-orm/postgres-js/migrator");
     const { DATABASE_URL } = await import("@/lib/db");
+    const schema = await import("@/db/schema");
+    const { sql } = await import("drizzle-orm");
+    const bcrypt = await import("bcryptjs");
 
-    const db = drizzle(DATABASE_URL);
+    const requiredEnvVars = ["BETTER_AUTH_SECRET"];
+
+    const warnEnvVars: [string, string][] = [
+      ["TEMPUS_URL", "http://localhost:3000"],
+    ];
+
+    const missing = requiredEnvVars.filter((key) => !process.env[key]);
+    const warned = warnEnvVars.filter(([key]) => !process.env[key]);
+
+    if (missing.length > 0) {
+      console.error("═══════════════════════════════════════════════════");
+      console.error("  TEMPUS — MISSING REQUIRED ENVIRONMENT VARIABLES");
+      console.error("═══════════════════════════════════════════════════");
+      missing.forEach((key) => console.error(`  Missing: ${key}`));
+      console.error("");
+      console.error("  Please check your compose.yaml and restart.");
+      console.error("═══════════════════════════════════════════════════");
+      throw new Error(
+        `Missing required environment variables: ${missing.join(", ")}`,
+      );
+    }
+
+    if (warned.length > 0) {
+      console.warn("═══════════════════════════════════════════════════");
+      console.warn("  TEMPUS — WARNING");
+      console.warn("═══════════════════════════════════════════════════");
+      warned.forEach(
+        ([key, defaultValue]) => (
+          console.warn(`  ${key} is not set,`),
+          console.warn(`  defaulting to ${defaultValue}`)
+        ),
+      );
+      console.warn("");
+      console.warn("  Tempus may not behave correctly if this variable");
+      console.warn("  is not set.");
+      console.warn("═══════════════════════════════════════════════════");
+    }
+
+    const db = drizzle(DATABASE_URL, { schema });
 
     await migrate(db, { migrationsFolder: "./db/migrations" });
-
     console.log("Migrations complete");
+
+    const existingUsers = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .limit(1);
+
+    if (existingUsers.length === 0) {
+      const existingSets = await db
+        .selectDistinct({ ownerId: schema.timetableSets.ownerId })
+        .from(schema.timetableSets)
+        .limit(1);
+
+      if (existingSets.length > 0) {
+        const existingOwnerId = existingSets[0].ownerId;
+        const tempPassword = generateTempPassword();
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+        const defaultEmail = "admin@tempus.local";
+
+        try {
+          await db.execute(
+            sql`INSERT INTO users (id, name, email, email_verified, role, banned, user_migration_setup_complete, created_at, updated_at)
+      VALUES (${existingOwnerId}::uuid, 'Admin', ${defaultEmail}, false, 'admin', false, false, NOW(), NOW())`,
+          );
+
+          await db.insert(schema.account).values({
+            id: crypto.randomUUID(),
+            accountId: existingOwnerId as any,
+            providerId: "credential",
+            userId: existingOwnerId as any,
+            password: hashedPassword,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+
+          console.log("═══════════════════════════════════════════════════");
+          console.log("  TEMPUS — SINGLE USER MIGRATION");
+          console.log("═══════════════════════════════════════════════════");
+          console.log("  Visit your Tempus instance to complete setup.");
+          console.log("  Log in with the temporary credentials below,");
+          console.log("  then follow the prompts to set your details.");
+          console.log("");
+          console.log("  Email:    " + defaultEmail);
+          console.log("  Password: " + tempPassword);
+          console.log("");
+          console.log("  You will be asked to set a new email and password");
+          console.log("  before you can access the dashboard.");
+          console.log("═══════════════════════════════════════════════════");
+        } catch (error) {
+          console.error("Failed to migrate single-user install:", error);
+          throw error;
+        }
+      }
+      // else: fresh install with no data — first signup handles everything
+    }
+    // else: already has users — nothing to do
   }
+}
+
+function generateTempPassword(): string {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
+  let password = "";
+  for (let i = 0; i < 16; i++) {
+    password += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return password;
 }

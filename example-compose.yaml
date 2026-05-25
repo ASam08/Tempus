@@ -14,8 +14,7 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_HOST: tempus_db
       BETTER_AUTH_SECRET: # Run: openssl rand -base64 32
-      BETTER_AUTH_URL: # Set to your app's base URL, e.g. `http://localhost:3000`
-      AUTH_ON: true # Change to false to remove auth, single user only
+      TEMPUS_URL: # Set to your app's base URL, e.g. `http://localhost:3000`
     restart: unless-stopped
 
   tempus_db:

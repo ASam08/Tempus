@@ -11,6 +11,7 @@ jest.mock("@/lib/db", () => ({
   sqlConn: {
     insert: jest.fn(),
     delete: jest.fn(),
+    update: jest.fn(),
   },
 }));
 
@@ -67,6 +68,7 @@ import {
   settingsSave,
   unhideDow,
   updateSettings,
+  markSetupComplete,
 } from "@/lib/actions";
 
 import { revalidatePath } from "next/cache";
@@ -81,7 +83,7 @@ import {
   blockConflictCheck,
 } from "@/lib/data";
 const mockRevalidatePath = revalidatePath as jest.Mock;
-const mockRedirect = redirect as jest.Mock;
+const mockRedirect = redirect as any as jest.Mock;
 const mockGetUserID = getUserID as jest.Mock;
 const mockGetTimetableSets = getTimetableSets as jest.Mock;
 const mockGetCurrentBlock = getCurrentBlock as jest.Mock;
@@ -168,24 +170,6 @@ describe("ActionsTests", () => {
       const result = await createNewTimetableSet(undefined, form);
       expect(result).toMatchObject({ errors: expect.any(Object) });
       expect(sqlConn.insert).not.toHaveBeenCalled();
-    });
-
-    it("uses random UUID when getUserID returns null and AUTH_ON is not true", async () => {
-      const savedEnv = process.env.AUTH_ON;
-      process.env.AUTH_ON = "false";
-      mockGetUserID.mockResolvedValueOnce(null);
-      mockInsertChain();
-
-      await expect(createNewTimetableSet(undefined, validForm)).rejects.toThrow(
-        "NEXT_REDIRECT",
-      );
-
-      const insertMock = sqlConn.insert as jest.Mock;
-      const valuesCalled = insertMock.mock.results[0].value.values;
-      expect(valuesCalled).toHaveBeenCalledWith(
-        expect.objectContaining({ ownerId: expect.any(String) }),
-      );
-      process.env.AUTH_ON = savedEnv;
     });
 
     it("returns error object when DB insert throws", async () => {
@@ -523,6 +507,33 @@ describe("ActionsTests", () => {
 
       const result = await updateSettings("user-uuid", days);
       expect(result).toEqual({ message: "success", errors: {} });
+    });
+  });
+
+  describe("markSetupComplete", () => {
+    it("returns an empty object on success", async () => {
+      const setMethod = jest.fn().mockReturnValue({
+        where: jest.fn().mockResolvedValue(undefined),
+      });
+      (sqlConn.update as jest.Mock).mockReturnValue({ set: setMethod });
+
+      const result = await markSetupComplete("user-uuid");
+
+      expect(result).toEqual({});
+      expect(sqlConn.update).toHaveBeenCalled();
+    });
+
+    it("returns an error object when the DB update throws", async () => {
+      const setMethod = jest.fn().mockReturnValue({
+        where: jest.fn().mockRejectedValue(new Error("db error")),
+      });
+      (sqlConn.update as jest.Mock).mockReturnValue({ set: setMethod });
+
+      const result = await markSetupComplete("user-uuid");
+
+      expect(result).toEqual({
+        error: "Something went wrong. Please try again.",
+      });
     });
   });
 });

@@ -35,12 +35,6 @@ export default async function AdminDashboard({
     filterOperator?: string;
   }>;
 }) {
-  const authOn = process.env.AUTH_ON?.toLowerCase() === "true";
-
-  if (!authOn) {
-    redirect("/dashboard");
-  }
-
   const session = await auth.api.getSession({
     headers: await headers(),
   });

@@ -199,42 +199,7 @@ beforeEach(() => {
 });
 
 describe("AdminDashboard", () => {
-  describe("AUTH_ON guard", () => {
-    it("redirects to /dashboard when AUTH_ON is not true", async () => {
-      delete process.env.AUTH_ON;
-      await expect(
-        AdminDashboard({ searchParams: makeSearchParams() }),
-      ).rejects.toThrow("NEXT_REDIRECT:/dashboard");
-      expect(mockRedirect).toHaveBeenCalledWith("/dashboard");
-    });
-
-    it("redirects to /dashboard when AUTH_ON is false", async () => {
-      process.env.AUTH_ON = "false";
-      await expect(
-        AdminDashboard({ searchParams: makeSearchParams() }),
-      ).rejects.toThrow("NEXT_REDIRECT:/dashboard");
-      expect(mockRedirect).toHaveBeenCalledWith("/dashboard");
-    });
-
-    it("redirects to /dashboard when AUTH_ON is TRUE (case check)", async () => {
-      process.env.AUTH_ON = "TRUE";
-      mockGetSession.mockResolvedValue(null);
-      await expect(
-        AdminDashboard({ searchParams: makeSearchParams() }),
-      ).rejects.toThrow("NEXT_REDIRECT:/login?callbackUrl=/dashboard/admin");
-      delete process.env.AUTH_ON;
-    });
-  });
-
   describe("session guard", () => {
-    beforeEach(() => {
-      process.env.AUTH_ON = "true";
-    });
-
-    afterEach(() => {
-      delete process.env.AUTH_ON;
-    });
-
     it("redirects to /login when no session", async () => {
       mockGetSession.mockResolvedValue(null);
       await expect(
@@ -258,12 +223,7 @@ describe("AdminDashboard", () => {
 
   describe("admin page rendering", () => {
     beforeEach(() => {
-      process.env.AUTH_ON = "true";
       mockGetSession.mockResolvedValue(adminSession);
-    });
-
-    afterEach(() => {
-      delete process.env.AUTH_ON;
     });
 
     it("renders the admin dashboard heading", async () => {
@@ -597,12 +557,7 @@ describe("AdminDashboard", () => {
 
   describe("pagination", () => {
     beforeEach(() => {
-      process.env.AUTH_ON = "true";
       mockGetSession.mockResolvedValue(adminSession);
-    });
-
-    afterEach(() => {
-      delete process.env.AUTH_ON;
     });
 
     it("renders page info and pagination when totalPages > 1", async () => {

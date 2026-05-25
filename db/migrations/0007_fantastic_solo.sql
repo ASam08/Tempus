@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "user_migration_setup_complete" boolean DEFAULT true NOT NULL;
