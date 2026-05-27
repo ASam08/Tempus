@@ -8,6 +8,16 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { defaultTimeSettings, defaultDaySettings } from "@/lib/defaults";
 import { dowShortened } from "@/lib/constants";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 const slotMinutes = 15;
 
@@ -28,6 +38,8 @@ export function TimetableGrid({
 }) {
   const [deleteMode, setDeleteMode] = useState(false);
   const [width, setWidth] = useState(1200);
+  const [showDowAlertDialog, setShowDowAlertDialog] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const router = useRouter();
   const startHour = Number(
     (settings?.["start_time"] ?? defaultTimeSettings.start_time).slice(0, 2),
@@ -62,9 +74,16 @@ export function TimetableGrid({
   const virtualRows = (hoursCovered * 60) / minSlotMinutes;
   const columns: number = dow.length - 1;
 
-  const handleDeleteBlock = async (id: string) => {
-    if (!confirm("Delete this block?")) return;
-    await deleteBlock(id);
+  const handleDeleteRequest = (id: string) => {
+    setShowDowAlertDialog(true);
+    setDeleteId(id);
+  };
+
+  const handleDeleteBlock = async () => {
+    if (deleteId) {
+      await deleteBlock(deleteId);
+    }
+    setShowDowAlertDialog(false);
     router.refresh();
   };
 
@@ -171,7 +190,7 @@ export function TimetableGrid({
                       <div className="flex grow justify-end p-0.5">
                         <LucideX
                           className="size-4 cursor-pointer text-gray-300 hover:text-white"
-                          onClick={() => handleDeleteBlock(e.id)}
+                          onClick={() => handleDeleteRequest(e.id)}
                         />
                       </div>
                     )}
@@ -203,6 +222,28 @@ export function TimetableGrid({
           })}
         </div>
       </div>
+      <AlertDialog
+        open={showDowAlertDialog}
+        onOpenChange={setShowDowAlertDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Do you want to delete this block?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleDeleteBlock}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
