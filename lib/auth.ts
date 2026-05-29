@@ -4,6 +4,7 @@ import { admin } from "better-auth/plugins";
 import { sqlConn } from "@/lib/db";
 import * as schema from "@/db/schema";
 import bcrypt from "bcryptjs";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 export const auth = betterAuth({
   database: drizzleAdapter(sqlConn, {
@@ -18,6 +19,15 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url, token }, request) => {
+      void sendPasswordResetEmail({
+        email: user.email,
+        url: url,
+      });
+    },
+    onPasswordReset: async ({ user }, request) => {
+      console.log(`Password for user ${user.email} has been reset.`);
+    },
     password: {
       async hash(password) {
         return bcrypt.hash(password, 10);

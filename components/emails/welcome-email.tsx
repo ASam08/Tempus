@@ -4,7 +4,7 @@ interface EmailTemplateProps {
   firstName: string;
 }
 
-export function EmailTemplate({ firstName }: EmailTemplateProps) {
+export function WelcomeEmail({ firstName }: EmailTemplateProps) {
   return (
     <div>
       <h1>Welcome, {firstName}!</h1>
