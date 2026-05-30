@@ -101,6 +101,9 @@ export function LoginForm({
                 </div>
                 <Input id="password" type="password" name="password" required />
               </Field>
+              <FieldDescription className="text-right">
+                <Link href="/login/password-reset">Forgot password?</Link>
+              </FieldDescription>
               <Field>
                 <Button
                   type="submit"
