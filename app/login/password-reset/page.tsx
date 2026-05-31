@@ -13,7 +13,7 @@ import TempusLogoBrand from "@/components/branding/tempuslogobrand";
 export default function PasswordResetPage() {
   const [isPending, setIsPending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const redirectUrl = `${process.env.NEXT_PUBLIC_TEMPUS_URL ?? "http://localhost:3000"}/reset-password-confirmation`;
+  const redirectUrl = `${process.env.NEXT_PUBLIC_TEMPUS_URL ?? "http://localhost:3000"}/reset-password`;
 
   const handleSubmit = async (email: string) => {
     setIsPending(true);
