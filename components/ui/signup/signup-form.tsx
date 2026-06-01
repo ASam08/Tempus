@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { z } from "zod";
 import { passwordSchema } from "@/lib/schema";
+import { PasswordRequirementsHover } from "@/components/general/password-requirements-hover";
 
 const SignupFormSchema = z
   .object({
@@ -145,7 +146,9 @@ export function SignupForm({
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <FieldLabel htmlFor="password">
+                      Password <PasswordRequirementsHover />
+                    </FieldLabel>
                     <Input
                       id="password"
                       type="password"
@@ -180,9 +183,6 @@ export function SignupForm({
                     {error}
                   </p>
                 ))}
-                <FieldDescription>
-                  Must be at least 8 characters long.
-                </FieldDescription>
               </Field>
               <Field>
                 {message && <p className="text-sm text-red-500">{message}</p>}

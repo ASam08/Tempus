@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import TempusLogoBrand from "@/components/branding/tempuslogobrand";
 import { useSearchParams, useRouter } from "next/navigation";
 import { passwordSchema } from "@/lib/schema";
+import { PasswordRequirementsHover } from "@/components/general/password-requirements-hover";
 
 export default function PasswordResetPage() {
   const [isPending, setIsPending] = useState(false);
@@ -102,7 +103,9 @@ export default function PasswordResetPage() {
               }}
             >
               <Field>
-                <FieldLabel htmlFor="newPassword">New Password</FieldLabel>
+                <FieldLabel htmlFor="newPassword">
+                  New Password <PasswordRequirementsHover />
+                </FieldLabel>
                 <Input
                   id="newPassword"
                   type="password"
