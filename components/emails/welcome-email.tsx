@@ -1,13 +1,13 @@
 import * as React from "react";
 
 interface EmailTemplateProps {
-  firstName: string;
+  name: string;
 }
 
-export function WelcomeEmail({ firstName }: EmailTemplateProps) {
+export function WelcomeEmail({ name }: EmailTemplateProps) {
   return (
     <div>
-      <h1>Welcome, {firstName}!</h1>
+      <h1>Welcome to Tempus, {name}!</h1>
     </div>
   );
 }
