@@ -69,11 +69,11 @@ export default function PasswordResetForm() {
         >
           <Field>
             <FieldLabel htmlFor="email">
-              Email{" "}
+              Email
               <div>
                 <div className="hidden md:flex">
                   <HoverCard>
-                    <HoverCardTrigger className="text-muted-foreground ml-2 text-xs">
+                    <HoverCardTrigger className="text-muted-foreground ml-1 text-xs">
                       <LucideCircleQuestionMark size={16} />
                     </HoverCardTrigger>
                     <HoverCardContent>
@@ -86,7 +86,7 @@ export default function PasswordResetForm() {
                 </div>
                 <div className="md:hidden">
                   <Popover>
-                    <PopoverTrigger className="text-muted-foreground ml-2 text-xs">
+                    <PopoverTrigger className="text-muted-foreground ml-1 text-xs">
                       <LucideCircleQuestionMark size={16} />
                     </PopoverTrigger>
                     <PopoverContent>

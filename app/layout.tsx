@@ -31,12 +31,12 @@ export default function RootLayout({
         >
           {children}
           <Toaster />
-          <div className="flex">
-            <div className="fixed top-2 left-2 justify-start md:top-2"></div>
-            <div className="fixed top-2 right-2 justify-end md:top-4 md:right-4">
-              <ModeToggle />
-            </div>
+          {/* <div className="flex"> */}
+          {/* <div className="fixed top-2 left-2 justify-start md:top-2"></div> */}
+          <div className="fixed top-2 right-2 justify-end md:top-4 md:right-4">
+            <ModeToggle />
           </div>
+          {/* </div> */}
         </ThemeProvider>
       </body>
     </html>
