@@ -20,6 +20,10 @@ jest.mock("sonner", () => ({
   toast: { success: jest.fn(), error: jest.fn() },
 }));
 
+jest.mock("@/components/general/password-requirements-hover", () => ({
+  PasswordRequirementsHover: () => null,
+}));
+
 import { SignupForm } from "@/components/ui/signup/signup-form";
 import { authClient } from "@/lib/auth-client";
 
@@ -48,10 +52,10 @@ function fillAndSubmit(overrides: Partial<typeof validFormData> = {}) {
   fireEvent.change(screen.getByLabelText(/^email$/i), {
     target: { value: data.email },
   });
-  fireEvent.change(screen.getByLabelText(/^password$/i), {
+  fireEvent.change(document.getElementById("password")!, {
     target: { value: data.password },
   });
-  fireEvent.change(screen.getByLabelText(/confirm password/i), {
+  fireEvent.change(document.getElementById("confirmPassword")!, {
     target: { value: data.confirmPassword },
   });
   fireEvent.submit(document.querySelector("form")!);
@@ -71,12 +75,12 @@ describe("SignupForm", () => {
 
     it("renders the password input", () => {
       render(<SignupForm />);
-      expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+      expect(document.getElementById("password")).toBeInTheDocument();
     });
 
     it("renders the confirm password input", () => {
       render(<SignupForm />);
-      expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
+      expect(document.getElementById("confirmPassword")).toBeInTheDocument();
     });
 
     it("renders the create account button", () => {

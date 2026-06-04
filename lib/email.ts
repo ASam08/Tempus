@@ -10,13 +10,13 @@ type EmailResult = { success: true } | { success: false; error: string };
 
 export async function sendWelcomeEmail(
   email: string,
-  firstName: string,
+  name: string,
 ): Promise<EmailResult> {
   const { error } = await resend.emails.send({
     from: FROM,
     to: [email],
     subject: "Welcome to Tempus",
-    react: WelcomeEmail({ firstName }),
+    react: WelcomeEmail({ name }),
   });
 
   if (error) return { success: false, error: error.message };
