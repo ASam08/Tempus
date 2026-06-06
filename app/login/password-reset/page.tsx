@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 export default function PasswordResetPage() {
   if (
-    !process.env.EMAIL_DOMAIN === undefined ||
+    process.env.EMAIL_DOMAIN === undefined ||
     process.env.RESEND_API_KEY === undefined
   ) {
     redirect("/login");
