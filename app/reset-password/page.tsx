@@ -2,6 +2,7 @@ import Link from "next/link";
 import TempusLogoBrand from "@/components/branding/tempuslogobrand";
 import ResetPasswordForm from "@/components/ui/reset-password/reset-password-form";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 export default function PasswordResetPage() {
   if (
@@ -19,7 +20,9 @@ export default function PasswordResetPage() {
         >
           <TempusLogoBrand width={340} height={105} />
         </Link>
-        <ResetPasswordForm />
+        <Suspense>
+          <ResetPasswordForm />
+        </Suspense>
       </div>
     </div>
   );
