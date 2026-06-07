@@ -2,7 +2,18 @@ import { Resend } from "resend";
 import { WelcomeEmail } from "@/components/emails/welcome-email";
 import { PasswordResetEmail } from "@/components/emails/password-reset-email";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend: Resend;
+
+if (!process.env.RESEND_API_KEY) {
+  throw new Error("RESEND_API_KEY is not set");
+} else {
+  resend = new Resend(process.env.RESEND_API_KEY);
+}
+
+if (!process.env.EMAIL_DOMAIN) {
+  throw new Error("EMAIL_DOMAIN is not set");
+}
+// const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM = `Tempus <noreply@${process.env.EMAIL_DOMAIN}>`;
 
