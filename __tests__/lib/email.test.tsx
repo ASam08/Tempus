@@ -34,22 +34,32 @@ describe("email", () => {
   });
 
   describe("module initialisation", () => {
-    it("instantiates Resend with RESEND_API_KEY", async () => {
+    it("instantiates Resend with RESEND_API_KEY when it is set", async () => {
       jest.resetModules();
-      await import("@/lib/email");
       const { Resend: FreshResend } = await import("resend");
+      await import("@/lib/email");
 
       expect(FreshResend).toHaveBeenCalledWith("re_test_key");
     });
 
-    it("instantiates Resend with undefined when RESEND_API_KEY is not set", async () => {
+    it("does not instantiate Resend when RESEND_API_KEY is missing", async () => {
       delete process.env.RESEND_API_KEY;
 
       jest.resetModules();
-      await import("@/lib/email");
       const { Resend: FreshResend } = await import("resend");
+      await import("@/lib/email");
 
-      expect(FreshResend).toHaveBeenCalledWith(undefined);
+      expect(FreshResend).not.toHaveBeenCalled();
+    });
+
+    it("instantiates Resend even when EMAIL_DOMAIN is missing", async () => {
+      delete process.env.EMAIL_DOMAIN;
+
+      jest.resetModules();
+      const { Resend: FreshResend } = await import("resend");
+      await import("@/lib/email");
+
+      expect(FreshResend).toHaveBeenCalledWith("re_test_key");
     });
   });
 
@@ -104,6 +114,34 @@ describe("email", () => {
         expect.objectContaining({ from: "Tempus <noreply@my-school.nz>" }),
       );
     });
+
+    it("returns { success: false, error } when RESEND_API_KEY is not set", async () => {
+      delete process.env.RESEND_API_KEY;
+
+      jest.resetModules();
+      const { sendWelcomeEmail } = await import("@/lib/email");
+      const result = await sendWelcomeEmail("user@test.com", "Alice");
+
+      expect(result).toEqual({
+        success: false,
+        error: "Email service disabled",
+      });
+      expect(mockEmailsSend).not.toHaveBeenCalled();
+    });
+
+    it("returns { success: false, error } when EMAIL_DOMAIN is not set", async () => {
+      delete process.env.EMAIL_DOMAIN;
+
+      jest.resetModules();
+      const { sendWelcomeEmail } = await import("@/lib/email");
+      const result = await sendWelcomeEmail("user@test.com", "Alice");
+
+      expect(result).toEqual({
+        success: false,
+        error: "Email service disabled",
+      });
+      expect(mockEmailsSend).not.toHaveBeenCalled();
+    });
   });
 
   describe("sendPasswordResetEmail", () => {
@@ -127,7 +165,7 @@ describe("email", () => {
       });
     });
 
-    it("returns undefined (fire-and-forget — does not return a result)", async () => {
+    it("resolves to undefined (fire-and-forget)", async () => {
       mockEmailsSend.mockResolvedValue({ data: {}, error: null });
 
       jest.resetModules();
@@ -140,18 +178,17 @@ describe("email", () => {
       expect(result).toBeUndefined();
     });
 
-    it("does not throw when resend rejects (fire-and-forget)", async () => {
+    it("resolves without throwing when resend rejects (fire-and-forget)", async () => {
       mockEmailsSend.mockRejectedValue(new Error("Network failure"));
 
       jest.resetModules();
       const { sendPasswordResetEmail } = await import("@/lib/email");
+      await sendPasswordResetEmail({
+        email: "user@test.com",
+        url: "https://example.com/reset-password?token=abc123",
+      });
 
-      await expect(
-        sendPasswordResetEmail({
-          email: "user@test.com",
-          url: "https://example.com/reset-password?token=abc123",
-        }),
-      ).resolves.toBeUndefined();
+      expect(mockEmailsSend).toHaveBeenCalled();
     });
 
     it("uses EMAIL_DOMAIN in the from address", async () => {
@@ -168,6 +205,32 @@ describe("email", () => {
       expect(mockEmailsSend).toHaveBeenCalledWith(
         expect.objectContaining({ from: "Tempus <noreply@my-school.nz>" }),
       );
+    });
+
+    it("skips send when RESEND_API_KEY is not set", async () => {
+      delete process.env.RESEND_API_KEY;
+
+      jest.resetModules();
+      const { sendPasswordResetEmail } = await import("@/lib/email");
+      await sendPasswordResetEmail({
+        email: "user@test.com",
+        url: "https://example.com/reset-password?token=abc123",
+      });
+
+      expect(mockEmailsSend).not.toHaveBeenCalled();
+    });
+
+    it("skips send when EMAIL_DOMAIN is not set", async () => {
+      delete process.env.EMAIL_DOMAIN;
+
+      jest.resetModules();
+      const { sendPasswordResetEmail } = await import("@/lib/email");
+      await sendPasswordResetEmail({
+        email: "user@test.com",
+        url: "https://example.com/reset-password?token=abc123",
+      });
+
+      expect(mockEmailsSend).not.toHaveBeenCalled();
     });
   });
 });

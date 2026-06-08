@@ -2,20 +2,11 @@ import { Resend } from "resend";
 import { WelcomeEmail } from "@/components/emails/welcome-email";
 import { PasswordResetEmail } from "@/components/emails/password-reset-email";
 
-let resend: Resend;
+const resendApiKey = process.env.RESEND_API_KEY;
+const emailDomain = process.env.EMAIL_DOMAIN;
+const resend = resendApiKey ? new Resend(process.env.RESEND_API_KEY) : null;
 
-if (!process.env.RESEND_API_KEY) {
-  throw new Error("RESEND_API_KEY is not set");
-} else {
-  resend = new Resend(process.env.RESEND_API_KEY);
-}
-
-if (!process.env.EMAIL_DOMAIN) {
-  throw new Error("EMAIL_DOMAIN is not set");
-}
-// const resend = new Resend(process.env.RESEND_API_KEY);
-
-const FROM = `Tempus <noreply@${process.env.EMAIL_DOMAIN}>`;
+const FROM = emailDomain ? `Tempus <noreply@${emailDomain}>` : null;
 
 type EmailResult = { success: true } | { success: false; error: string };
 
@@ -23,6 +14,12 @@ export async function sendWelcomeEmail(
   email: string,
   name: string,
 ): Promise<EmailResult> {
+  if (!resend || !FROM) {
+    console.warn(
+      "Resend API key or email domain is missing. Skipping email send.",
+    );
+    return { success: false, error: "Email service disabled" };
+  }
   const { error } = await resend.emails.send({
     from: FROM,
     to: [email],
@@ -41,6 +38,12 @@ export async function sendPasswordResetEmail({
   email: string;
   url: string;
 }): Promise<void> {
+  if (!resend || !FROM) {
+    console.warn(
+      "Resend API key or email domain is missing. Skipping email send.",
+    );
+    return;
+  }
   void resend.emails.send({
     from: FROM,
     to: [email],

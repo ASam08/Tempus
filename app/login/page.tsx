@@ -4,6 +4,14 @@ import TempusLogoBrand from "@/components/branding/tempuslogobrand";
 import Link from "next/link";
 
 export default function LoginPage() {
+  let emailDisabled = false;
+  if (
+    process.env.EMAIL_DOMAIN === undefined ||
+    process.env.RESEND_API_KEY === undefined
+  ) {
+    emailDisabled = true;
+  }
+
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
@@ -14,7 +22,7 @@ export default function LoginPage() {
           <TempusLogoBrand width={340} height={105} />
         </Link>
         <Suspense>
-          <LoginForm />
+          <LoginForm emailDisabled={emailDisabled} />
         </Suspense>
       </div>
     </div>

@@ -13,6 +13,8 @@ export async function register() {
 
     const warnEnvVars: [string, string][] = [
       ["TEMPUS_URL", "http://localhost:3000"],
+      ["RESEND_API_KEY", "not set (email sending disabled)"],
+      ["EMAIL_DOMAIN", "not set (email sending disabled)"],
     ];
 
     const missing = requiredEnvVars.filter((key) => !process.env[key]);
