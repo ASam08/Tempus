@@ -15,6 +15,9 @@ services:
       POSTGRES_HOST: tempus_db
       BETTER_AUTH_SECRET: # Run: openssl rand -base64 32
       TEMPUS_URL: # Set to your app's base URL, e.g. `http://localhost:3000`
+      # Email optional variables. Email will not function without these, which will prevent password resets.
+      RESEND_API_KEY: # See Resend documentation for how to obtain
+      EMAIL_DOMAIN: # The domain registered with your Resend API key
     restart: unless-stopped
 
   tempus_db:
