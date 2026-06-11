@@ -53,7 +53,7 @@ export function PasswordResetEmail({
 }
 
 const body: React.CSSProperties = {
-  backgroundColor: "#f4f4f5",
+  backgroundColor: "#f7f7f3",
   fontFamily:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 };
@@ -61,7 +61,7 @@ const body: React.CSSProperties = {
 const container: React.CSSProperties = {
   margin: "40px auto",
   backgroundColor: "#ffffff",
-  borderRadius: "8px",
+  borderRadius: "0.625rem",
   padding: "40px",
   maxWidth: "480px",
 };
@@ -69,20 +69,20 @@ const container: React.CSSProperties = {
 const heading: React.CSSProperties = {
   fontSize: "24px",
   fontWeight: "700",
-  color: "#09090b",
+  color: "#231f1c",
   margin: "0 0 4px",
 };
 
 const subheading: React.CSSProperties = {
   fontSize: "16px",
-  color: "#71717a",
+  color: "#737168",
   margin: "0 0 24px",
 };
 
 const paragraph: React.CSSProperties = {
   fontSize: "15px",
   lineHeight: "1.6",
-  color: "#3f3f46",
+  color: "#231f1c",
   margin: "0 0 24px",
 };
 
@@ -92,9 +92,9 @@ const buttonSection: React.CSSProperties = {
 };
 
 const button: React.CSSProperties = {
-  backgroundColor: "#09090b",
-  color: "#ffffff",
-  borderRadius: "6px",
+  backgroundColor: "#2d5be3",
+  color: "#f0f3fd",
+  borderRadius: "0.625rem",
   padding: "12px 24px",
   fontSize: "15px",
   fontWeight: "600",
@@ -104,15 +104,15 @@ const button: React.CSSProperties = {
 
 const expiry: React.CSSProperties = {
   fontSize: "13px",
-  color: "#71717a",
+  color: "#737168",
   lineHeight: "1.5",
   margin: "0 0 24px",
 };
 
 const footer: React.CSSProperties = {
   fontSize: "12px",
-  color: "#a1a1aa",
-  borderTop: "1px solid #f4f4f5",
+  color: "#737168",
+  borderTop: "1px solid #ebe9e6",
   paddingTop: "16px",
   margin: "0",
 };
