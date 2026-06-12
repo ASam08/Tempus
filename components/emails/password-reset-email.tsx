@@ -5,6 +5,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Section,
   Text,
@@ -26,7 +27,13 @@ export function PasswordResetEmail({
       <Preview>{`Reset your Tempus password — link expires in ${expiresInHours} hour${expiresInHours !== 1 ? "s" : ""}`}</Preview>
       <Body style={body}>
         <Container style={container}>
-          <Heading style={heading}>Tempus</Heading>
+          <Img
+            src="https://raw.githubusercontent.com/ASam08/Tempus/main/public/logos/tempuslogo-light.png"
+            alt="Tempus"
+            width={120}
+            height={32}
+            style={logo}
+          />
           <Text style={subheading}>Password Reset Request</Text>
           <Text style={paragraph}>
             We received a request to reset the password for your Tempus account.
@@ -38,13 +45,11 @@ export function PasswordResetEmail({
             </Button>
           </Section>
           <Text style={expiry}>
-            This link expires in {expiresInHours} hour
-            {expiresInHours !== 1 ? "s" : ""}. If you didn&apos;t request a
-            password reset, you can safely ignore this email.
+            {`This link expires in ${expiresInHours} hour${expiresInHours !== 1 ? "s" : ""}. If you didn't request a password reset, you can safely ignore this email.`}
           </Text>
           <Text style={footer}>
-            You&apos;re receiving this because a password reset was requested
-            for your Tempus account.
+            You're receiving this because a password reset was requested for
+            your Tempus account.
           </Text>
         </Container>
       </Body>
@@ -66,11 +71,8 @@ const container: React.CSSProperties = {
   maxWidth: "480px",
 };
 
-const heading: React.CSSProperties = {
-  fontSize: "24px",
-  fontWeight: "700",
-  color: "#231f1c",
-  margin: "0 0 4px",
+const logo: React.CSSProperties = {
+  margin: "0 0 24px",
 };
 
 const subheading: React.CSSProperties = {
