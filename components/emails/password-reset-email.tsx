@@ -27,13 +27,15 @@ export function PasswordResetEmail({
       <Preview>{`Reset your Tempus password — link expires in ${expiresInHours} hour${expiresInHours !== 1 ? "s" : ""}`}</Preview>
       <Body style={body}>
         <Container style={container}>
-          <Img
-            src="https://raw.githubusercontent.com/ASam08/Tempus/main/public/logos/tempuslogo-light.png"
-            alt="Tempus"
-            width={120}
-            height={32}
-            style={logo}
-          />
+          <Section style={logoSection}>
+            <Img
+              src="https://raw.githubusercontent.com/ASam08/Tempus/57e6ca703583afdf5333fe2fecc7df52869384d0/public/logos/tempuslogo_light.png"
+              alt="Tempus"
+              width={340}
+              height={105}
+              style={logo}
+            />
+          </Section>
           <Text style={subheading}>Password Reset Request</Text>
           <Text style={paragraph}>
             We received a request to reset the password for your Tempus account.
@@ -71,8 +73,15 @@ const container: React.CSSProperties = {
   maxWidth: "480px",
 };
 
-const logo: React.CSSProperties = {
+const logoSection: React.CSSProperties = {
+  textAlign: "center",
+  width: "100%",
   margin: "0 0 24px",
+};
+
+const logo: React.CSSProperties = {
+  display: "inline-block",
+  margin: "0 auto",
 };
 
 const subheading: React.CSSProperties = {
