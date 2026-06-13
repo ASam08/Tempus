@@ -9,7 +9,7 @@ import {
   Preview,
   Section,
   Text,
-} from "@react-email/components";
+} from "react-email";
 import * as React from "react";
 
 interface PasswordResetEmailProps {
@@ -17,7 +17,7 @@ interface PasswordResetEmailProps {
   expiresInHours?: number;
 }
 
-export function PasswordResetEmail({
+export default function PasswordResetEmail({
   resetLink,
   expiresInHours = 1,
 }: PasswordResetEmailProps) {

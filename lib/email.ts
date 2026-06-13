@@ -1,6 +1,6 @@
 import { Resend } from "resend";
-import { WelcomeEmail } from "@/components/emails/welcome-email";
-import { PasswordResetEmail } from "@/components/emails/password-reset-email";
+import WelcomeEmail from "@/components/emails/welcome-email";
+import PasswordResetEmail from "@/components/emails/password-reset-email";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const emailDomain = process.env.EMAIL_DOMAIN;
@@ -24,7 +24,7 @@ export async function sendWelcomeEmail(
     from: FROM,
     to: [email],
     subject: "Welcome to Tempus",
-    react: WelcomeEmail({ name }),
+    react: WelcomeEmail({ name, loginLink: `${process.env.TEMPUS_URL}/login` }),
   });
 
   if (error) return { success: false, error: error.message };
