@@ -28,6 +28,8 @@ export async function sendWelcomeEmail(
   });
 
   if (error) return { success: false, error: error.message };
+
+  console.log(`Sent welcome email to ${email}`);
   return { success: true };
 }
 

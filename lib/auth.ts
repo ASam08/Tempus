@@ -6,7 +6,6 @@ import * as schema from "@/db/schema";
 import bcrypt from "bcryptjs";
 import { sendPasswordResetEmail, sendWelcomeEmail } from "@/lib/email";
 import { createAuthMiddleware } from "better-auth/api";
-import { ConsoleLogWriter } from "drizzle-orm";
 
 export const auth = betterAuth({
   database: drizzleAdapter(sqlConn, {
@@ -47,7 +46,6 @@ export const auth = betterAuth({
           await ctx.context.runInBackgroundOrAwait(
             sendWelcomeEmail(newSession.user.email, newSession.user.name),
           );
-          console.log(`Sent welcome email to ${newSession.user.email}`);
         }
       }
     }),
