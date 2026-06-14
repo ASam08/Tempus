@@ -22,19 +22,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { z } from "zod";
+import { passwordSchema } from "@/lib/schema";
+import { PasswordRequirementsHover } from "@/components/general/password-requirements-hover";
 
 const SignupFormSchema = z
   .object({
     name: z.string().min(1, { message: "Name is required" }).trim(),
     email: z.string().email({ message: "Invalid email address" }).trim(),
-    password: z
-      .string()
-      .min(8, { message: "Be at least 8 characters long" })
-      .regex(/[a-zA-Z]/, { message: "Contain at least one letter." })
-      .regex(/[0-9]/, { message: "Contain at least one number." })
-      .regex(/[^a-zA-Z0-9]/, {
-        message: "Contain at least one special character.",
-      }),
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -151,7 +146,9 @@ export function SignupForm({
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <FieldLabel htmlFor="password">
+                      Password <PasswordRequirementsHover />
+                    </FieldLabel>
                     <Input
                       id="password"
                       type="password"
@@ -186,9 +183,6 @@ export function SignupForm({
                     {error}
                   </p>
                 ))}
-                <FieldDescription>
-                  Must be at least 8 characters long.
-                </FieldDescription>
               </Field>
               <Field>
                 {message && <p className="text-sm text-red-500">{message}</p>}

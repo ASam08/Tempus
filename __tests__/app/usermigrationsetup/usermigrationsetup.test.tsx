@@ -16,15 +16,6 @@ jest.mock("@/components/branding/tempuslogobrand", () => ({
   default: () => <img alt="Tempus logo" />,
 }));
 
-jest.mock("@/lib/actions", () => ({
-  authenticate: jest.fn(),
-}));
-
-jest.mock("@/lib/db", () => ({
-  DATABASE_URL: "postgres://dummy:dummy@dummy:5432/dummy",
-  sqlConn: {},
-}));
-
 import SetupPage from "@/app/usermigrationsetup/page";
 
 describe("SetupPage", () => {

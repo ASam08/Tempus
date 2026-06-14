@@ -13,10 +13,6 @@ jest.mock("next/headers", () => ({
   headers: jest.fn().mockResolvedValue(new Headers()),
 }));
 
-jest.mock("@/lib/actions", () => ({
-  authenticate: jest.fn(),
-}));
-
 jest.mock("@/app/ui/dashboard/currentcardclient", () => ({
   __esModule: true,
   default: () => <div>CurrentCardClient</div>,
@@ -40,11 +36,6 @@ jest.mock("@/components/ui/dashboard/localdate", () => ({
 jest.mock("@/components/ui/dashboard/localtime", () => ({
   __esModule: true,
   default: () => <div>LocalTimeDisplay</div>,
-}));
-
-jest.mock("@/lib/db", () => ({
-  DATABASE_URL: "postgres://dummy:dummy@dummy:5432/dummy",
-  sqlConn: {},
 }));
 
 jest.mock("next/navigation", () => ({

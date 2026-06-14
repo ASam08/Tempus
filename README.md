@@ -62,6 +62,7 @@ A simple, self-hostable weekly timetable app. Whether you're a student keeping t
 | Auth       | [Better-Auth](https://better-auth.com)            |
 | UI         | [shadcn/ui](https://ui.shadcn.com) + Tailwind CSS |
 | Deployment | Docker + Docker Compose                           |
+| Email      | [Resend](https://resend.com)                      |
 
 ---
 
@@ -94,6 +95,9 @@ services:
       POSTGRES_HOST: tempus_db
       BETTER_AUTH_SECRET: # Run: openssl rand -base64 32
       TEMPUS_URL: # set to your applications URL
+      # Email optional variables. Email will not function without these, which will prevent password resets.
+      RESEND_API_KEY: # See Resend documentation for how to obtain
+      EMAIL_DOMAIN: # The domain registered with your Resend API key
     restart: unless-stopped
 
   tempus_db:
@@ -137,12 +141,14 @@ Visit [http://localhost:3000](http://localhost:3000) and create your account.
 
 The following environment variables are available:
 
-| Variable             | Required? | Default | Notes                                                                |
-| -------------------- | --------- | ------- | -------------------------------------------------------------------- |
-| `BETTER_AUTH_SECRET` | Yes       | -       | Run `openssl rand -base64 32` to generate                            |
-| `TEMPUS_URL`         | Yes       | -       | Set to your app's base URL, e.g. `http://localhost:3000`             |
-| `NODE_ENV`           | Yes       | -       | set to true to ensure proper performance                             |
-| `APPROVE_SIGNUPS`    | No        | `false` | Set to `true` to require admin approval before new users can sign in |
+| Variable             | Required? | Default | Notes                                                                                                                    |
+| -------------------- | --------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `BETTER_AUTH_SECRET` | Yes       | -       | Run `openssl rand -base64 32` to generate                                                                                |
+| `TEMPUS_URL`         | Yes       | -       | Set to your app's base URL, e.g. `http://localhost:3000`                                                                 |
+| `NODE_ENV`           | Yes       | -       | set to true to ensure proper performance                                                                                 |
+| `APPROVE_SIGNUPS`    | No        | `false` | Set to `true` to require admin approval before new users can sign in                                                     |
+| `RESEND_API_KEY`     | No        | -       | See Resend documentation for how to obtain. Allows for emails to be sent to users for welcome emails and password resets |
+| `EMAIL_DOMAIN`       | No        | -       | The email domain associated with your Resend API key                                                                     |
 
 ---
 
@@ -172,6 +178,8 @@ BETTER_AUTH_SECRET: # Run: openssl rand -base64 32
 BETTER_AUTH_URL=http://localhost:3000 # Base URL of your app
 NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000 # Base URL of your app for client-side usage
 TEMPUS_URL=http://localhost:3000 # Base URL of your app
+RESEND_API_KEY: # See Resend documentation for how to obtain
+EMAIL_DOMAIN: # The domain registered with your Resend API key
 ```
 
 **4. Start the dev server**

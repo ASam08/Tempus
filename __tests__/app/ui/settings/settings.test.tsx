@@ -42,6 +42,18 @@ jest.mock("@/components/ui/hover-card", () => ({
   ),
 }));
 
+jest.mock("@/components/ui/popover", () => ({
+  Popover: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  PopoverTrigger: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  PopoverContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
 jest.mock("@/components/ui/checkbox", () => ({
   Checkbox: ({
     id,

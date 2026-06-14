@@ -4,6 +4,8 @@ import { admin } from "better-auth/plugins";
 import { sqlConn } from "@/lib/db";
 import * as schema from "@/db/schema";
 import bcrypt from "bcryptjs";
+import { sendPasswordResetEmail, sendWelcomeEmail } from "@/lib/email";
+import { createAuthMiddleware } from "better-auth/api";
 
 export const auth = betterAuth({
   database: drizzleAdapter(sqlConn, {
@@ -18,6 +20,15 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url, token }, request) => {
+      void sendPasswordResetEmail({
+        email: user.email,
+        url: url,
+      });
+    },
+    onPasswordReset: async ({ user }, request) => {
+      console.log(`Password for user ${user.email} has been reset.`);
+    },
     password: {
       async hash(password) {
         return bcrypt.hash(password, 10);
@@ -26,6 +37,18 @@ export const auth = betterAuth({
         return bcrypt.compare(password, hash);
       },
     },
+  },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path.startsWith("/sign-up")) {
+        const newSession = ctx.context.newSession;
+        if (newSession) {
+          await ctx.context.runInBackgroundOrAwait(
+            sendWelcomeEmail(newSession.user.email, newSession.user.name),
+          );
+        }
+      }
+    }),
   },
 
   databaseHooks: {

@@ -20,6 +20,11 @@ import { dowKeyValue } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { dowDefault } from "@/lib/utils";
 import { SettingsState } from "@/lib/definitions";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export default function SettingsFormClient({
   settings,
@@ -117,15 +122,30 @@ export default function SettingsFormClient({
           </div>
 
           <div className="">
-            <HoverCard openDelay={10} closeDelay={100}>
-              <HoverCardTrigger asChild>
-                <LucideCircleQuestionMark className="size-4" />
-              </HoverCardTrigger>
-              <HoverCardContent className="max-w-xl text-xs" side="right">
-                Start and End times are used to determine the hours shown on the
-                timetable.
-              </HoverCardContent>
-            </HoverCard>
+            <div>
+              <div className="hidden md:inline">
+                <HoverCard openDelay={10} closeDelay={100}>
+                  <HoverCardTrigger asChild>
+                    <LucideCircleQuestionMark className="size-4" />
+                  </HoverCardTrigger>
+                  <HoverCardContent className="max-w-xl text-xs" side="right">
+                    Start and End times are used to determine the hours shown on
+                    the timetable.
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
+              <div className="md:hidden">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <LucideCircleQuestionMark className="size-4" />
+                  </PopoverTrigger>
+                  <PopoverContent className="max-w-xl text-xs">
+                    Start and End times are used to determine the hours shown on
+                    the timetable.
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
             <div
               className="grid items-center pt-5"
               id="end_time_error"

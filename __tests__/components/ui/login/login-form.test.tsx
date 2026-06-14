@@ -2,8 +2,6 @@ import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-// jest.fn() must live inside the factory — variables declared outside are not
-// yet initialised when Jest hoists jest.mock() calls above all imports.
 jest.mock("next/navigation", () => ({
   useSearchParams: jest.fn(() => ({ get: jest.fn(() => null) })),
   useRouter: jest.fn(() => ({ push: jest.fn() })),
@@ -38,7 +36,6 @@ async function fillAndSubmit(email = "user@example.com", password = "secret") {
   await userEvent.click(screen.getByRole("button", { name: /login/i }));
 }
 
-// Returns the push spy that useRouter handed to the component in this render.
 function getMockPush(): jest.Mock {
   return mockUseRouter.mock.results.at(-1)?.value?.push;
 }
@@ -53,31 +50,31 @@ beforeEach(() => {
 describe("LoginForm", () => {
   describe("Form fields", () => {
     it("renders the email input", () => {
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     });
 
     it("renders the password input", () => {
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     });
 
     it("renders the login button", () => {
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       expect(
         screen.getByRole("button", { name: /login/i }),
       ).toBeInTheDocument();
     });
 
     it("renders a link to sign up", () => {
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       expect(
         screen.getByRole("link", { name: /sign up/i }),
       ).toBeInTheDocument();
     });
 
     it("renders terms of service and privacy policy links", () => {
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       expect(
         screen.getByRole("link", { name: /terms of service/i }),
       ).toBeInTheDocument();
@@ -87,9 +84,23 @@ describe("LoginForm", () => {
     });
 
     it("does not show an error message on initial render", () => {
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       const liveRegion = document.querySelector('[aria-live="polite"]');
       expect(liveRegion).toBeEmptyDOMElement();
+    });
+
+    it("shows the forgot password link when emailDisabled is false", () => {
+      render(<LoginForm emailDisabled={false} />);
+      expect(
+        screen.getByRole("link", { name: /forgot password/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("does not show the forgot password link when emailDisabled is true", () => {
+      render(<LoginForm emailDisabled={true} />);
+      expect(
+        screen.queryByRole("link", { name: /forgot password/i }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -97,7 +108,7 @@ describe("LoginForm", () => {
     it("shows 'Logging in…' and disables the button while the request is in flight", async () => {
       mockSignInEmail.mockReturnValue(new Promise(() => {}));
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       const button = screen.getByRole("button", { name: /logging in/i });
@@ -108,7 +119,7 @@ describe("LoginForm", () => {
 
   describe("Successful login", () => {
     it("calls authClient.signIn.email with the submitted credentials", async () => {
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit("user@example.com", "mypassword");
 
       await waitFor(() => {
@@ -121,7 +132,7 @@ describe("LoginForm", () => {
     });
 
     it("redirects to /dashboard (default) after a successful login", async () => {
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -130,7 +141,7 @@ describe("LoginForm", () => {
     });
 
     it("does not show an error message after a successful login", async () => {
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -144,7 +155,7 @@ describe("LoginForm", () => {
 
   describe("Callback URL", () => {
     it("defaults to /dashboard when no callbackUrl param is present", async () => {
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -157,7 +168,7 @@ describe("LoginForm", () => {
     it("passes the callbackUrl from search params to signIn", async () => {
       mockUseSearchParams.mockReturnValue({ get: jest.fn(() => "/timetable") });
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -175,7 +186,7 @@ describe("LoginForm", () => {
         error: { code: "BANNED_USER" },
       });
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -190,7 +201,7 @@ describe("LoginForm", () => {
         error: { code: "BANNED_USER" },
       });
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -206,7 +217,7 @@ describe("LoginForm", () => {
         error: { code: "INVALID_EMAIL_OR_PASSWORD" },
       });
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -219,7 +230,7 @@ describe("LoginForm", () => {
         error: { code: "INVALID_EMAIL_OR_PASSWORD" },
       });
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -235,7 +246,7 @@ describe("LoginForm", () => {
         error: { code: "SOME_UNKNOWN_CODE" },
       });
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -251,7 +262,7 @@ describe("LoginForm", () => {
       const unknownError = { code: "SOME_UNKNOWN_CODE" };
       mockSignInEmail.mockResolvedValue({ error: unknownError });
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -266,7 +277,7 @@ describe("LoginForm", () => {
         error: { code: "SOME_UNKNOWN_CODE" },
       });
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -282,7 +293,7 @@ describe("LoginForm", () => {
         error: { code: "INVALID_EMAIL_OR_PASSWORD" },
       });
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -297,7 +308,7 @@ describe("LoginForm", () => {
         error: { code: "INVALID_EMAIL_OR_PASSWORD" },
       });
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {
@@ -311,7 +322,7 @@ describe("LoginForm", () => {
         error: { code: "BANNED_USER" },
       });
 
-      render(<LoginForm />);
+      render(<LoginForm emailDisabled={false} />);
       await fillAndSubmit();
 
       await waitFor(() => {

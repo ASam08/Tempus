@@ -25,8 +25,9 @@ import { authClient } from "@/lib/auth-client";
 
 export function LoginForm({
   className,
+  emailDisabled,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { emailDisabled: boolean }) {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const router = useRouter();
@@ -101,6 +102,11 @@ export function LoginForm({
                 </div>
                 <Input id="password" type="password" name="password" required />
               </Field>
+              {!emailDisabled && (
+                <FieldDescription className="text-right">
+                  <Link href="/login/password-reset">Forgot password?</Link>
+                </FieldDescription>
+              )}
               <Field>
                 <Button
                   type="submit"
