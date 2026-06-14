@@ -29,7 +29,7 @@ export default function PasswordResetEmail({
         <Container style={container}>
           <Section style={logoSection}>
             <Img
-              src="https://raw.githubusercontent.com/ASam08/Tempus/57e6ca703583afdf5333fe2fecc7df52869384d0/public/logos/tempuslogo_light.png"
+              src="https://raw.githubusercontent.com/ASam08/Tempus/main/public/logos/tempuslogo_light.png"
               alt="Tempus"
               width={340}
               height={105}
