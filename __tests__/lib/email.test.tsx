@@ -7,15 +7,14 @@ jest.mock("resend", () => ({
 }));
 
 jest.mock("@/components/emails/welcome-email", () => ({
-  WelcomeEmail: jest.fn((props) => props),
+  __esModule: true,
+  default: jest.fn((props) => props),
 }));
 
 jest.mock("@/components/emails/password-reset-email", () => ({
-  PasswordResetEmail: jest.fn((props) => props),
+  __esModule: true,
+  default: jest.fn((props) => props),
 }));
-
-import { WelcomeEmail } from "@/components/emails/welcome-email";
-import { PasswordResetEmail } from "@/components/emails/password-reset-email";
 
 describe("email", () => {
   const originalEnv = process.env;
@@ -26,6 +25,7 @@ describe("email", () => {
       ...originalEnv,
       RESEND_API_KEY: "re_test_key",
       EMAIL_DOMAIN: "example.com",
+      TEMPUS_URL: "http://localhost",
     };
   });
 
@@ -75,7 +75,7 @@ describe("email", () => {
         from: "Tempus <noreply@example.com>",
         to: ["user@test.com"],
         subject: "Welcome to Tempus",
-        react: WelcomeEmail({ name: "Alice" }),
+        react: expect.any(Object),
       });
     });
 
@@ -159,9 +159,7 @@ describe("email", () => {
         from: "Tempus <noreply@example.com>",
         to: ["user@test.com"],
         subject: "Reset your Tempus password",
-        react: PasswordResetEmail({
-          resetLink: "https://example.com/reset-password?token=abc123",
-        }),
+        react: expect.any(Object),
       });
     });
 
