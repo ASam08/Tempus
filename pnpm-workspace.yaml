@@ -11,3 +11,4 @@ ignoredBuiltDependencies:
 overrides:
   "@types/react": "19.2.17"
   "@types/react-dom": "19.2.3"
+  "@esbuild-kit/core-utils>esbuild": "^0.28.0"
