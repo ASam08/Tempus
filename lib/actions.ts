@@ -15,7 +15,7 @@ import { sqlConn } from "@/lib/db";
 import { dow } from "@/lib/constants";
 import { BlockState, SettingsState } from "@/lib/definitions";
 import * as schema from "@/db/schema";
-import { sql, eq } from "drizzle-orm";
+import { sql, eq, and } from "drizzle-orm";
 import { timeToMinutes } from "@/lib/utils";
 
 const TimetableSetSchema = z.object({
@@ -80,7 +80,7 @@ const originalTimetableBlockSchema = z.object({
   end_time: z.string().min(1, "End time is required"),
 });
 
-const createTimetableBlock = originalTimetableBlockSchema
+const refinedTimetableBlock = originalTimetableBlockSchema
   .omit({ id: true })
   .refine(
     (data) => {
@@ -108,7 +108,7 @@ export async function addTimetableBlock(
     };
   }
   const set_id = await getTimetableSets(user_id);
-  const validatedFields = createTimetableBlock.safeParse({
+  const validatedFields = refinedTimetableBlock.safeParse({
     timetable_set_id: set_id[0].id,
     day: formData.get("day_of_week"),
     subject: formData.get("subject"),
@@ -162,6 +162,120 @@ export async function addTimetableBlock(
     console.error("Error creating timetable block:", error);
     return {
       message: "Error creating timetable block.",
+      errors: {},
+      conflicts: [],
+    };
+  }
+  revalidatePath("/dashboard/timetable");
+  redirect("/dashboard/timetable");
+}
+
+export async function updateTimetableBlock(
+  prevState: BlockState,
+  formData: FormData,
+) {
+  const user_id = await getUserID();
+  if (!user_id) {
+    return {
+      message: "User not authenticated. Please log in.",
+      errors: {},
+      conflicts: [],
+    };
+  }
+  const current_block_id = formData.get("id") as string;
+  let set_result;
+  try {
+    set_result = await sqlConn
+      .select({ timetableSetId: schema.timetableSets.id })
+      .from(schema.timetableBlocks)
+      .innerJoin(
+        schema.timetableSets,
+        eq(schema.timetableBlocks.timetableSetId, schema.timetableSets.id),
+      )
+      .where(
+        and(
+          eq(schema.timetableBlocks.id, current_block_id),
+          eq(schema.timetableSets.ownerId, user_id),
+        ),
+      )
+      .limit(1);
+  } catch (error) {
+    console.error("Error fetching timetable set for block update:", error);
+    return {
+      message: "Error fetching timetable set for block update.",
+      errors: {},
+      conflicts: [],
+    };
+  }
+  const set_id = set_result[0]?.timetableSetId;
+  if (!set_id) {
+    console.error(
+      "No timetable set found for block update with block ID:",
+      current_block_id,
+    );
+    return {
+      message: "No timetable set found for block update.",
+      errors: {},
+      conflicts: [],
+    };
+  }
+  const validatedFields = refinedTimetableBlock.safeParse({
+    timetable_set_id: set_id,
+    day: formData.get("day_of_week"),
+    subject: formData.get("subject"),
+    location: formData.get("location"),
+    start_time: formData.get("start_time"),
+    end_time: formData.get("end_time"),
+  });
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Missing fields. Failed to update timetable block.",
+      conflicts: [],
+    };
+  }
+  const { timetable_set_id, day, subject, location, start_time, end_time } =
+    validatedFields.data;
+
+  const conflicts = await blockConflictCheck(
+    timetable_set_id,
+    day,
+    start_time,
+    end_time,
+    current_block_id,
+  );
+  if (conflicts === null) {
+    return {
+      message: "Error checking conflicts",
+      conflicts: [],
+      errors: {},
+    };
+  }
+  if (conflicts.length > 0) {
+    return {
+      message: "Time conflict with existing block(s)",
+      conflicts: conflicts,
+      errors: {},
+    };
+  }
+  try {
+    await sqlConn
+      .update(schema.timetableBlocks)
+      .set({
+        dayOfWeek: day,
+        subject: subject,
+        location: location,
+        startTime: start_time,
+        endTime: end_time,
+      })
+      .where(eq(schema.timetableBlocks.id, current_block_id));
+    console.log(
+      `Timetable block for ${subject} on ${day} updated successfully`,
+    );
+  } catch (error) {
+    console.error("Error updating timetable block:", error);
+    return {
+      message: "Error updating timetable block.",
       errors: {},
       conflicts: [],
     };

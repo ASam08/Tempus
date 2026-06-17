@@ -326,5 +326,25 @@ describe("DataTests", () => {
       expect(result).toBeNull();
       expect(console.error).toHaveBeenCalled();
     });
+
+    it("excludes the current block when current_block_id is provided", async () => {
+      mockOrderBy.mockResolvedValueOnce([]);
+      const result = await blockConflictCheck(
+        "set-123",
+        1,
+        "09:00",
+        "10:00",
+        "block-1",
+      );
+      expect(result).toEqual([]);
+      expect(mockWhere).toHaveBeenCalled();
+    });
+
+    it("does not exclude any block when current_block_id is omitted", async () => {
+      mockOrderBy.mockResolvedValueOnce([]);
+      const result = await blockConflictCheck("set-123", 1, "09:00", "10:00");
+      expect(result).toEqual([]);
+      expect(mockWhere).toHaveBeenCalled();
+    });
   });
 });
