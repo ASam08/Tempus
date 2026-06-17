@@ -7,7 +7,7 @@ import {
 } from "@/lib/definitions";
 import { sqlConn } from "@/lib/db";
 import * as schema from "@/db/schema";
-import { sql, and, eq, gt, gte, lt, lte, isNull } from "drizzle-orm";
+import { sql, and, eq, gt, gte, lt, lte, isNull, not } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -169,6 +169,7 @@ export async function blockConflictCheck(
   dayOfWeek: number,
   start_time: string,
   end_time: string,
+  current_block_id?: string,
 ) {
   try {
     const result: ConflictBlocks[] = await sqlConn
@@ -185,6 +186,9 @@ export async function blockConflictCheck(
           eq(schema.timetableBlocks.dayOfWeek, dayOfWeek),
           lt(schema.timetableBlocks.startTime, sql`${end_time}::time`),
           gt(schema.timetableBlocks.endTime, sql`${start_time}::time`),
+          current_block_id
+            ? not(eq(schema.timetableBlocks.id, current_block_id))
+            : undefined,
         ),
       )
       .orderBy(schema.timetableBlocks.startTime);
