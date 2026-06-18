@@ -27,6 +27,7 @@ import { useState, useActionState, useRef } from "react";
 import { dowKeyValue } from "@/lib/constants";
 import { defaultDaySettings } from "@/lib/defaults";
 import { BlockState } from "@/lib/definitions";
+import { timeToMinutes } from "@/lib/utils";
 
 export default function AddTimetableBlock({
   settings,
@@ -79,12 +80,7 @@ export default function AddTimetableBlock({
     if (!end) errors.end_time = "End time is required";
 
     if (start && end) {
-      const toMinutes = (t: string) => {
-        const [h, m] = t.split(":").map(Number);
-        return h * 60 + m;
-      };
-
-      if (toMinutes(String(end)) <= toMinutes(String(start))) {
+      if (timeToMinutes(String(end))! <= timeToMinutes(String(start))!) {
         errors.end_time = "End time must be after start time";
       }
     }
