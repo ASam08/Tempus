@@ -30,15 +30,17 @@ import { BlockState, RetreivedTimetableBlocks } from "@/lib/definitions";
 import { timeToMinutes } from "@/lib/utils";
 
 export default function EditTimetableBlock({
+  action,
   settings,
   currentBlock,
 }: {
+  action: (prevState: BlockState, formData: FormData) => Promise<BlockState>;
   settings: Record<string, string> | null;
   currentBlock: RetreivedTimetableBlocks;
 }) {
   const initialState: BlockState = { message: "", errors: {}, conflicts: [] };
   const [state, formAction] = useActionState<BlockState, FormData>(
-    updateTimetableBlock,
+    action,
     initialState,
   );
   const [dowHidden, setDowHidden] = useState(false);
@@ -61,6 +63,10 @@ export default function EditTimetableBlock({
       setDowHidden(true);
     }
   };
+
+  const dowName = dow.filter(
+    (d) => Number(d.dow) === currentBlock.day_of_week,
+  )[0]?.dow;
 
   const validateForm = (formData: FormData) => {
     const errors: Record<string, string> = {};
@@ -118,9 +124,11 @@ export default function EditTimetableBlock({
             name="day_of_week"
             onValueChange={(value: string) => checkDowHidden(value)}
             onOpenChange={() => clearClientErrors("day")}
+            defaultValue={String(dowName)}
+            key={String(dowName)}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a day" />
+              <SelectValue placeholder={String(dowName)} />
             </SelectTrigger>
 
             <SelectContent position="popper">

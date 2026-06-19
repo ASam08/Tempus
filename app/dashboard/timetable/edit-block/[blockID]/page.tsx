@@ -2,6 +2,7 @@ import EditTimetableBlockForm from "@/app/ui/timetable/edittimetableblock";
 import { getBlockByID, getUserID, getUserSettings } from "@/lib/data";
 import { redirect } from "next/navigation";
 import { RetreivedTimetableBlocks } from "@/lib/definitions";
+import { updateTimetableBlock } from "@/lib/actions";
 
 export default async function EditBlockPage({
   params,
@@ -23,9 +24,15 @@ export default async function EditBlockPage({
     redirect("/dashboard/timetable");
   }
 
+  const boundAction = updateTimetableBlock.bind(null, blockID);
+
   return (
-    <div>
-      <EditTimetableBlockForm settings={settings} currentBlock={currentBlock} />
+    <div className="flex h-full max-w-2xl flex-col px-3 py-4 md:px-2">
+      <EditTimetableBlockForm
+        action={boundAction}
+        settings={settings}
+        currentBlock={currentBlock}
+      />
     </div>
   );
 }

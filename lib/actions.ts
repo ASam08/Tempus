@@ -84,9 +84,12 @@ const refinedTimetableBlock = originalTimetableBlockSchema
   .omit({ id: true })
   .refine(
     (data) => {
-      const startTimeDate = new Date(`1970-01-01T${data.start_time}:00`);
-      const endTimeDate = new Date(`1970-01-01T${data.end_time}:00`);
-
+      const startTimeDate = new Date(
+        `1970-01-01T${data.start_time.slice(0, 5)}:00`,
+      );
+      const endTimeDate = new Date(
+        `1970-01-01T${data.end_time.slice(0, 5)}:00`,
+      );
       return endTimeDate > startTimeDate;
     },
     {
@@ -171,6 +174,7 @@ export async function addTimetableBlock(
 }
 
 export async function updateTimetableBlock(
+  blockId: string,
   prevState: BlockState,
   formData: FormData,
 ) {
@@ -182,7 +186,9 @@ export async function updateTimetableBlock(
       conflicts: [],
     };
   }
-  const current_block_id = formData.get("id") as string;
+
+  console.log(formData);
+
   let set_result;
   try {
     set_result = await sqlConn
@@ -194,7 +200,7 @@ export async function updateTimetableBlock(
       )
       .where(
         and(
-          eq(schema.timetableBlocks.id, current_block_id),
+          eq(schema.timetableBlocks.id, blockId),
           eq(schema.timetableSets.ownerId, user_id),
         ),
       )
@@ -211,7 +217,7 @@ export async function updateTimetableBlock(
   if (!set_id) {
     console.error(
       "No timetable set found for block update with block ID:",
-      current_block_id,
+      blockId,
     );
     return {
       message: "No timetable set found for block update.",
@@ -242,7 +248,7 @@ export async function updateTimetableBlock(
     day,
     start_time,
     end_time,
-    current_block_id,
+    blockId,
   );
   if (conflicts === null) {
     return {
@@ -268,7 +274,12 @@ export async function updateTimetableBlock(
         startTime: start_time,
         endTime: end_time,
       })
-      .where(eq(schema.timetableBlocks.id, current_block_id));
+      .where(
+        and(
+          eq(schema.timetableBlocks.id, blockId),
+          eq(schema.timetableBlocks.timetableSetId, set_id),
+        ),
+      );
     console.log(
       `Timetable block for ${subject} on ${day} updated successfully`,
     );
