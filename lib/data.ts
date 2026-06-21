@@ -7,7 +7,7 @@ import {
 } from "@/lib/definitions";
 import { sqlConn } from "@/lib/db";
 import * as schema from "@/db/schema";
-import { sql, and, eq, gt, gte, lt, lte, isNull } from "drizzle-orm";
+import { sql, and, eq, gt, gte, lt, lte, isNull, not } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -169,6 +169,7 @@ export async function blockConflictCheck(
   dayOfWeek: number,
   start_time: string,
   end_time: string,
+  current_block_id?: string,
 ) {
   try {
     const result: ConflictBlocks[] = await sqlConn
@@ -185,12 +186,45 @@ export async function blockConflictCheck(
           eq(schema.timetableBlocks.dayOfWeek, dayOfWeek),
           lt(schema.timetableBlocks.startTime, sql`${end_time}::time`),
           gt(schema.timetableBlocks.endTime, sql`${start_time}::time`),
+          current_block_id
+            ? not(eq(schema.timetableBlocks.id, current_block_id))
+            : undefined,
         ),
       )
       .orderBy(schema.timetableBlocks.startTime);
     return result;
   } catch (error) {
     console.error("Error checking block conflicts:", error);
+    return null;
+  }
+}
+
+export async function getBlockByID(block_id: string, user_id: string) {
+  try {
+    const result: RetreivedTimetableBlocks[] = await sqlConn
+      .select({
+        id: schema.timetableBlocks.id,
+        start_time: schema.timetableBlocks.startTime,
+        end_time: schema.timetableBlocks.endTime,
+        day_of_week: schema.timetableBlocks.dayOfWeek,
+        subject: schema.timetableBlocks.subject,
+        location: schema.timetableBlocks.location,
+      })
+      .from(schema.timetableBlocks)
+      .innerJoin(
+        schema.timetableSets,
+        eq(schema.timetableBlocks.timetableSetId, schema.timetableSets.id),
+      )
+      .where(
+        and(
+          eq(schema.timetableBlocks.id, block_id),
+          eq(schema.timetableSets.ownerId, user_id),
+        ),
+      )
+      .limit(1);
+    return result[0] ?? null;
+  } catch (error) {
+    console.error("Error fetching block by ID:", error);
     return null;
   }
 }

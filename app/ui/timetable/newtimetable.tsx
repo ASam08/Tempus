@@ -36,10 +36,10 @@ export function TimetableGrid({
   events?: RetreivedTimetableBlocks[];
   settings: Record<string, string> | null;
 }) {
-  const [deleteMode, setDeleteMode] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [width, setWidth] = useState(1200);
   const [showDowAlertDialog, setShowDowAlertDialog] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const router = useRouter();
   const startHour = Number(
     (settings?.["start_time"] ?? defaultTimeSettings.start_time).slice(0, 2),
@@ -76,12 +76,12 @@ export function TimetableGrid({
 
   const handleDeleteRequest = (id: string) => {
     setShowDowAlertDialog(true);
-    setDeleteId(id);
+    setEditId(id);
   };
 
   const handleDeleteBlock = async () => {
-    if (deleteId) {
-      await deleteBlock(deleteId);
+    if (editId) {
+      await deleteBlock(editId);
     }
     setShowDowAlertDialog(false);
     router.refresh();
@@ -105,14 +105,14 @@ export function TimetableGrid({
       <div className="mb-1 flex w-full grow">
         <div className="flex grow justify-end">
           <Button
-            onClick={() => setDeleteMode((d) => !d)}
+            onClick={() => setEditMode((d) => !d)}
             className={`px-3 py-1 text-sm font-medium ${
-              deleteMode ? "bg-red-600 text-white" : "bg-blue-600 text-white"
+              editMode ? "bg-red-600 text-white" : "bg-blue-600 text-white"
             } `}
           >
             <LucideEdit2 />{" "}
             <span className="hidden sm:flex">
-              {deleteMode ? "Stop Editing" : "Edit"}
+              {editMode ? "Stop Editing" : "Edit"}
             </span>
           </Button>
         </div>
@@ -186,8 +186,14 @@ export function TimetableGrid({
                         {e.start_time.slice(0, 5)}
                       </div>
                     )}
-                    {deleteMode && (
-                      <div className="flex grow justify-end p-0.5">
+                    {editMode && (
+                      <div className="flex grow justify-end gap-1 p-0.5">
+                        <LucideEdit2
+                          className="size-4 cursor-pointer text-gray-300 hover:text-white"
+                          onClick={() =>
+                            router.push(`./timetable/edit-block/${e.id}`)
+                          }
+                        />
                         <LucideX
                           className="size-4 cursor-pointer text-gray-300 hover:text-white"
                           onClick={() => handleDeleteRequest(e.id)}

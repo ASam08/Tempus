@@ -565,4 +565,27 @@ describe("TimetableGrid", () => {
       expect(screen.getByText("Sunday")).toBeInTheDocument();
     });
   });
+
+  describe("edit block navigation", () => {
+    it("navigates to the edit page when the edit icon on an event is clicked", async () => {
+      const mockPush = jest.fn();
+      jest
+        .requireMock("next/navigation")
+        .useRouter.mockReturnValue({ refresh: jest.fn(), push: mockPush });
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      render(
+        <TimetableGrid
+          events={[makeEvent({ id: "evt-99" })]}
+          settings={defaultSettings}
+        />,
+      );
+      await user.click(screen.getByTestId("edit-button"));
+      const eventBlock = screen
+        .getByText("Maths")
+        .closest("div[style]") as HTMLElement;
+      const svgs = eventBlock.querySelectorAll("svg");
+      fireEvent.click(svgs[0]);
+      expect(mockPush).toHaveBeenCalledWith("./timetable/edit-block/evt-99");
+    });
+  });
 });

@@ -5,10 +5,12 @@ jest.mock("@/lib/db", () => {
   const mockOrderBy = jest.fn(() => ({ limit: mockLimit }));
   const mockWhere = jest.fn(() => ({ limit: mockLimit, orderBy: mockOrderBy }));
   const mockLeftJoin = jest.fn(() => ({ where: mockWhere }));
+  const mockInnerJoin = jest.fn(() => ({ where: mockWhere }));
   const mockFrom = jest.fn(() => ({
     where: mockWhere,
     limit: mockLimit,
     leftJoin: mockLeftJoin,
+    innerJoin: mockInnerJoin,
   }));
   const mockSelect = jest.fn(() => ({ from: mockFrom }));
   const mockSelectDistinct = jest.fn(() => ({ from: mockFrom }));
@@ -25,6 +27,7 @@ jest.mock("@/lib/db", () => {
       mockWhere,
       mockFrom,
       mockLeftJoin,
+      mockInnerJoin,
       mockSelect,
       mockSelectDistinct,
     },
@@ -52,6 +55,7 @@ import {
   getNextBreak,
   getUserSettings,
   blockConflictCheck,
+  getBlockByID,
 } from "@/lib/data";
 
 const {
@@ -60,6 +64,7 @@ const {
   mockWhere,
   mockFrom,
   mockLeftJoin,
+  mockInnerJoin,
   mockSelect,
   mockSelectDistinct,
 } = require("@/lib/db").__mocks;
@@ -76,7 +81,9 @@ beforeEach(() => {
     where: mockWhere,
     limit: mockLimit,
     leftJoin: mockLeftJoin,
+    innerJoin: mockInnerJoin,
   });
+  mockInnerJoin.mockReturnValue({ where: mockWhere });
   mockSelect.mockReturnValue({ from: mockFrom });
   mockSelectDistinct.mockReturnValue({ from: mockFrom });
 
@@ -323,6 +330,56 @@ describe("DataTests", () => {
     it("returns null when the database throws", async () => {
       mockOrderBy.mockRejectedValueOnce(new Error("DB error"));
       const result = await blockConflictCheck("set-123", 1, "09:00", "10:00");
+      expect(result).toBeNull();
+      expect(console.error).toHaveBeenCalled();
+    });
+
+    it("excludes the current block when current_block_id is provided", async () => {
+      mockOrderBy.mockResolvedValueOnce([]);
+      const result = await blockConflictCheck(
+        "set-123",
+        1,
+        "09:00",
+        "10:00",
+        "block-1",
+      );
+      expect(result).toEqual([]);
+      expect(mockWhere).toHaveBeenCalled();
+    });
+
+    it("does not exclude any block when current_block_id is omitted", async () => {
+      mockOrderBy.mockResolvedValueOnce([]);
+      const result = await blockConflictCheck("set-123", 1, "09:00", "10:00");
+      expect(result).toEqual([]);
+      expect(mockWhere).toHaveBeenCalled();
+    });
+  });
+
+  describe("getBlockByID", () => {
+    it("returns the block when found", async () => {
+      const fakeBlock = {
+        id: "block-1",
+        start_time: "09:00",
+        end_time: "10:00",
+        day_of_week: 1,
+        subject: "Maths",
+        location: "Room 1",
+      };
+      mockLimit.mockResolvedValueOnce([fakeBlock]);
+      const result = await getBlockByID("block-1", "user-123");
+      expect(result).toEqual(fakeBlock);
+      expect(mockInnerJoin).toHaveBeenCalled();
+    });
+
+    it("returns null when no block is found", async () => {
+      mockLimit.mockResolvedValueOnce([]);
+      const result = await getBlockByID("block-1", "user-123");
+      expect(result).toBeNull();
+    });
+
+    it("returns null when the database throws", async () => {
+      mockLimit.mockRejectedValueOnce(new Error("DB error"));
+      const result = await getBlockByID("block-1", "user-123");
       expect(result).toBeNull();
       expect(console.error).toHaveBeenCalled();
     });

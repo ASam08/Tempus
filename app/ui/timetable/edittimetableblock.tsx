@@ -21,22 +21,26 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { addTimetableBlock, unhideDow } from "@/lib/actions";
+import { updateTimetableBlock, unhideDow } from "@/lib/actions";
 import Link from "next/link";
 import { useState, useActionState, useRef } from "react";
 import { dowKeyValue } from "@/lib/constants";
 import { defaultDaySettings } from "@/lib/defaults";
-import { BlockState } from "@/lib/definitions";
+import { BlockState, RetreivedTimetableBlocks } from "@/lib/definitions";
 import { timeToMinutes } from "@/lib/utils";
 
-export default function AddTimetableBlock({
+export default function EditTimetableBlock({
+  action,
   settings,
+  currentBlock,
 }: {
+  action: (prevState: BlockState, formData: FormData) => Promise<BlockState>;
   settings: Record<string, string> | null;
+  currentBlock: RetreivedTimetableBlocks;
 }) {
   const initialState: BlockState = { message: "", errors: {}, conflicts: [] };
   const [state, formAction] = useActionState<BlockState, FormData>(
-    addTimetableBlock,
+    action,
     initialState,
   );
   const [dowHidden, setDowHidden] = useState(false);
@@ -60,6 +64,10 @@ export default function AddTimetableBlock({
     }
   };
 
+  const dowName = dow.filter(
+    (d) => Number(d.dow) === currentBlock.day_of_week,
+  )[0]?.dow;
+
   const validateForm = (formData: FormData) => {
     const errors: Record<string, string> = {};
 
@@ -69,7 +77,6 @@ export default function AddTimetableBlock({
     const start = formData.get("start_time");
     const end = formData.get("end_time");
 
-    if (!day) errors.day = "Please select a day";
     if (!subject || String(subject).trim().length === 0) {
       errors.subject = "Subject is required";
     }
@@ -102,10 +109,10 @@ export default function AddTimetableBlock({
     <form action={formAction} ref={formRef}>
       <div className="pb-4">
         <h1 className="mb-4 text-2xl font-bold text-gray-800 dark:text-gray-200">
-          Add Timetable Block
+          Edit Timetable Block
         </h1>
         <div className="grid gap-3">
-          Fill in the details below to add a new block to your timetable.
+          Change the details below to edit the selected block in your timetable.
         </div>
       </div>
       <div className="grid gap-4">
@@ -116,9 +123,11 @@ export default function AddTimetableBlock({
             name="day_of_week"
             onValueChange={(value: string) => checkDowHidden(value)}
             onOpenChange={() => clearClientErrors("day")}
+            defaultValue={String(dowName)}
+            key={String(dowName)}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a day" />
+              <SelectValue placeholder={String(dowName)} />
             </SelectTrigger>
 
             <SelectContent position="popper">
@@ -148,7 +157,7 @@ export default function AddTimetableBlock({
             type="text"
             id="subject"
             name="subject"
-            placeholder="e.g. Maths"
+            defaultValue={currentBlock.subject}
             onChange={() => clearClientErrors("subject")}
           />
           <div id="subject_error" aria-live="polite" aria-atomic="true">
@@ -169,7 +178,7 @@ export default function AddTimetableBlock({
             type="text"
             id="location"
             name="location"
-            placeholder="e.g. Room 101"
+            defaultValue={currentBlock.location}
             onChange={() => clearClientErrors("location")}
           />
           <div id="location_error" aria-live="polite" aria-atomic="true">
@@ -193,7 +202,7 @@ export default function AddTimetableBlock({
                 id="start_time"
                 name="start_time"
                 step="300"
-                defaultValue="09:30"
+                defaultValue={currentBlock.start_time}
                 className="bg-background appearance-none pr-4 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                 onChange={() => {
                   clearClientErrors("start_time");
@@ -223,7 +232,7 @@ export default function AddTimetableBlock({
                 id="end_time"
                 name="end_time"
                 step="300"
-                defaultValue="10:30"
+                defaultValue={currentBlock.end_time}
                 className="bg-background appearance-none pr-4 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                 onChange={() => clearClientErrors("end_time")}
               />
