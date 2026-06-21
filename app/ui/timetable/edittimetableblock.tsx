@@ -77,7 +77,6 @@ export default function EditTimetableBlock({
     const start = formData.get("start_time");
     const end = formData.get("end_time");
 
-    if (!day) errors.day = "Please select a day";
     if (!subject || String(subject).trim().length === 0) {
       errors.subject = "Subject is required";
     }

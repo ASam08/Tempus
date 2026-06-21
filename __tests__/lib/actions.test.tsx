@@ -309,7 +309,7 @@ describe("ActionsTests", () => {
       (sqlConn.update as jest.Mock).mockReturnValue({ set: setMethod });
 
       await expect(
-        updateTimetableBlock(initialState, validForm),
+        updateTimetableBlock("block-uuid", initialState, validForm),
       ).rejects.toThrow("NEXT_REDIRECT");
       expect(sqlConn.update).toHaveBeenCalled();
       expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/timetable");
@@ -318,7 +318,11 @@ describe("ActionsTests", () => {
 
     it("returns not-authenticated when getUserID returns null", async () => {
       mockGetUserID.mockResolvedValueOnce(null);
-      const result = await updateTimetableBlock(initialState, validForm);
+      const result = await updateTimetableBlock(
+        "block-uuid",
+        initialState,
+        validForm,
+      );
       expect(result).toMatchObject({
         message: expect.stringContaining("not authenticated"),
       });
@@ -333,7 +337,11 @@ describe("ActionsTests", () => {
         .mockReturnValue({ innerJoin: innerJoinMethod });
       (sqlConn.select as jest.Mock).mockReturnValue({ from: fromMethod });
 
-      const result = await updateTimetableBlock(initialState, validForm);
+      const result = await updateTimetableBlock(
+        "block-uuid",
+        initialState,
+        validForm,
+      );
       expect(result).toMatchObject({
         message: "Error fetching timetable set for block update.",
       });
@@ -341,7 +349,11 @@ describe("ActionsTests", () => {
 
     it("returns error when no set is found for the block", async () => {
       mockSelectChain([]);
-      const result = await updateTimetableBlock(initialState, validForm);
+      const result = await updateTimetableBlock(
+        "block-uuid",
+        initialState,
+        validForm,
+      );
       expect(result).toMatchObject({
         message: "No timetable set found for block update.",
       });
@@ -357,7 +369,11 @@ describe("ActionsTests", () => {
         start_time: "",
         end_time: "",
       });
-      const result = await updateTimetableBlock(initialState, form);
+      const result = await updateTimetableBlock(
+        "block-uuid",
+        initialState,
+        form,
+      );
       expect(result).toMatchObject({ errors: expect.any(Object) });
       expect(sqlConn.update).not.toHaveBeenCalled();
     });
@@ -372,14 +388,22 @@ describe("ActionsTests", () => {
         start_time: "10:00",
         end_time: "09:00",
       });
-      const result = await updateTimetableBlock(initialState, form);
+      const result = await updateTimetableBlock(
+        "block-uuid",
+        initialState,
+        form,
+      );
       expect(result?.errors).toHaveProperty("end_time");
     });
 
     it("returns conflict error when blockConflictCheck returns conflicts", async () => {
       mockSelectChain([{ timetableSetId: "set-uuid" }]);
       mockBlockConflictCheck.mockResolvedValueOnce([{ id: "conflict-block" }]);
-      const result = await updateTimetableBlock(initialState, validForm);
+      const result = await updateTimetableBlock(
+        "block-uuid",
+        initialState,
+        validForm,
+      );
       expect(result).toMatchObject({
         message: "Time conflict with existing block(s)",
         conflicts: [{ id: "conflict-block" }],
@@ -390,7 +414,11 @@ describe("ActionsTests", () => {
     it("returns error when blockConflictCheck returns null", async () => {
       mockSelectChain([{ timetableSetId: "set-uuid" }]);
       mockBlockConflictCheck.mockResolvedValueOnce(null);
-      const result = await updateTimetableBlock(initialState, validForm);
+      const result = await updateTimetableBlock(
+        "block-uuid",
+        initialState,
+        validForm,
+      );
       expect(result).toMatchObject({ message: "Error checking conflicts" });
     });
 
@@ -402,7 +430,7 @@ describe("ActionsTests", () => {
       (sqlConn.update as jest.Mock).mockReturnValue({ set: setMethod });
 
       await expect(
-        updateTimetableBlock(initialState, validForm),
+        updateTimetableBlock("block-uuid", initialState, validForm),
       ).rejects.toThrow("NEXT_REDIRECT");
       expect(mockBlockConflictCheck).toHaveBeenCalledWith(
         "set-uuid",
@@ -420,7 +448,11 @@ describe("ActionsTests", () => {
       });
       (sqlConn.update as jest.Mock).mockReturnValue({ set: setMethod });
 
-      const result = await updateTimetableBlock(initialState, validForm);
+      const result = await updateTimetableBlock(
+        "block-uuid",
+        initialState,
+        validForm,
+      );
       expect(result).toMatchObject({
         message: "Error updating timetable block.",
       });

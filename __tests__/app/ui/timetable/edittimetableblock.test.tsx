@@ -96,15 +96,18 @@ jest.mock("@/components/ui/select", () => ({
     onValueChange,
     name,
     onOpenChange,
+    defaultValue,
   }: {
     children: React.ReactNode;
     onValueChange?: (v: string) => void;
     name?: string;
     onOpenChange?: () => void;
+    defaultValue?: string;
   }) => (
     <select
       name={name}
       aria-label={name}
+      defaultValue={defaultValue}
       onChange={(e) => {
         onOpenChange?.();
         onValueChange?.(e.target.value);
@@ -116,9 +119,7 @@ jest.mock("@/components/ui/select", () => ({
   SelectTrigger: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
-  SelectValue: ({ placeholder }: { placeholder?: string }) => (
-    <option value="">{placeholder}</option>
-  ),
+  SelectValue: () => null,
   SelectContent: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
@@ -535,6 +536,32 @@ describe("EditTimetableBlock", () => {
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(mockFormAction).not.toHaveBeenCalled();
     });
+
+    it("shows an error when start time is empty", async () => {
+      const user = userEvent.setup();
+      renderComponent(defaultSettings, initialState, {
+        ...defaultBlock,
+        start_time: "",
+      });
+      await user.clear(screen.getByLabelText(/start time/i));
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      expect(
+        await screen.findByText(/start time is required/i),
+      ).toBeInTheDocument();
+    });
+
+    it("shows an error when end time is empty", async () => {
+      const user = userEvent.setup();
+      renderComponent(defaultSettings, initialState, {
+        ...defaultBlock,
+        end_time: "",
+      });
+      await user.clear(screen.getByLabelText(/finish time/i));
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      expect(
+        await screen.findByText(/end time is required/i),
+      ).toBeInTheDocument();
+    });
   });
 
   describe("clearing client errors", () => {
@@ -607,23 +634,6 @@ describe("EditTimetableBlock", () => {
       await user.type(screen.getByLabelText(/finish time/i), "11:00");
       expect(
         screen.queryByText(/end time must be after start time/i),
-      ).not.toBeInTheDocument();
-    });
-
-    it("clears the day error when the day select changes", async () => {
-      const user = userEvent.setup();
-      renderComponent(defaultSettings, initialState, {
-        ...defaultBlock,
-        subject: "",
-        location: "",
-      });
-      await user.click(screen.getByRole("button", { name: /save changes/i }));
-      expect(
-        await screen.findByText(/please select a day/i),
-      ).toBeInTheDocument();
-      await user.selectOptions(screen.getByRole("combobox"), "1");
-      expect(
-        screen.queryByText(/please select a day/i),
       ).not.toBeInTheDocument();
     });
   });
