@@ -37,23 +37,10 @@ jest.mock("@/components/ui/textarea", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    type,
-    variant,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    type?: "button" | "submit" | "reset";
-    variant?: string;
-  }) => (
-    <button type={type ?? "button"} onClick={onClick} data-variant={variant}>
-      {children}
-    </button>
-  ),
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
 jest.mock("next/link", () => {
   const Link = ({

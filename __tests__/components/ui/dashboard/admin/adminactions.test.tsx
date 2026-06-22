@@ -19,30 +19,10 @@ jest.mock("@/lib/auth-client", () => ({
   },
 }));
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    variant,
-    size,
-    className,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    variant?: string;
-    size?: string;
-    className?: string;
-  }) => (
-    <button
-      onClick={onClick}
-      data-variant={variant}
-      data-size={size}
-      className={className}
-    >
-      {children}
-    </button>
-  ),
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
 jest.mock("lucide-react", () => ({
   MoreHorizontalIcon: () => <svg data-testid="more-icon" />,

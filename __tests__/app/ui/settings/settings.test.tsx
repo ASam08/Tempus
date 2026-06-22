@@ -73,23 +73,10 @@ jest.mock("@/components/ui/checkbox", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    type,
-    disabled,
-    variant,
-  }: {
-    children: React.ReactNode;
-    type?: "submit" | "button" | "reset";
-    disabled?: boolean;
-    variant?: string;
-  }) => (
-    <button type={type} disabled={disabled} data-variant={variant}>
-      {children}
-    </button>
-  ),
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
 jest.mock("@/components/ui/label", () => ({
   Label: ({

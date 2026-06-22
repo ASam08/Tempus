@@ -43,17 +43,10 @@ jest.mock("@/lib/constants", () => ({
   ],
 }));
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    className,
-  }: React.PropsWithChildren<{ onClick?: () => void; className?: string }>) => (
-    <button onClick={onClick} className={className} data-testid="edit-button">
-      {children}
-    </button>
-  ),
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
 jest.mock("@/components/ui/alert-dialog", () => ({
   AlertDialog: ({

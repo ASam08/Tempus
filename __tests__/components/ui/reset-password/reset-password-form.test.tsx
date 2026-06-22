@@ -65,14 +65,10 @@ jest.mock("@/components/ui/input", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    children: React.ReactNode;
-  }) => <button {...props}>{children}</button>,
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";

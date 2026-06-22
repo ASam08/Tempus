@@ -106,6 +106,7 @@ export function TimetableGrid({
         <div className="flex grow justify-end">
           <Button
             onClick={() => setEditMode((d) => !d)}
+            data-testid="edit-button"
             className={`px-3 py-1 text-sm font-medium ${
               editMode ? "bg-red-600 text-white" : "bg-blue-600 text-white"
             } `}
