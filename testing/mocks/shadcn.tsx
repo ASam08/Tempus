@@ -33,3 +33,9 @@ export const buttonMock = {
     </button>
   ),
 };
+
+export const inputMock = {
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+    <input {...props} />
+  ),
+};

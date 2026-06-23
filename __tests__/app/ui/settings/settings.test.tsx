@@ -24,11 +24,10 @@ jest.mock("sonner", () => ({
   },
 }));
 
-jest.mock("@/components/ui/input", () => ({
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <input {...props} />
-  ),
-}));
+jest.mock(
+  "@/components/ui/input",
+  () => require("@/testing/mocks/shadcn").inputMock,
+);
 
 jest.mock("@/components/ui/hover-card", () => ({
   HoverCard: ({ children }: { children: React.ReactNode }) => (
