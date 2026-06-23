@@ -178,16 +178,10 @@ jest.mock("@/components/ui/alert-dialog", () => {
   };
 });
 
-jest.mock("@/components/ui/field", () => ({
-  Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  FieldLabel: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
+jest.mock(
+  "@/components/ui/field",
+  () => require("@/testing/mocks/shadcn").fieldMock,
+);
 
 import AddTimetableBlock from "@/app/ui/timetable/addtimetableblock";
 

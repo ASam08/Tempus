@@ -39,3 +39,14 @@ export const inputMock = {
     <input {...props} />
   ),
 };
+
+export const fieldMock = {
+  Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  FieldLabel: ({
+    children,
+    htmlFor,
+  }: {
+    children: React.ReactNode;
+    htmlFor?: string;
+  }) => <label htmlFor={htmlFor}>{children}</label>,
+};
