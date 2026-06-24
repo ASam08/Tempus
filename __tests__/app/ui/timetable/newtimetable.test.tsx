@@ -48,56 +48,9 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").buttonMock,
 );
 
-jest.mock("@/components/ui/alert-dialog", () => ({
-  AlertDialog: ({
-    children,
-    open,
-    onOpenChange,
-  }: React.PropsWithChildren<{
-    open?: boolean;
-    onOpenChange?: (open: boolean) => void;
-  }>) => (
-    <div data-testid="alert-dialog" data-open={open ? "true" : "false"}>
-      {open ? children : null}
-    </div>
-  ),
-  AlertDialogContent: ({ children }: React.PropsWithChildren) => (
-    <div data-testid="alert-dialog-content">{children}</div>
-  ),
-  AlertDialogHeader: ({ children }: React.PropsWithChildren) => (
-    <div>{children}</div>
-  ),
-  AlertDialogTitle: ({ children }: React.PropsWithChildren) => (
-    <div data-testid="alert-dialog-title">{children}</div>
-  ),
-  AlertDialogDescription: ({ children }: React.PropsWithChildren) => (
-    <div data-testid="alert-dialog-description">{children}</div>
-  ),
-  AlertDialogFooter: ({ children }: React.PropsWithChildren) => (
-    <div>{children}</div>
-  ),
-  AlertDialogCancel: ({
-    children,
-    onClick,
-  }: React.PropsWithChildren<{ onClick?: () => void }>) => (
-    <button data-testid="alert-dialog-cancel" onClick={onClick}>
-      {children}
-    </button>
-  ),
-  AlertDialogAction: ({
-    children,
-    onClick,
-    variant,
-  }: React.PropsWithChildren<{ onClick?: () => void; variant?: string }>) => (
-    <button
-      data-testid="alert-dialog-confirm"
-      onClick={onClick}
-      data-variant={variant}
-    >
-      {children}
-    </button>
-  ),
-}));
+jest.mock("@/components/ui/alert-dialog", () => 
+  require("@/testing/mocks/shadcn").alertDialogMock(),
+);
 
 import { TimetableGrid } from "@/app/ui/timetable/newtimetable";
 import { deleteBlock } from "@/lib/actions";

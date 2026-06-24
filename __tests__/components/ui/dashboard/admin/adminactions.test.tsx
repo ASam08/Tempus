@@ -38,75 +38,9 @@ jest.mock("@/lib/defaults", () => ({
   ],
 }));
 
-jest.mock("@/components/ui/alert-dialog", () => {
-  const React = jest.requireActual("react") as typeof import("react");
-  const AlertDialogContext = React.createContext<
-    ((open: boolean) => void) | undefined
-  >(undefined);
-
-  return {
-    AlertDialog: ({
-      open,
-      onOpenChange,
-      children,
-    }: {
-      open: boolean;
-      onOpenChange?: (v: boolean) => void;
-      children: React.ReactNode;
-    }) =>
-      open ? (
-        <AlertDialogContext.Provider value={onOpenChange}>
-          <div role="alertdialog">{children}</div>
-        </AlertDialogContext.Provider>
-      ) : null,
-    AlertDialogContent: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogHeader: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogTitle: ({ children }: { children: React.ReactNode }) => (
-      <h2>{children}</h2>
-    ),
-    AlertDialogDescription: ({ children }: { children: React.ReactNode }) => (
-      <p>{children}</p>
-    ),
-    AlertDialogFooter: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogAction: ({
-      children,
-      onClick,
-      variant,
-    }: {
-      children: React.ReactNode;
-      onClick?: () => void;
-      variant?: string;
-    }) => (
-      <button onClick={onClick} data-variant={variant}>
-        {children}
-      </button>
-    ),
-    AlertDialogCancel: ({
-      children,
-      variant,
-    }: {
-      children: React.ReactNode;
-      variant?: string;
-    }) => {
-      const onOpenChange = React.useContext(AlertDialogContext);
-      return (
-        <button
-          type="button"
-          data-variant={variant}
-          onClick={() => onOpenChange?.(false)}
-        >
-          {children}
-        </button>
-      );
-    },
-  };
-});
+jest.mock("@/components/ui/alert-dialog", () => 
+  require("@/testing/mocks/shadcn").alertDialogMock(),
+);
 
 jest.mock("@/components/ui/dropdown-menu", () => {
   const React = jest.requireActual("react") as typeof import("react");

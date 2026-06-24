@@ -232,19 +232,21 @@ export function TimetableGrid({
       <AlertDialog
         open={showDowAlertDialog}
         onOpenChange={setShowDowAlertDialog}
+        data-testid="alert-dialog"
       >
-        <AlertDialogContent>
+        <AlertDialogContent data-testid="alert-dialog-content">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle data-testid="alert-dialog-title">Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription data-testid="alert-dialog-description">
               Do you want to delete this block?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="alert-dialog-cancel">Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={handleDeleteBlock}
+              data-testid="alert-dialog-confirm"
             >
               Delete
             </AlertDialogAction>
