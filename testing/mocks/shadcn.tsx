@@ -165,3 +165,9 @@ export const cardMock = {
         <div>{children}</div>
     ),
 };
+
+export const textareaMock = {
+  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+    <textarea {...props} />
+  ),
+};

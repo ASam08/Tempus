@@ -25,11 +25,10 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").inputMock,
 );
 
-jest.mock("@/components/ui/textarea", () => ({
-  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-    <textarea {...props} />
-  ),
-}));
+jest.mock(
+  "@/components/ui/textarea",
+  () => require("@/testing/mocks/shadcn").textareaMock,
+);
 
 jest.mock(
   "@/components/ui/button",
