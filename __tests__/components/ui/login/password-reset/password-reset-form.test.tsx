@@ -36,18 +36,10 @@ jest.mock("lucide-react", () => ({
   LucideCircleQuestionMark: () => <span>?</span>,
 }));
 
-jest.mock("@/components/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h1>{children}</h1>
-  ),
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
+jest.mock(
+  "@/components/ui/card",
+  () => require("@/testing/mocks/shadcn").cardMock,
+);
 
 jest.mock(
   "@/components/ui/field",

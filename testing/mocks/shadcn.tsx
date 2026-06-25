@@ -152,3 +152,16 @@ export const labelMock = {
     htmlFor?: string;
   }) => <label htmlFor={htmlFor}>{children}</label>,
 };
+
+export const cardMock = {
+    Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    CardHeader: ({ children }: { children: React.ReactNode }) => (
+        <div>{children}</div>
+    ),
+    CardTitle: ({ children }: { children: React.ReactNode }) => (
+        <h1>{children}</h1>
+    ),
+    CardContent: ({ children }: { children: React.ReactNode }) => (
+        <div>{children}</div>
+    ),
+};
