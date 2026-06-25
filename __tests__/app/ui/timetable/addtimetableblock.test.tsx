@@ -47,15 +47,10 @@ jest.mock("@/lib/defaults", () => ({
   },
 }));
 
-jest.mock("@/components/ui/label", () => ({
-  Label: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
+jest.mock(
+  "@/components/ui/label",
+  () => require("@/testing/mocks/shadcn").labelMock,
+);
 
 jest.mock(
   "@/components/ui/input",

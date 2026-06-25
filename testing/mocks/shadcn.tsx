@@ -142,3 +142,13 @@ export const alertDialogMock = () => {
     },
   };
 };
+
+export const labelMock = {
+  Label: ({
+    children,
+    htmlFor,
+  }: {
+    children: React.ReactNode;
+    htmlFor?: string;
+  }) => <label htmlFor={htmlFor}>{children}</label>,
+};
