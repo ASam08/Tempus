@@ -166,6 +166,28 @@ export const cardMock = {
     ),
 };
 
+export const tableMock = {
+  __esModule: true,
+  Table: ({ children }: { children: React.ReactNode }) => (
+    <table>{children}</table>
+  ),
+  TableHeader: ({ children }: { children: React.ReactNode }) => (
+    <thead>{children}</thead>
+  ),
+  TableBody: ({ children }: { children: React.ReactNode }) => (
+    <tbody>{children}</tbody>
+  ),
+  TableRow: ({ children }: { children: React.ReactNode }) => (
+    <tr>{children}</tr>
+  ),
+  TableHead: ({ children }: { children: React.ReactNode }) => (
+    <th>{children}</th>
+  ),
+  TableCell: ({ children }: { children: React.ReactNode }) => (
+    <td>{children}</td>
+  ),
+};
+
 export const textareaMock = {
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
     <textarea {...props} />

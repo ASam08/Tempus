@@ -52,27 +52,9 @@ jest.mock("@/components/ui/dashboard/admin/adminactions", () => ({
   },
 }));
 
-jest.mock("@/components/ui/table", () => ({
-  __esModule: true,
-  Table: ({ children }: { children: React.ReactNode }) => (
-    <table>{children}</table>
-  ),
-  TableHeader: ({ children }: { children: React.ReactNode }) => (
-    <thead>{children}</thead>
-  ),
-  TableBody: ({ children }: { children: React.ReactNode }) => (
-    <tbody>{children}</tbody>
-  ),
-  TableRow: ({ children }: { children: React.ReactNode }) => (
-    <tr>{children}</tr>
-  ),
-  TableHead: ({ children }: { children: React.ReactNode }) => (
-    <th>{children}</th>
-  ),
-  TableCell: ({ children }: { children: React.ReactNode }) => (
-    <td>{children}</td>
-  ),
-}));
+jest.mock("@/components/ui/table",
+  () => require("@/testing/mocks/shadcn").tableMock,
+);
 
 jest.mock("@/components/ui/pagination", () => ({
   __esModule: true,
