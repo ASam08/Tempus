@@ -56,29 +56,15 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").buttonMock,
 );
 
-jest.mock("@/components/ui/hover-card", () => ({
-  HoverCard: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  HoverCardTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  HoverCardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
+jest.mock(
+  "@/components/ui/hover-card",
+  () => require("@/testing/mocks/shadcn").hoverCardMock,
+);
 
-jest.mock("@/components/ui/popover", () => ({
-  Popover: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  PopoverTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  PopoverContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
+jest.mock(
+  "@/components/ui/popover",
+  () => require("@/testing/mocks/shadcn").popoverMock,
+);
 
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";

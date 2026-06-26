@@ -1,56 +1,5 @@
 import React from "react";
 
-export const buttonMock = {
-  Button: ({
-    children,
-    onClick,
-    variant,
-    size,
-    className,
-    disabled,
-    type,
-    "data-testid": testId,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    variant?: string;
-    size?: string;
-    className?: string;
-    disabled?: boolean;
-    type?: "button" | "submit" | "reset";
-    "data-testid"?: string;
-  }) => (
-    <button
-      type={type ?? "button"}
-      onClick={onClick}
-      data-variant={variant}
-      data-size={size}
-      className={className}
-      disabled={disabled}
-      data-testid={testId}
-    >
-      {children}
-    </button>
-  ),
-};
-
-export const inputMock = {
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <input {...props} />
-  ),
-};
-
-export const fieldMock = {
-  Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  FieldLabel: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-};
-
 export const alertDialogMock = () => {
   const AlertDialogContext = React.createContext(
     undefined as ((open: boolean) => void) | undefined,
@@ -143,14 +92,38 @@ export const alertDialogMock = () => {
   };
 };
 
-export const labelMock = {
-  Label: ({
+export const buttonMock = {
+  Button: ({
     children,
-    htmlFor,
+    onClick,
+    variant,
+    size,
+    className,
+    disabled,
+    type,
+    "data-testid": testId,
   }: {
     children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
+    onClick?: () => void;
+    variant?: string;
+    size?: string;
+    className?: string;
+    disabled?: boolean;
+    type?: "button" | "submit" | "reset";
+    "data-testid"?: string;
+  }) => (
+    <button
+      type={type ?? "button"}
+      onClick={onClick}
+      data-variant={variant}
+      data-size={size}
+      className={className}
+      disabled={disabled}
+      data-testid={testId}
+    >
+      {children}
+    </button>
+  ),
 };
 
 export const cardMock = {
@@ -164,6 +137,57 @@ export const cardMock = {
     CardContent: ({ children }: { children: React.ReactNode }) => (
         <div>{children}</div>
     ),
+};
+
+export const fieldMock = {
+  Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  FieldLabel: ({
+    children,
+    htmlFor,
+  }: {
+    children: React.ReactNode;
+    htmlFor?: string;
+  }) => <label htmlFor={htmlFor}>{children}</label>,
+};
+
+export const hoverCardMock = {
+  HoverCard: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  HoverCardTrigger: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  HoverCardContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+};
+
+export const inputMock = {
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+    <input {...props} />
+  ),
+};
+
+export const labelMock = {
+  Label: ({
+    children,
+    htmlFor,
+  }: {
+    children: React.ReactNode;
+    htmlFor?: string;
+  }) => <label htmlFor={htmlFor}>{children}</label>,
+};
+
+export const popoverMock = {
+  Popover: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  PopoverTrigger: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  PopoverContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 };
 
 export const tableMock = {
