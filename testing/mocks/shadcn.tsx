@@ -198,6 +198,36 @@ export const labelMock = {
   }) => <label htmlFor={htmlFor}>{children}</label>,
 };
 
+export const paginationMock = {
+  Pagination: ({ children }: { children: React.ReactNode }) => (
+    <nav>{children}</nav>
+  ),
+  PaginationContent: ({ children }: { children: React.ReactNode }) => (
+    <ul>{children}</ul>
+  ),
+  PaginationItem: ({ children }: { children: React.ReactNode }) => (
+    <li>{children}</li>
+  ),
+  PaginationLink: ({
+    children,
+    href,
+    isActive,
+  }: {
+    children: React.ReactNode;
+    href: string;
+    isActive?: boolean;
+  }) => (
+    <a href={href} aria-current={isActive ? "page" : undefined}>
+      {children}
+    </a>
+  ),
+  PaginationPrevious: ({ href }: { href: string }) => (
+    <a href={href}>Previous</a>
+  ),
+  PaginationNext: ({ href }: { href: string }) => <a href={href}>Next</a>,
+  PaginationEllipsis: () => <span>...</span>,
+};
+
 export const popoverMock = {
   Popover: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
