@@ -39,24 +39,10 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").popoverMock,
 );
 
-jest.mock("@/components/ui/checkbox", () => ({
-  Checkbox: ({
-    id,
-    name,
-    defaultChecked,
-  }: {
-    id: string;
-    name: string;
-    defaultChecked: boolean;
-  }) => (
-    <input
-      type="checkbox"
-      id={id}
-      name={name}
-      defaultChecked={defaultChecked}
-    />
-  ),
-}));
+jest.mock(
+  "@/components/ui/checkbox",
+  () => require("@/testing/mocks/shadcn").checkboxMock,
+);
 
 jest.mock(
   "@/components/ui/button",

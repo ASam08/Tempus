@@ -139,6 +139,26 @@ export const cardMock = {
     ),
 };
 
+export const checkboxMock = {
+  Checkbox: ({
+    id,
+    name,
+    defaultChecked,
+  }: {
+    id: string;
+    name: string;
+    defaultChecked: boolean;
+  }) => (
+    <input
+      type="checkbox"
+      id={id}
+      name={name}
+      defaultChecked={defaultChecked}
+      aria-label={name}
+    />
+  ),
+};
+
 export const fieldMock = {
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   FieldLabel: ({
