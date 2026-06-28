@@ -23,9 +23,9 @@ export const alertDialogMock = () => {
             {children}
           </div>
         </AlertDialogContext.Provider>
-      ) : (
+      ) : testId ? (
         <div data-testid={testId} data-open="false" />
-      ),
+        ) : null,
     AlertDialogContent: ({
       children,
       "data-testid": testId,
@@ -238,6 +238,50 @@ export const popoverMock = {
   PopoverContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+};
+
+export const selectMock = {
+    Select: ({
+        children,
+        onValueChange,
+        name,
+        onOpenChange,
+        defaultValue,
+    }: {
+        children: React.ReactNode;
+        onValueChange?: (v: string) => void;
+        name?: string;
+        onOpenChange?: () => void;
+        defaultValue?: string;
+    }) => (
+        <select
+            name={name}
+            aria-label={name ?? "select"}
+            title={name ?? "select"}
+            defaultValue={defaultValue ?? ""}
+            onChange={(e) => {
+                onOpenChange?.();
+                onValueChange?.(e.target.value);
+            }}
+        >
+            {!defaultValue && <option value="" disabled />}
+            {children}
+        </select>
+    ),
+    SelectTrigger: ({ children }: { children: React.ReactNode }) => (
+        <>{children}</>
+    ),
+    SelectValue: ({ placeholder }: { placeholder?: string }) => null,
+    SelectContent: ({ children }: { children: React.ReactNode }) => (
+        <>{children}</>
+    ),
+    SelectItem: ({
+        value,
+        children,
+    }: {
+        value: string;
+        children: React.ReactNode;
+    }) => <option value={value}>{children}</option>,
 };
 
 export const tableMock = {

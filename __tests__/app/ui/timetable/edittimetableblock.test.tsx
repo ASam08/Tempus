@@ -71,47 +71,10 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").buttonMock,
 );
 
-jest.mock("@/components/ui/select", () => ({
-  Select: ({
-    children,
-    onValueChange,
-    name,
-    onOpenChange,
-    defaultValue,
-  }: {
-    children: React.ReactNode;
-    onValueChange?: (v: string) => void;
-    name?: string;
-    onOpenChange?: () => void;
-    defaultValue?: string;
-  }) => (
-    <select
-      name={name}
-      aria-label={name}
-      defaultValue={defaultValue}
-      onChange={(e) => {
-        onOpenChange?.();
-        onValueChange?.(e.target.value);
-      }}
-    >
-      {children}
-    </select>
-  ),
-  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-  SelectValue: () => null,
-  SelectContent: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-  SelectItem: ({
-    value,
-    children,
-  }: {
-    value: string;
-    children: React.ReactNode;
-  }) => <option value={value}>{children}</option>,
-}));
+jest.mock(
+  "@/components/ui/select",
+  () => require("@/testing/mocks/shadcn").selectMock,
+);
 
 jest.mock("@/components/ui/alert-dialog", () => 
   require("@/testing/mocks/shadcn").alertDialogMock(),
