@@ -159,6 +159,75 @@ export const checkboxMock = {
   ),
 };
 
+export const dropdownMenuMock = (() => {
+  const DropdownContext = React.createContext<{
+    open: boolean;
+    setOpen: (v: boolean) => void;
+  }>({ open: false, setOpen: () => {} });
+
+  const SubContext = React.createContext<{
+    subOpen: boolean;
+    setSubOpen: (v: boolean) => void;
+  }>({ subOpen: false, setSubOpen: () => {} });
+
+  return {
+    DropdownMenu: ({ children }: { children: React.ReactNode }) => {
+      const [open, setOpen] = React.useState(false);
+      return (
+        <DropdownContext.Provider value={{ open, setOpen }}>
+          {children}
+        </DropdownContext.Provider>
+      );
+    },
+    DropdownMenuTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => {
+      const { setOpen } = React.useContext(DropdownContext);
+      if (asChild && React.isValidElement(children)) {
+        return React.cloneElement(
+          children as React.ReactElement<{ onClick?: () => void }>,
+          { onClick: () => setOpen(true) },
+        );
+      }
+      return <button onClick={() => setOpen(true)}>{children}</button>;
+    },
+    DropdownMenuContent: ({ children }: { children: React.ReactNode }) => {
+      const { open } = React.useContext(DropdownContext);
+      return open ? <div data-testid="dropdown-content">{children}</div> : null;
+    },
+    DropdownMenuSub: ({ children }: { children: React.ReactNode }) => {
+      const [subOpen, setSubOpen] = React.useState(false);
+      return (
+        <SubContext.Provider value={{ subOpen, setSubOpen }}>
+          {children}
+        </SubContext.Provider>
+      );
+    },
+    DropdownMenuSubTrigger: ({ children }: { children: React.ReactNode }) => {
+      const { setSubOpen } = React.useContext(SubContext);
+      return <button onClick={() => setSubOpen(true)}>{children}</button>;
+    },
+    DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => {
+      const { subOpen } = React.useContext(SubContext);
+      return subOpen ? <div>{children}</div> : null;
+    },
+    DropdownMenuPortal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    DropdownMenuItem: ({ children, onClick, onSelect, variant }: {
+      children: React.ReactNode;
+      onClick?: () => void;
+      onSelect?: () => void;
+      variant?: string;
+    }) => (
+      <button type="button" role="menuitem" onClick={onClick ?? onSelect} data-variant={variant}>
+        {children}
+      </button>
+    ),
+    DropdownMenuLabel: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+      <div className={className}>{children}</div>
+    ),
+    DropdownMenuSeparator: () => <hr />,
+    DropdownMenuGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  };
+})();
+
 export const fieldMock = {
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   FieldLabel: ({
