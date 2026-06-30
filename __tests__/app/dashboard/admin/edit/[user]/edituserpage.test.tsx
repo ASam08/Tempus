@@ -34,11 +34,10 @@ jest.mock("@/components/ui/dashboard/admin/editUserForm", () => ({
   default: () => <div data-testid="edit-user-form" />,
 }));
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({ children }: { children: React.ReactNode }) => (
-    <button>{children}</button>
-  ),
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
 const mockGetSession = auth.api.getSession as unknown as jest.Mock;
 const mockGetUser = auth.api.getUser as unknown as jest.Mock;

@@ -15,45 +15,25 @@ jest
   .spyOn(React, "useActionState")
   .mockReturnValue([{}, mockFormAction, false]);
 
-jest.mock("@/components/ui/label", () => ({
-  Label: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
+jest.mock(
+  "@/components/ui/label",
+  () => require("@/testing/mocks/shadcn").labelMock,
+);
 
-jest.mock("@/components/ui/input", () => ({
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <input {...props} />
-  ),
-}));
+jest.mock(
+  "@/components/ui/input",
+  () => require("@/testing/mocks/shadcn").inputMock,
+);
 
-jest.mock("@/components/ui/textarea", () => ({
-  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-    <textarea {...props} />
-  ),
-}));
+jest.mock(
+  "@/components/ui/textarea",
+  () => require("@/testing/mocks/shadcn").textareaMock,
+);
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    type,
-    variant,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    type?: "button" | "submit" | "reset";
-    variant?: string;
-  }) => (
-    <button type={type ?? "button"} onClick={onClick} data-variant={variant}>
-      {children}
-    </button>
-  ),
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
 jest.mock("next/link", () => {
   const Link = ({

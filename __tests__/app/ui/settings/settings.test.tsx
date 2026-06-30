@@ -24,93 +24,40 @@ jest.mock("sonner", () => ({
   },
 }));
 
-jest.mock("@/components/ui/input", () => ({
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <input {...props} />
-  ),
-}));
+jest.mock(
+  "@/components/ui/input",
+  () => require("@/testing/mocks/shadcn").inputMock,
+);
 
-jest.mock("@/components/ui/hover-card", () => ({
-  HoverCard: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  HoverCardTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  HoverCardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
+jest.mock(
+  "@/components/ui/hover-card",
+  () => require("@/testing/mocks/shadcn").hoverCardMock,
+);
 
-jest.mock("@/components/ui/popover", () => ({
-  Popover: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  PopoverTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  PopoverContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
+jest.mock(
+  "@/components/ui/popover",
+  () => require("@/testing/mocks/shadcn").popoverMock,
+);
 
-jest.mock("@/components/ui/checkbox", () => ({
-  Checkbox: ({
-    id,
-    name,
-    defaultChecked,
-  }: {
-    id: string;
-    name: string;
-    defaultChecked: boolean;
-  }) => (
-    <input
-      type="checkbox"
-      id={id}
-      name={name}
-      defaultChecked={defaultChecked}
-    />
-  ),
-}));
+jest.mock(
+  "@/components/ui/checkbox",
+  () => require("@/testing/mocks/shadcn").checkboxMock,
+);
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    type,
-    disabled,
-    variant,
-  }: {
-    children: React.ReactNode;
-    type?: "submit" | "button" | "reset";
-    disabled?: boolean;
-    variant?: string;
-  }) => (
-    <button type={type} disabled={disabled} data-variant={variant}>
-      {children}
-    </button>
-  ),
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
-jest.mock("@/components/ui/label", () => ({
-  Label: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
+jest.mock(
+  "@/components/ui/label",
+  () => require("@/testing/mocks/shadcn").labelMock,
+);
 
-jest.mock("@/components/ui/field", () => ({
-  Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  FieldLabel: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
+jest.mock(
+  "@/components/ui/field",
+  () => require("@/testing/mocks/shadcn").fieldMock,
+);
 
 jest.mock("lucide-react", () => ({
   LucideCircleQuestionMark: () => <div>LucideCircleQuestionMark</div>,

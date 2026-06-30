@@ -5,20 +5,15 @@ jest.mock("next-themes", () => ({
   useTheme: jest.fn(() => ({ setTheme: jest.fn() })),
 }));
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, ...props }: any) => (
-    <button {...props}>{children}</button>
-  ),
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
-jest.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: any) => <div>{children}</div>,
-  DropdownMenuTrigger: ({ children }: any) => <div>{children}</div>,
-  DropdownMenuContent: ({ children }: any) => <div>{children}</div>,
-  DropdownMenuItem: ({ children, onClick }: any) => (
-    <button onClick={onClick}>{children}</button>
-  ),
-}));
+jest.mock(
+  "@/components/ui/dropdown-menu",
+  () => require("@/testing/mocks/shadcn").dropdownMenuMock,
+);
 
 jest.mock("lucide-react", () => ({
   Sun: () => <svg data-testid="sun-icon" />,
@@ -36,7 +31,7 @@ const getMockSetTheme = () => {
 
 describe("ModeToggle", () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     const { useTheme } = require("next-themes");
     useTheme.mockReturnValue({ setTheme: jest.fn() });
   });
@@ -49,6 +44,7 @@ describe("ModeToggle", () => {
   it("calls setTheme with 'light' when Light is clicked", () => {
     const mockSetTheme = getMockSetTheme();
     render(<ModeToggle />);
+    fireEvent.click(screen.getByText("Toggle theme").closest("button")!);
     fireEvent.click(screen.getByText("Light"));
     expect(mockSetTheme).toHaveBeenCalledWith("light");
   });
@@ -56,6 +52,7 @@ describe("ModeToggle", () => {
   it("calls setTheme with 'dark' when Dark is clicked", () => {
     const mockSetTheme = getMockSetTheme();
     render(<ModeToggle />);
+    fireEvent.click(screen.getByText("Toggle theme").closest("button")!);
     fireEvent.click(screen.getByText("Dark"));
     expect(mockSetTheme).toHaveBeenCalledWith("dark");
   });
@@ -63,6 +60,7 @@ describe("ModeToggle", () => {
   it("calls setTheme with 'system' when System is clicked", () => {
     const mockSetTheme = getMockSetTheme();
     render(<ModeToggle />);
+    fireEvent.click(screen.getByText("Toggle theme").closest("button")!);
     fireEvent.click(screen.getByText("System"));
     expect(mockSetTheme).toHaveBeenCalledWith("system");
   });

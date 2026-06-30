@@ -35,44 +35,25 @@ jest.mock("@/components/general/password-requirements-hover", () => ({
   PasswordRequirementsHover: () => <span>Password requirements</span>,
 }));
 
-jest.mock("@/components/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h1>{children}</h1>
-  ),
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
+jest.mock(
+  "@/components/ui/card",
+  () => require("@/testing/mocks/shadcn").cardMock,
+);
 
-jest.mock("@/components/ui/field", () => ({
-  Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  FieldLabel: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
+jest.mock(
+  "@/components/ui/field",
+  () => require("@/testing/mocks/shadcn").fieldMock,
+);
 
-jest.mock("@/components/ui/input", () => ({
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <input {...props} />
-  ),
-}));
+jest.mock(
+  "@/components/ui/input",
+  () => require("@/testing/mocks/shadcn").inputMock,
+);
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    children: React.ReactNode;
-  }) => <button {...props}>{children}</button>,
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";

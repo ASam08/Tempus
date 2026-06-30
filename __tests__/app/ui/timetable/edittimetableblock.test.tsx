@@ -56,162 +56,34 @@ jest.mock("@/lib/utils", () => ({
   },
 }));
 
-jest.mock("@/components/ui/label", () => ({
-  Label: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
+jest.mock(
+  "@/components/ui/label",
+  () => require("@/testing/mocks/shadcn").labelMock,
+);
 
-jest.mock("@/components/ui/input", () => ({
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <input {...props} />
-  ),
-}));
+jest.mock(
+  "@/components/ui/input",
+  () => require("@/testing/mocks/shadcn").inputMock,
+);
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    type,
-    variant,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    type?: "button" | "submit" | "reset";
-    variant?: string;
-  }) => (
-    <button type={type ?? "button"} onClick={onClick} data-variant={variant}>
-      {children}
-    </button>
-  ),
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
-jest.mock("@/components/ui/select", () => ({
-  Select: ({
-    children,
-    onValueChange,
-    name,
-    onOpenChange,
-    defaultValue,
-  }: {
-    children: React.ReactNode;
-    onValueChange?: (v: string) => void;
-    name?: string;
-    onOpenChange?: () => void;
-    defaultValue?: string;
-  }) => (
-    <select
-      name={name}
-      aria-label={name}
-      defaultValue={defaultValue}
-      onChange={(e) => {
-        onOpenChange?.();
-        onValueChange?.(e.target.value);
-      }}
-    >
-      {children}
-    </select>
-  ),
-  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-  SelectValue: () => null,
-  SelectContent: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-  SelectItem: ({
-    value,
-    children,
-  }: {
-    value: string;
-    children: React.ReactNode;
-  }) => <option value={value}>{children}</option>,
-}));
+jest.mock(
+  "@/components/ui/select",
+  () => require("@/testing/mocks/shadcn").selectMock,
+);
 
-jest.mock("@/components/ui/alert-dialog", () => {
-  const React = jest.requireActual("react") as typeof import("react");
-  const AlertDialogContext = React.createContext<
-    ((open: boolean) => void) | undefined
-  >(undefined);
+jest.mock("@/components/ui/alert-dialog", () => 
+  require("@/testing/mocks/shadcn").alertDialogMock(),
+);
 
-  return {
-    AlertDialog: ({
-      open,
-      onOpenChange,
-      children,
-    }: {
-      open: boolean;
-      onOpenChange?: (v: boolean) => void;
-      children: React.ReactNode;
-    }) =>
-      open ? (
-        <AlertDialogContext.Provider value={onOpenChange}>
-          <div role="alertdialog">{children}</div>
-        </AlertDialogContext.Provider>
-      ) : null,
-    AlertDialogContent: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogHeader: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogTitle: ({ children }: { children: React.ReactNode }) => (
-      <h2>{children}</h2>
-    ),
-    AlertDialogDescription: ({ children }: { children: React.ReactNode }) => (
-      <p>{children}</p>
-    ),
-    AlertDialogFooter: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogAction: ({
-      children,
-      onClick,
-      variant,
-    }: {
-      children: React.ReactNode;
-      onClick?: () => void;
-      variant?: string;
-    }) => (
-      <button onClick={onClick} data-variant={variant}>
-        {children}
-      </button>
-    ),
-    AlertDialogCancel: ({
-      children,
-      variant,
-    }: {
-      children: React.ReactNode;
-      variant?: string;
-    }) => {
-      const onOpenChange = React.useContext(AlertDialogContext);
-      return (
-        <button
-          type="button"
-          data-variant={variant}
-          onClick={() => onOpenChange?.(false)}
-        >
-          {children}
-        </button>
-      );
-    },
-  };
-});
-
-jest.mock("@/components/ui/field", () => ({
-  Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  FieldLabel: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
+jest.mock(
+  "@/components/ui/field",
+  () => require("@/testing/mocks/shadcn").fieldMock,
+);
 
 import EditTimetableBlock from "@/app/ui/timetable/edittimetableblock";
 

@@ -19,30 +19,10 @@ jest.mock("@/lib/auth-client", () => ({
   },
 }));
 
-jest.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    variant,
-    size,
-    className,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    variant?: string;
-    size?: string;
-    className?: string;
-  }) => (
-    <button
-      onClick={onClick}
-      data-variant={variant}
-      data-size={size}
-      className={className}
-    >
-      {children}
-    </button>
-  ),
-}));
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
 
 jest.mock("lucide-react", () => ({
   MoreHorizontalIcon: () => <svg data-testid="more-icon" />,
@@ -58,198 +38,14 @@ jest.mock("@/lib/defaults", () => ({
   ],
 }));
 
-jest.mock("@/components/ui/alert-dialog", () => {
-  const React = jest.requireActual("react") as typeof import("react");
-  const AlertDialogContext = React.createContext<
-    ((open: boolean) => void) | undefined
-  >(undefined);
+jest.mock("@/components/ui/alert-dialog", () => 
+  require("@/testing/mocks/shadcn").alertDialogMock(),
+);
 
-  return {
-    AlertDialog: ({
-      open,
-      onOpenChange,
-      children,
-    }: {
-      open: boolean;
-      onOpenChange?: (v: boolean) => void;
-      children: React.ReactNode;
-    }) =>
-      open ? (
-        <AlertDialogContext.Provider value={onOpenChange}>
-          <div role="alertdialog">{children}</div>
-        </AlertDialogContext.Provider>
-      ) : null,
-    AlertDialogContent: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogHeader: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogTitle: ({ children }: { children: React.ReactNode }) => (
-      <h2>{children}</h2>
-    ),
-    AlertDialogDescription: ({ children }: { children: React.ReactNode }) => (
-      <p>{children}</p>
-    ),
-    AlertDialogFooter: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogAction: ({
-      children,
-      onClick,
-      variant,
-    }: {
-      children: React.ReactNode;
-      onClick?: () => void;
-      variant?: string;
-    }) => (
-      <button onClick={onClick} data-variant={variant}>
-        {children}
-      </button>
-    ),
-    AlertDialogCancel: ({
-      children,
-      variant,
-    }: {
-      children: React.ReactNode;
-      variant?: string;
-    }) => {
-      const onOpenChange = React.useContext(AlertDialogContext);
-      return (
-        <button
-          type="button"
-          data-variant={variant}
-          onClick={() => onOpenChange?.(false)}
-        >
-          {children}
-        </button>
-      );
-    },
-  };
-});
-
-jest.mock("@/components/ui/dropdown-menu", () => {
-  const React = jest.requireActual("react") as typeof import("react");
-
-  const DropdownContext = React.createContext<{
-    open: boolean;
-    setOpen: (v: boolean) => void;
-  }>({ open: false, setOpen: () => {} });
-
-  const SubContext = React.createContext<{
-    subOpen: boolean;
-    setSubOpen: (v: boolean) => void;
-  }>({ subOpen: false, setSubOpen: () => {} });
-
-  const DropdownMenu = ({ children }: { children: React.ReactNode }) => {
-    const [open, setOpen] = React.useState(false);
-    return (
-      <DropdownContext.Provider value={{ open, setOpen }}>
-        {children}
-      </DropdownContext.Provider>
-    );
-  };
-
-  const DropdownMenuTrigger = ({
-    children,
-    asChild,
-  }: {
-    children: React.ReactNode;
-    asChild?: boolean;
-  }) => {
-    const { setOpen } = React.useContext(DropdownContext);
-    if (asChild && React.isValidElement(children)) {
-      return React.cloneElement(
-        children as React.ReactElement<{ onClick?: () => void }>,
-        {
-          onClick: () => setOpen(true),
-        },
-      );
-    }
-    return <button onClick={() => setOpen(true)}>{children}</button>;
-  };
-
-  const DropdownMenuContent = ({ children }: { children: React.ReactNode }) => {
-    const { open } = React.useContext(DropdownContext);
-    return open ? <div data-testid="dropdown-content">{children}</div> : null;
-  };
-
-  const DropdownMenuSub = ({ children }: { children: React.ReactNode }) => {
-    const [subOpen, setSubOpen] = React.useState(false);
-    return (
-      <SubContext.Provider value={{ subOpen, setSubOpen }}>
-        {children}
-      </SubContext.Provider>
-    );
-  };
-
-  const DropdownMenuSubTrigger = ({
-    children,
-  }: {
-    children: React.ReactNode;
-  }) => {
-    const { setSubOpen } = React.useContext(SubContext);
-    return <button onClick={() => setSubOpen(true)}>{children}</button>;
-  };
-
-  const DropdownMenuSubContent = ({
-    children,
-  }: {
-    children: React.ReactNode;
-  }) => {
-    const { subOpen } = React.useContext(SubContext);
-    return subOpen ? <div>{children}</div> : null;
-  };
-
-  const DropdownMenuPortal = ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  );
-  const DropdownMenuItem = ({
-    children,
-    onClick,
-    onSelect,
-    variant,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    onSelect?: () => void;
-    variant?: string;
-  }) => (
-    <button
-      type="button"
-      role="menuitem"
-      onClick={onClick ?? onSelect}
-      data-variant={variant}
-    >
-      {children}
-    </button>
-  );
-  const DropdownMenuLabel = ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <div className={className}>{children}</div>;
-  const DropdownMenuSeparator = () => <hr />;
-  const DropdownMenuGroup = ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  );
-
-  return {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuSub,
-    DropdownMenuSubTrigger,
-    DropdownMenuSubContent,
-    DropdownMenuPortal,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuGroup,
-  };
-});
+jest.mock(
+  "@/components/ui/dropdown-menu",
+  () => require("@/testing/mocks/shadcn").dropdownMenuMock,
+);
 
 const mockPush = jest.fn();
 jest.mock("next/navigation", () => ({
