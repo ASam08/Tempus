@@ -7,7 +7,7 @@ import {
 } from "@/lib/definitions";
 import { sqlConn } from "@/lib/db";
 import * as schema from "@/db/schema";
-import { sql, and, eq, gt, gte, lt, lte, isNull, not } from "drizzle-orm";
+import { sql, and, eq, gt, gte, lt, lte, isNull, not, asc } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -28,6 +28,23 @@ export async function getTimetableSets(user_id: string) {
       .from(schema.timetableSets)
       .where(eq(schema.timetableSets.ownerId, user_id))
       .limit(1);
+    return result;
+  } catch (error) {
+    console.error("Error fetching timetable sets:", error);
+    return [];
+  }
+}
+
+export async function getAllTimetableSets(user_id: string) {
+  try {
+    const result = await sqlConn
+      .select({
+        id: schema.timetableSets.id,
+        title: schema.timetableSets.title,
+      })
+      .from(schema.timetableSets)
+      .where(eq(schema.timetableSets.ownerId, user_id))
+      .orderBy(asc(schema.timetableSets.title));
     return result;
   } catch (error) {
     console.error("Error fetching timetable sets:", error);
