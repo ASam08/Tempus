@@ -4,7 +4,7 @@ import { LucideGrid2X2Plus, PlusCircle } from "lucide-react";
 import { TimetableGrid } from "@/app/ui/timetable/newtimetable";
 import {
   getAllTimetableSets,
-  getUserID,
+  checkTimetableSetOwnership,
   getTimetableBlocks,
   getUserSettings,
 } from "@/lib/data";
@@ -12,6 +12,7 @@ import { RetreivedTimetableBlocks } from "@/lib/definitions";
 import TimetableSetSelect from "@/app/ui/timetable/timetablesetselect";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -26,23 +27,33 @@ export default async function timetablePage({
   });
   const user_id = session!.user.id;
   if (!user_id) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-4">
-        Please log in to view your timetable.
-      </div>
-    );
+    redirect("/login");
   }
 
   const timetable_sets: { id: string; title: string }[] | null = user_id
     ? await getAllTimetableSets(user_id)
     : null;
 
-  const selectedSetId = set ?? timetable_sets?.[0]?.id ?? undefined;
+  const settings = (await getUserSettings(user_id)) ?? null;
+
+  console.log("Last timetable set ID:", settings?.last_timetable_set_id);
+
+  const selectedSetId =
+    set ??
+    settings?.last_timetable_set_id ??
+    timetable_sets?.[0]?.id ??
+    undefined;
   let events: RetreivedTimetableBlocks[] = [];
   if (selectedSetId) {
-    events = await getTimetableBlocks(selectedSetId);
+    const isSetOwner = await checkTimetableSetOwnership(selectedSetId, user_id);
+    if (isSetOwner === true) {
+      events = await getTimetableBlocks(selectedSetId);
+    } else {
+      console.warn(
+        `WARN: User ${user_id} tried to show timetable set ${selectedSetId} but does not own it.`,
+      );
+    }
   }
-  const settings = (await getUserSettings(user_id)) ?? null;
 
   return (
     <div className="flex h-full flex-col px-3 py-4 md:px-2">

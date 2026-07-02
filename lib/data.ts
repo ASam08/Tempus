@@ -245,3 +245,25 @@ export async function getBlockByID(block_id: string, user_id: string) {
     return null;
   }
 }
+
+export async function checkTimetableSetOwnership(
+  timetable_set_id: string,
+  user_id: string,
+): Promise<boolean> {
+  try {
+    const result = await sqlConn
+      .select()
+      .from(schema.timetableSets)
+      .where(
+        and(
+          eq(schema.timetableSets.id, timetable_set_id),
+          eq(schema.timetableSets.ownerId, user_id),
+        ),
+      )
+      .limit(1);
+    return result.length > 0;
+  } catch (error) {
+    console.error("Error checking timetable set ownership:", error);
+    return false;
+  }
+}

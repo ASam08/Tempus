@@ -434,6 +434,15 @@ export async function unhideDow(dayKey: string) {
   revalidatePath("/dashboard/settings");
 }
 
+export async function setLastTimetableSet(setId: string) {
+  const user_id = await getUserID();
+  if (!user_id) {
+    return { message: "User not authenticated." };
+  }
+  await updateSettings(user_id, [["last_timetable_set_id", setId]]);
+  return { message: "Last timetable set updated." };
+}
+
 export async function updateSettings(
   user_id: string,
   data: [string, FormDataEntryValue][],
@@ -448,6 +457,7 @@ export async function updateSettings(
     "friday",
     "saturday",
     "sunday",
+    "last_timetable_set_id",
   ]);
 
   const rows = data

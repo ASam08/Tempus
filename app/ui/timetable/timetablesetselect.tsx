@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { RetrievedTimetableSets } from "@/lib/definitions";
 import { useRouter, usePathname } from "next/navigation";
+import { setLastTimetableSet } from "@/lib/actions";
 
 type TimetableSetSelectProps = {
   timetableSets: RetrievedTimetableSets;
@@ -26,6 +27,7 @@ export default function TimetableSetSelect({
     const params = new URLSearchParams();
     params.set("set", value);
     router.push(`${pathname}?${params.toString()}`);
+    setLastTimetableSet(value);
   }
 
   return (
