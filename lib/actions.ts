@@ -4,12 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import {
-  getTimetableSets,
   getCurrentBlock,
   getNextBlock,
   getUserID,
   getNextBreak,
   blockConflictCheck,
+  checkTimetableSetOwnership,
 } from "@/lib/data";
 import { sqlConn } from "@/lib/db";
 import { dow } from "@/lib/constants";
@@ -99,6 +99,7 @@ const refinedTimetableBlock = originalTimetableBlockSchema
   );
 
 export async function addTimetableBlock(
+  setId: string,
   prevState: BlockState,
   formData: FormData,
 ) {
@@ -110,9 +111,17 @@ export async function addTimetableBlock(
       conflicts: [],
     };
   }
-  const set_id = await getTimetableSets(user_id);
+  const set_id = setId;
+  const checkSetOwnership = await checkTimetableSetOwnership(set_id, user_id);
+  if (!checkSetOwnership) {
+    return {
+      message: "User does not own the timetable set.",
+      errors: {},
+      conflicts: [],
+    };
+  }
   const validatedFields = refinedTimetableBlock.safeParse({
-    timetable_set_id: set_id[0].id,
+    timetable_set_id: set_id,
     day: formData.get("day_of_week"),
     subject: formData.get("subject"),
     location: formData.get("location"),

@@ -21,7 +21,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { addTimetableBlock, unhideDow } from "@/lib/actions";
+import { unhideDow } from "@/lib/actions";
 import Link from "next/link";
 import { useState, useActionState, useRef } from "react";
 import { dowKeyValue } from "@/lib/constants";
@@ -30,13 +30,15 @@ import { BlockState } from "@/lib/definitions";
 import { timeToMinutes } from "@/lib/utils";
 
 export default function AddTimetableBlock({
+  action,
   settings,
 }: {
+  action: (prevState: BlockState, formData: FormData) => Promise<BlockState>;
   settings: Record<string, string> | null;
 }) {
   const initialState: BlockState = { message: "", errors: {}, conflicts: [] };
   const [state, formAction] = useActionState<BlockState, FormData>(
-    addTimetableBlock,
+    action,
     initialState,
   );
   const [dowHidden, setDowHidden] = useState(false);

@@ -48,7 +48,7 @@ jest.mock("next/headers", () => ({
 
 import {
   getUserID,
-  getTimetableSets,
+  getAllTimetableSets,
   getTimetableBlocks,
   getCurrentBlock,
   getNextBlock,
@@ -116,23 +116,23 @@ describe("DataTests", () => {
     });
   });
 
-  describe("getTimetableSets", () => {
+  describe("getAllTimetableSets", () => {
     it("returns timetable sets for a user", async () => {
       const fakeSets = [{ id: "set-123" }];
       mockLimit.mockResolvedValueOnce(fakeSets);
-      const result = await getTimetableSets("user-123");
+      const result = await getAllTimetableSets("user-123");
       expect(result).toEqual(fakeSets);
     });
 
     it("returns empty array when there are no sets", async () => {
       mockLimit.mockResolvedValueOnce([]);
-      const result = await getTimetableSets("user-123");
+      const result = await getAllTimetableSets("user-123");
       expect(result).toEqual([]);
     });
 
     it("returns empty array when the database throws", async () => {
       mockLimit.mockRejectedValueOnce(new Error("DB error"));
-      const result = await getTimetableSets("user-123");
+      const result = await getAllTimetableSets("user-123");
       expect(result).toEqual([]);
       expect(console.error).toHaveBeenCalled();
     });

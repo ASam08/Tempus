@@ -83,7 +83,9 @@ export default async function timetablePage({
             </div>
 
             <div className="flex grow justify-end">
-              <Link href="\dashboard\timetable\add-block">
+              <Link
+                href={`/dashboard/timetable/add-block?setId=${selectedSetId}`}
+              >
                 <Button className="hidden bg-blue-600 text-white sm:flex">
                   <PlusCircle /> Add Timetable Block
                 </Button>

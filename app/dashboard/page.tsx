@@ -48,8 +48,7 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
-      {timetableSets &&
-        timetableSets.length > 0 &&
+      {timetableSets && timetableSets.length > 0 ? (
         timetableSets.map((set) => (
           <div key={set.id} className="mt-4 gap-2">
             {set.title}
@@ -59,7 +58,16 @@ export default async function DashboardPage() {
               <NextCardClient setId={set.id} />
             </div>
           </div>
-        ))}
+        ))
+      ) : (
+        <div className="mt-4 flex flex-col gap-2 md:flex-row md:gap-4">
+          <div className="w-full max-w-64 rounded-lg border-2 border-dashed p-4 md:w-1/3">
+            <p className="text-gray-400">
+              Nothing to see here, add a timetable to get started!
+            </p>
+          </div>
+        </div>
+      )}
       {admin && (
         <div className="my-4 flex">
           <Button className="flex">

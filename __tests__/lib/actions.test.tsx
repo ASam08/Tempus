@@ -87,7 +87,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sqlConn } from "@/lib/db";
 import {
-  getTimetableSets,
+  getAllTimetableSets,
   getCurrentBlock,
   getNextBlock,
   getUserID,
@@ -97,7 +97,7 @@ import {
 const mockRevalidatePath = revalidatePath as jest.Mock;
 const mockRedirect = redirect as any as jest.Mock;
 const mockGetUserID = getUserID as jest.Mock;
-const mockGetTimetableSets = getTimetableSets as jest.Mock;
+const mockGetTimetableSets = getAllTimetableSets as jest.Mock;
 const mockGetCurrentBlock = getCurrentBlock as jest.Mock;
 const mockGetNextBlock = getNextBlock as jest.Mock;
 const mockGetNextBreak = getNextBreak as jest.Mock;

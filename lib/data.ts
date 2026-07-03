@@ -21,20 +21,6 @@ export async function getUserID() {
   return user_id;
 }
 
-export async function getTimetableSets(user_id: string) {
-  try {
-    const result = await sqlConn
-      .select({ id: schema.timetableSets.id })
-      .from(schema.timetableSets)
-      .where(eq(schema.timetableSets.ownerId, user_id))
-      .limit(1);
-    return result;
-  } catch (error) {
-    console.error("Error fetching timetable sets:", error);
-    return [];
-  }
-}
-
 export async function getAllTimetableSets(user_id: string) {
   try {
     const result = await sqlConn
