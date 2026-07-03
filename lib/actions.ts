@@ -295,60 +295,72 @@ export async function updateTimetableBlock(
   redirect("/dashboard/timetable");
 }
 
-export async function fetchCurrentBlock(dayOfWeek: number, time: string) {
-  const user_id = await getUserID();
-  if (!user_id) {
-    console.error("No user found.");
-    return { reason: "no-user" } as const;
-  }
-  const sets = await getTimetableSets(user_id);
+export async function fetchCurrentBlock(
+  setId: string,
+  dayOfWeek: number,
+  time: string,
+) {
+  // const user_id = await getUserID();
+  // if (!user_id) {
+  //   console.error("No user found.");
+  //   return { reason: "no-user" } as const;
+  // }
+  // const sets = await getTimetableSets(user_id);
 
-  // Defensive guard
-  if (!Array.isArray(sets) || sets.length === 0) {
-    console.warn("No timetable sets found for user:", user_id);
-    return { reason: "no-set" } as const;
-  }
+  // // Defensive guard
+  // if (!Array.isArray(sets) || sets.length === 0) {
+  //   console.warn("No timetable sets found for user:", user_id);
+  //   return { reason: "no-set" } as const;
+  // }
 
-  const timetableSetId = sets[0].id;
+  const timetableSetId = setId;
 
   return getCurrentBlock(timetableSetId, dayOfWeek, time);
 }
 
-export async function fetchNextBlock(dayOfWeek: number, time: string) {
-  const user_id = await getUserID();
-  if (!user_id) {
-    console.error("No user found.");
-    return { reason: "no-user" } as const;
-  }
-  const sets = await getTimetableSets(user_id);
+export async function fetchNextBlock(
+  setId: string,
+  dayOfWeek: number,
+  time: string,
+) {
+  // const user_id = await getUserID();
+  // if (!user_id) {
+  //   console.error("No user found.");
+  //   return { reason: "no-user" } as const;
+  // }
+  // const sets = await getTimetableSets(user_id);
 
-  // Defensive guard
-  if (!Array.isArray(sets) || sets.length === 0) {
-    console.warn("No timetable sets found for user:", user_id);
-    return { reason: "no-set" } as const;
-  }
+  // // Defensive guard
+  // if (!Array.isArray(sets) || sets.length === 0) {
+  //   console.warn("No timetable sets found for user:", user_id);
+  //   return { reason: "no-set" } as const;
+  //}
 
-  const timetableSetId = sets[0].id;
+  const timetableSetId = setId;
 
   return getNextBlock(timetableSetId, dayOfWeek, time);
 }
 
-export async function fetchNextBreak(dayOfWeek: number, time: string) {
-  const user_id = await getUserID();
-  if (!user_id) {
-    // Explicit sentinel so callers can distinguish "no user" from "no next break"
-    console.error("No user found.");
-    return { reason: "no-user" } as const;
-  }
-  const sets = await getTimetableSets(user_id);
+export async function fetchNextBreak(
+  setId: string,
+  dayOfWeek: number,
+  time: string,
+) {
+  // const user_id = await getUserID();
+  // if (!user_id) {
+  //   // Explicit sentinel so callers can distinguish "no user" from "no next break"
+  //   console.error("No user found.");
+  //   return { reason: "no-user" } as const;
+  // }
+  // const sets = await getTimetableSets(user_id);
 
-  // Defensive guard
-  if (!Array.isArray(sets) || sets.length === 0) {
-    console.warn("No timetable sets found for user:", user_id);
-    return { reason: "no-set" } as const;
-  }
+  // // Defensive guard
+  // if (!Array.isArray(sets) || sets.length === 0) {
+  //   console.warn("No timetable sets found for user:", user_id);
+  //   return { reason: "no-set" } as const;
+  // }
 
-  const timetableSetId = sets[0].id;
+  const timetableSetId = setId;
 
   return getNextBreak(timetableSetId, dayOfWeek, time);
 }

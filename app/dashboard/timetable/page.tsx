@@ -36,8 +36,6 @@ export default async function timetablePage({
 
   const settings = (await getUserSettings(user_id)) ?? null;
 
-  console.log("Last timetable set ID:", settings?.last_timetable_set_id);
-
   const selectedSetId =
     set ??
     settings?.last_timetable_set_id ??

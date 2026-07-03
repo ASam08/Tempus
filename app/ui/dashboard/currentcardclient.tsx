@@ -6,7 +6,7 @@ import { RetreivedTimetableBlocks } from "@/lib/definitions";
 import { LucidePlay } from "lucide-react";
 import { timeToMinutes } from "@/lib/utils";
 
-export default function CurrentCardClient() {
+export default function CurrentCardClient({ setId }: { setId: string }) {
   const [block, setBlock] = useState<RetreivedTimetableBlocks | null>(null);
   const [loading, setLoading] = useState(true);
   const [foundUserId, setFoundUserId] = useState(true);
@@ -18,7 +18,7 @@ export default function CurrentCardClient() {
     const dayOfWeek = jsDay === 0 ? 7 : jsDay;
     const time = now.toTimeString().slice(0, 8);
 
-    const current = await fetchCurrentBlock(dayOfWeek, time);
+    const current = await fetchCurrentBlock(setId, dayOfWeek, time);
 
     if (current && "reason" in current) {
       setFoundUserId(false);
