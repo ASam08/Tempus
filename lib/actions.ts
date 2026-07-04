@@ -196,8 +196,6 @@ export async function updateTimetableBlock(
     };
   }
 
-  console.log(formData);
-
   let set_result;
   try {
     set_result = await sqlConn
@@ -304,74 +302,30 @@ export async function updateTimetableBlock(
   redirect("/dashboard/timetable");
 }
 
-export async function fetchCurrentBlock(
+type BlockRequestType = "current" | "next" | "next-break";
+
+export async function fetchDashboardCard(
+  type: BlockRequestType,
   setId: string,
   dayOfWeek: number,
   time: string,
 ) {
-  // const user_id = await getUserID();
-  // if (!user_id) {
-  //   console.error("No user found.");
-  //   return { reason: "no-user" } as const;
-  // }
-  // const sets = await getTimetableSets(user_id);
+  const user_id = await getUserID();
+  if (!user_id) return { reason: "no-user" } as const;
 
-  // // Defensive guard
-  // if (!Array.isArray(sets) || sets.length === 0) {
-  //   console.warn("No timetable sets found for user:", user_id);
-  //   return { reason: "no-set" } as const;
-  // }
+  const owns = await checkTimetableSetOwnership(setId, user_id);
+  if (!owns) return { reason: "no-ownership" } as const;
 
-  const timetableSetId = setId;
-
-  return getCurrentBlock(timetableSetId, dayOfWeek, time);
-}
-
-export async function fetchNextBlock(
-  setId: string,
-  dayOfWeek: number,
-  time: string,
-) {
-  // const user_id = await getUserID();
-  // if (!user_id) {
-  //   console.error("No user found.");
-  //   return { reason: "no-user" } as const;
-  // }
-  // const sets = await getTimetableSets(user_id);
-
-  // // Defensive guard
-  // if (!Array.isArray(sets) || sets.length === 0) {
-  //   console.warn("No timetable sets found for user:", user_id);
-  //   return { reason: "no-set" } as const;
-  //}
-
-  const timetableSetId = setId;
-
-  return getNextBlock(timetableSetId, dayOfWeek, time);
-}
-
-export async function fetchNextBreak(
-  setId: string,
-  dayOfWeek: number,
-  time: string,
-) {
-  // const user_id = await getUserID();
-  // if (!user_id) {
-  //   // Explicit sentinel so callers can distinguish "no user" from "no next break"
-  //   console.error("No user found.");
-  //   return { reason: "no-user" } as const;
-  // }
-  // const sets = await getTimetableSets(user_id);
-
-  // // Defensive guard
-  // if (!Array.isArray(sets) || sets.length === 0) {
-  //   console.warn("No timetable sets found for user:", user_id);
-  //   return { reason: "no-set" } as const;
-  // }
-
-  const timetableSetId = setId;
-
-  return getNextBreak(timetableSetId, dayOfWeek, time);
+  switch (type) {
+    case "current":
+      return getCurrentBlock(setId, dayOfWeek, time);
+    case "next":
+      return getNextBlock(setId, dayOfWeek, time);
+    case "next-break":
+      return getNextBreak(setId, dayOfWeek, time);
+    default:
+      return { reason: "invalid-type" } as const;
+  }
 }
 
 export async function deleteBlock(id: string) {
@@ -444,14 +398,17 @@ export async function settingsSave(
   return { message: result?.message, timestamp: Date.now() };
 }
 
+const DAY_KEYS = new Set(dow);
+
 export async function unhideDow(dayKey: string) {
   const user_id = await getUserID();
-  if (!user_id) {
-    return { message: "User not authenticated." };
+  if (!user_id) return { message: "User not authenticated." };
+
+  if (!DAY_KEYS.has(dayKey)) {
+    return { message: "Invalid day." };
   }
 
   await updateSettings(user_id, [[dayKey, "true"]]);
-
   revalidatePath("/dashboard/settings");
 }
 

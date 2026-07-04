@@ -145,6 +145,7 @@ export async function getNextBreak(
     )
     .orderBy(t1.startTime)
     .limit(1);
+  console.log("Next break result:", result);
   return result[0] ?? null;
 }
 

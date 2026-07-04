@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchNextBlock } from "@/lib/actions";
+import { fetchDashboardCard } from "@/lib/actions";
 import { RetreivedTimetableBlocks } from "@/lib/definitions";
 import { LucideSkipForward } from "lucide-react";
 import { timeToMinutes } from "@/lib/utils";
@@ -19,7 +19,7 @@ export default function NextCardClient({ setId }: { setId: string }) {
     const dayOfWeek = jsDay === 0 ? 7 : jsDay;
     const time = now.toTimeString().slice(0, 8);
 
-    const next = await fetchNextBlock(setId, dayOfWeek, time);
+    const next = await fetchDashboardCard("next", setId, dayOfWeek, time);
     if (next && "reason" in next) {
       setFoundUserId(false);
       setLoading(false);

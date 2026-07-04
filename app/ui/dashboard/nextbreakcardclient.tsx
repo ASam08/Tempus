@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchNextBreak } from "@/lib/actions";
+import { fetchDashboardCard } from "@/lib/actions";
 import { RetreivedTimetableBlocks } from "@/lib/definitions";
 import { LucidePause } from "lucide-react";
 import { timeToMinutes } from "@/lib/utils";
@@ -19,7 +19,7 @@ export default function NextBreakCardClient({ setId }: { setId: string }) {
     const dayOfWeek = jsDay === 0 ? 7 : jsDay;
     const time = now.toTimeString().slice(0, 8);
 
-    const next = await fetchNextBreak(setId, dayOfWeek, time);
+    const next = await fetchDashboardCard("next-break", setId, dayOfWeek, time);
     if (next && "reason" in next) {
       setFoundUserId(false);
       setLoading(false);
