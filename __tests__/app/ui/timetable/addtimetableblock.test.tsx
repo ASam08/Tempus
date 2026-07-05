@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
 const mockFormAction = jest.fn();
+const mockAction = jest.fn();
 const mockUnhideDow = jest.fn().mockResolvedValue(undefined);
 
 jest.mock("next/link", () => {
@@ -67,7 +68,7 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").selectMock,
 );
 
-jest.mock("@/components/ui/alert-dialog", () => 
+jest.mock("@/components/ui/alert-dialog", () =>
   require("@/testing/mocks/shadcn").alertDialogMock(),
 );
 
@@ -109,7 +110,7 @@ function renderComponent(
   jest
     .spyOn(React, "useActionState")
     .mockReturnValue([state, mockFormAction, false]);
-  return render(<AddTimetableBlock settings={settings} />);
+  return render(<AddTimetableBlock action={mockAction} settings={settings} />);
 }
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
@@ -504,6 +505,24 @@ describe("AddTimetableBlock", () => {
       await waitFor(() =>
         expect(mockUnhideDow).toHaveBeenCalledWith("saturday"),
       );
+      await waitFor(() => expect(mockFormAction).toHaveBeenCalled());
+    });
+
+    it("skips calling unhideDow when the selected day has no matching label", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+      const select = screen.getByRole("combobox");
+      const option = document.createElement("option");
+      option.value = "99";
+      option.textContent = "Unknown";
+      select.appendChild(option);
+      await user.selectOptions(select, "99");
+      await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
+      await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      await screen.findByRole("alertdialog");
+      await user.click(screen.getByRole("button", { name: /yes, unhide it/i }));
+      expect(mockUnhideDow).not.toHaveBeenCalled();
       await waitFor(() => expect(mockFormAction).toHaveBeenCalled());
     });
 
