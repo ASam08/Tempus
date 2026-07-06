@@ -1,5 +1,5 @@
 jest.mock("@/lib/data", () => ({
-  getTimetableSets: jest.fn(),
+  checkTimetableSetOwnership: jest.fn(),
   getCurrentBlock: jest.fn(),
   getNextBlock: jest.fn(),
   getUserID: jest.fn(),
@@ -22,10 +22,6 @@ jest.mock("next/navigation", () => ({
   redirect: jest.fn(() => {
     throw new Error("NEXT_REDIRECT");
   }),
-}));
-
-jest.mock("bcryptjs", () => ({
-  hash: jest.fn().mockResolvedValue("hashed_pw"),
 }));
 
 jest.mock("@/db/schema", () => ({
@@ -64,9 +60,7 @@ import {
   createNewTimetableSet,
   addTimetableBlock,
   updateTimetableBlock,
-  fetchCurrentBlock,
-  fetchNextBlock,
-  fetchNextBreak,
+  fetchDashboardCard,
   deleteBlock,
   settingsSave,
   unhideDow,
@@ -87,7 +81,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sqlConn } from "@/lib/db";
 import {
-  getAllTimetableSets,
+  checkTimetableSetOwnership,
   getCurrentBlock,
   getNextBlock,
   getUserID,
@@ -97,7 +91,7 @@ import {
 const mockRevalidatePath = revalidatePath as jest.Mock;
 const mockRedirect = redirect as any as jest.Mock;
 const mockGetUserID = getUserID as jest.Mock;
-const mockGetTimetableSets = getAllTimetableSets as jest.Mock;
+const mockCheckOwnership = checkTimetableSetOwnership as jest.Mock;
 const mockGetCurrentBlock = getCurrentBlock as jest.Mock;
 const mockGetNextBlock = getNextBlock as jest.Mock;
 const mockGetNextBreak = getNextBreak as jest.Mock;
@@ -207,15 +201,16 @@ describe("ActionsTests", () => {
 
     beforeEach(() => {
       mockGetUserID.mockResolvedValue("user-uuid");
-      mockGetTimetableSets.mockResolvedValue([{ id: "set-uuid" }]);
+      mockCheckOwnership.mockResolvedValue(true);
       mockBlockConflictCheck.mockResolvedValue([]);
     });
 
     it("inserts block, revalidates, and redirects on success", async () => {
       mockInsertChain();
-      await expect(addTimetableBlock(initialState, validForm)).rejects.toThrow(
-        "NEXT_REDIRECT",
-      );
+      await expect(
+        addTimetableBlock("set-uuid", initialState, validForm),
+      ).rejects.toThrow("NEXT_REDIRECT");
+      expect(mockCheckOwnership).toHaveBeenCalledWith("set-uuid", "user-uuid");
       expect(mockBlockConflictCheck).toHaveBeenCalledWith(
         "set-uuid",
         2,
@@ -223,14 +218,34 @@ describe("ActionsTests", () => {
         "10:00",
       );
       expect(sqlConn.insert).toHaveBeenCalled();
+      expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/timetable");
+      expect(mockRedirect).toHaveBeenCalledWith("/dashboard/timetable");
     });
 
     it("returns no-user sentinel when getUserID returns null", async () => {
       mockGetUserID.mockResolvedValueOnce(null);
-      const result = await addTimetableBlock(initialState, validForm);
+      const result = await addTimetableBlock(
+        "set-uuid",
+        initialState,
+        validForm,
+      );
       expect(result).toMatchObject({
         message: expect.stringContaining("not authenticated"),
       });
+      expect(mockCheckOwnership).not.toHaveBeenCalled();
+    });
+
+    it("returns error when user does not own the timetable set", async () => {
+      mockCheckOwnership.mockResolvedValueOnce(false);
+      const result = await addTimetableBlock(
+        "set-uuid",
+        initialState,
+        validForm,
+      );
+      expect(result).toMatchObject({
+        message: "User does not own the timetable set.",
+      });
+      expect(sqlConn.insert).not.toHaveBeenCalled();
     });
 
     it("returns validation errors when fields are missing", async () => {
@@ -241,7 +256,7 @@ describe("ActionsTests", () => {
         start_time: "",
         end_time: "",
       });
-      const result = await addTimetableBlock(initialState, form);
+      const result = await addTimetableBlock("set-uuid", initialState, form);
       expect(result).toMatchObject({ errors: expect.any(Object) });
       expect(sqlConn.insert).not.toHaveBeenCalled();
     });
@@ -254,13 +269,17 @@ describe("ActionsTests", () => {
         start_time: "10:00",
         end_time: "09:00",
       });
-      const result = await addTimetableBlock(initialState, form);
+      const result = await addTimetableBlock("set-uuid", initialState, form);
       expect(result?.errors).toHaveProperty("end_time");
     });
 
     it("returns conflict error when blockConflictCheck returns conflicts", async () => {
       mockBlockConflictCheck.mockResolvedValueOnce([{ id: "conflict-block" }]);
-      const result = await addTimetableBlock(initialState, validForm);
+      const result = await addTimetableBlock(
+        "set-uuid",
+        initialState,
+        validForm,
+      );
       expect(result).toMatchObject({
         message: "Time conflict with existing block(s)",
         conflicts: [{ id: "conflict-block" }],
@@ -270,7 +289,11 @@ describe("ActionsTests", () => {
 
     it("returns error when blockConflictCheck returns null", async () => {
       mockBlockConflictCheck.mockResolvedValueOnce(null);
-      const result = await addTimetableBlock(initialState, validForm);
+      const result = await addTimetableBlock(
+        "set-uuid",
+        initialState,
+        validForm,
+      );
       expect(result).toMatchObject({ message: "Error checking conflicts" });
     });
 
@@ -278,7 +301,11 @@ describe("ActionsTests", () => {
       (sqlConn.insert as jest.Mock).mockReturnValueOnce({
         values: jest.fn().mockRejectedValueOnce(new Error("db error")),
       });
-      const result = await addTimetableBlock(initialState, validForm);
+      const result = await addTimetableBlock(
+        "set-uuid",
+        initialState,
+        validForm,
+      );
       expect(result).toMatchObject({
         message: "Error creating timetable block.",
       });
@@ -459,80 +486,93 @@ describe("ActionsTests", () => {
     });
   });
 
-  describe("fetchCurrentBlock", () => {
+  describe("fetchDashboardCard", () => {
     it("returns no-user sentinel when getUserID returns null", async () => {
       mockGetUserID.mockResolvedValueOnce(null);
-      const result = await fetchCurrentBlock(1, "09:00");
+      const result = await fetchDashboardCard(
+        "current",
+        "set-uuid",
+        1,
+        "09:00",
+      );
       expect(result).toEqual({ reason: "no-user" });
+      expect(mockCheckOwnership).not.toHaveBeenCalled();
     });
 
-    it("returns no-set sentinel when getTimetableSets returns empty array", async () => {
+    it("returns no-ownership sentinel when checkTimetableSetOwnership returns false", async () => {
       mockGetUserID.mockResolvedValueOnce("user-uuid");
-      mockGetTimetableSets.mockResolvedValueOnce([]);
-      const result = await fetchCurrentBlock(1, "09:00");
-      expect(result).toEqual({ reason: "no-set" });
+      mockCheckOwnership.mockResolvedValueOnce(false);
+      const result = await fetchDashboardCard(
+        "current",
+        "set-uuid",
+        1,
+        "09:00",
+      );
+      expect(result).toEqual({ reason: "no-ownership" });
+      expect(mockGetCurrentBlock).not.toHaveBeenCalled();
     });
 
-    it("delegates to getCurrentBlock with correct args", async () => {
+    it("delegates to getCurrentBlock for the current type", async () => {
       mockGetUserID.mockResolvedValueOnce("user-uuid");
-      mockGetTimetableSets.mockResolvedValueOnce([{ id: "set-uuid" }]);
+      mockCheckOwnership.mockResolvedValueOnce(true);
       mockGetCurrentBlock.mockResolvedValueOnce({ id: "block-1" });
 
-      const result = await fetchCurrentBlock(3, "11:30");
+      const result = await fetchDashboardCard(
+        "current",
+        "set-uuid",
+        3,
+        "11:30",
+      );
 
       expect(mockGetCurrentBlock).toHaveBeenCalledWith("set-uuid", 3, "11:30");
       expect(result).toEqual({ id: "block-1" });
     });
-  });
 
-  describe("fetchNextBlock", () => {
-    it("returns no-user sentinel when getUserID returns null", async () => {
-      mockGetUserID.mockResolvedValueOnce(null);
-      expect(await fetchNextBlock(1, "09:00")).toEqual({ reason: "no-user" });
-    });
-
-    it("returns no-set sentinel when getTimetableSets returns empty array", async () => {
+    it("delegates to getNextBlock for the next type", async () => {
       mockGetUserID.mockResolvedValueOnce("user-uuid");
-      mockGetTimetableSets.mockResolvedValueOnce([]);
-      expect(await fetchNextBlock(1, "09:00")).toEqual({ reason: "no-set" });
-    });
-
-    it("delegates to getNextBlock with correct args", async () => {
-      mockGetUserID.mockResolvedValueOnce("user-uuid");
-      mockGetTimetableSets.mockResolvedValueOnce([{ id: "set-uuid" }]);
+      mockCheckOwnership.mockResolvedValueOnce(true);
       mockGetNextBlock.mockResolvedValueOnce({ id: "block-2" });
 
-      const result = await fetchNextBlock(4, "14:00");
+      const result = await fetchDashboardCard("next", "set-uuid", 4, "14:00");
 
       expect(mockGetNextBlock).toHaveBeenCalledWith("set-uuid", 4, "14:00");
       expect(result).toEqual({ id: "block-2" });
     });
-  });
 
-  describe("fetchNextBreak", () => {
-    it("returns no-user sentinel when getUserID returns null", async () => {
-      mockGetUserID.mockResolvedValueOnce(null);
-      expect(await fetchNextBreak(1, "09:00")).toEqual({ reason: "no-user" });
-    });
-
-    it("returns no-set sentinel when getTimetableSets returns empty array", async () => {
+    it("delegates to getNextBreak for the next-break type", async () => {
       mockGetUserID.mockResolvedValueOnce("user-uuid");
-      mockGetTimetableSets.mockResolvedValueOnce([]);
-      expect(await fetchNextBreak(1, "09:00")).toEqual({ reason: "no-set" });
-    });
-
-    it("delegates to getNextBreak with correct args", async () => {
-      mockGetUserID.mockResolvedValueOnce("user-uuid");
-      mockGetTimetableSets.mockResolvedValueOnce([{ id: "set-uuid" }]);
+      mockCheckOwnership.mockResolvedValueOnce(true);
       mockGetNextBreak.mockResolvedValueOnce({
         startTime: "12:00",
         endTime: "13:00",
       });
 
-      const result = await fetchNextBreak(5, "10:00");
+      const result = await fetchDashboardCard(
+        "next-break",
+        "set-uuid",
+        5,
+        "10:00",
+      );
 
       expect(mockGetNextBreak).toHaveBeenCalledWith("set-uuid", 5, "10:00");
       expect(result).toEqual({ startTime: "12:00", endTime: "13:00" });
+    });
+
+    it("returns invalid-type sentinel for an unrecognized type", async () => {
+      mockGetUserID.mockResolvedValueOnce("user-uuid");
+      mockCheckOwnership.mockResolvedValueOnce(true);
+
+      const result = await fetchDashboardCard(
+        "bogus" as any,
+        "set-uuid",
+        1,
+        "09:00",
+      );
+
+      expect(result).toEqual({ reason: "invalid-type" });
+      expect(mockGetCurrentBlock).not.toHaveBeenCalled();
+      expect(mockGetNextBlock).not.toHaveBeenCalled();
+      expect(mockGetNextBreak).not.toHaveBeenCalled();
     });
   });
 
@@ -593,7 +633,7 @@ describe("ActionsTests", () => {
     });
 
     it("calls updateSettings and revalidates on success", async () => {
-      const { onConflictMethod } = mockInsertWithConflictChain();
+      mockInsertWithConflictChain();
 
       const result = await settingsSave(initialState, makeSettingsForm());
 
@@ -612,9 +652,17 @@ describe("ActionsTests", () => {
       expect(result).toMatchObject({ message: "User not authenticated." });
     });
 
+    it("returns an invalid day message and does not update settings for an unknown day key", async () => {
+      mockGetUserID.mockResolvedValueOnce("user-uuid");
+      const result = await unhideDow("not_a_real_day");
+      expect(result).toMatchObject({ message: "Invalid day." });
+      expect(sqlConn.insert).not.toHaveBeenCalled();
+      expect(mockRevalidatePath).not.toHaveBeenCalled();
+    });
+
     it("calls updateSettings with the correct day key set to true and revalidates", async () => {
       mockGetUserID.mockResolvedValueOnce("user-uuid");
-      const { onConflictMethod } = mockInsertWithConflictChain();
+      mockInsertWithConflictChain();
 
       await unhideDow("wednesday");
 
@@ -642,7 +690,7 @@ describe("ActionsTests", () => {
     });
 
     it("upserts only allowed setting keys", async () => {
-      const { onConflictMethod } = mockInsertWithConflictChain();
+      mockInsertWithConflictChain();
 
       const result = await updateSettings("user-uuid", [
         ["start_time", "08:00"],
@@ -665,6 +713,21 @@ describe("ActionsTests", () => {
       expect(rows.map((r) => r.settingKey)).not.toContain("bad_key");
     });
 
+    it("filters out entries with a null value", async () => {
+      mockInsertWithConflictChain();
+
+      const result = await updateSettings("user-uuid", [
+        ["monday", null as unknown as FormDataEntryValue],
+        ["tuesday", "true"],
+      ]);
+
+      expect(result).toEqual({ message: "success", errors: {} });
+      const insertMock = sqlConn.insert as jest.Mock;
+      const valuesCalled = insertMock.mock.results[0].value.values;
+      const rows: Array<{ settingKey: string }> = valuesCalled.mock.calls[0][0];
+      expect(rows.map((r) => r.settingKey)).toEqual(["tuesday"]);
+    });
+
     it("returns error object when DB upsert throws", async () => {
       (sqlConn.insert as jest.Mock).mockReturnValueOnce({
         values: jest.fn().mockReturnValue({
@@ -679,7 +742,7 @@ describe("ActionsTests", () => {
     });
 
     it("accepts all seven day-of-week keys", async () => {
-      const { onConflictMethod } = mockInsertWithConflictChain();
+      mockInsertWithConflictChain();
 
       const days: [string, string][] = [
         ["monday", "true"],

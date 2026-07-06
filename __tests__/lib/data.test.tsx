@@ -56,6 +56,7 @@ import {
   getUserSettings,
   blockConflictCheck,
   getBlockByID,
+  checkTimetableSetOwnership,
 } from "@/lib/data";
 
 const {
@@ -87,7 +88,6 @@ beforeEach(() => {
   mockSelect.mockReturnValue({ from: mockFrom });
   mockSelectDistinct.mockReturnValue({ from: mockFrom });
 
-  // Re-apply after resetAllMocks wipes implementations
   const { auth } = require("@/lib/auth");
   auth.api.getSession = jest.fn();
 });
@@ -119,19 +119,19 @@ describe("DataTests", () => {
   describe("getAllTimetableSets", () => {
     it("returns timetable sets for a user", async () => {
       const fakeSets = [{ id: "set-123" }];
-      mockLimit.mockResolvedValueOnce(fakeSets);
+      mockOrderBy.mockResolvedValueOnce(fakeSets);
       const result = await getAllTimetableSets("user-123");
       expect(result).toEqual(fakeSets);
     });
 
     it("returns empty array when there are no sets", async () => {
-      mockLimit.mockResolvedValueOnce([]);
+      mockOrderBy.mockResolvedValueOnce([]);
       const result = await getAllTimetableSets("user-123");
       expect(result).toEqual([]);
     });
 
     it("returns empty array when the database throws", async () => {
-      mockLimit.mockRejectedValueOnce(new Error("DB error"));
+      mockOrderBy.mockRejectedValueOnce(new Error("DB error"));
       const result = await getAllTimetableSets("user-123");
       expect(result).toEqual([]);
       expect(console.error).toHaveBeenCalled();
@@ -243,6 +243,7 @@ describe("DataTests", () => {
       mockLimit.mockResolvedValueOnce([fakeBlock]);
       const result = await getNextBreak("set-123", 1, "09:30");
       expect(result).toEqual(fakeBlock);
+      expect(mockLeftJoin).toHaveBeenCalled();
     });
 
     it("returns null when there is no break", async () => {
@@ -256,22 +257,6 @@ describe("DataTests", () => {
       await expect(getNextBreak("set-123", 1, "09:30")).rejects.toThrow(
         "DB error",
       );
-    });
-
-    it("uses the leftJoin chain to find a break block", async () => {
-      const fakeBlock = {
-        id: "block-4",
-        start_time: "12:00",
-        end_time: "13:00",
-        day_of_week: 2,
-        subject: "Art",
-        location: "Room 4",
-      };
-      // getNextBreak resolves via .limit() at the end of the leftJoin chain
-      mockLimit.mockResolvedValueOnce([fakeBlock]);
-      const result = await getNextBreak("set-123", 2, "11:30");
-      expect(result).toEqual(fakeBlock);
-      expect(mockLeftJoin).toHaveBeenCalled();
     });
   });
 
@@ -381,6 +366,27 @@ describe("DataTests", () => {
       mockLimit.mockRejectedValueOnce(new Error("DB error"));
       const result = await getBlockByID("block-1", "user-123");
       expect(result).toBeNull();
+      expect(console.error).toHaveBeenCalled();
+    });
+  });
+
+  describe("checkTimetableSetOwnership", () => {
+    it("returns true when the user owns the timetable set", async () => {
+      mockLimit.mockResolvedValueOnce([{ id: "set-123" }]);
+      const result = await checkTimetableSetOwnership("set-123", "user-123");
+      expect(result).toBe(true);
+    });
+
+    it("returns false when the user does not own the timetable set", async () => {
+      mockLimit.mockResolvedValueOnce([]);
+      const result = await checkTimetableSetOwnership("set-123", "user-123");
+      expect(result).toBe(false);
+    });
+
+    it("returns false when the database throws", async () => {
+      mockLimit.mockRejectedValueOnce(new Error("DB error"));
+      const result = await checkTimetableSetOwnership("set-123", "user-123");
+      expect(result).toBe(false);
       expect(console.error).toHaveBeenCalled();
     });
   });

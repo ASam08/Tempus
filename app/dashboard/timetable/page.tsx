@@ -25,7 +25,7 @@ export default async function timetablePage({
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const user_id = session!.user.id;
+  const user_id = session?.user?.id;
   if (!user_id) {
     redirect("/login");
   }

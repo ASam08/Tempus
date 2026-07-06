@@ -405,6 +405,18 @@ describe("AddTimetableBlock", () => {
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(mockFormAction).not.toHaveBeenCalled();
     });
+
+    it("shows validation errors instead of the AlertDialog when a hidden day is selected on an otherwise invalid form", async () => {
+      const user = userEvent.setup();
+      renderComponent({ ...defaultSettings, saturday: "false" });
+      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      expect(
+        await screen.findByText(/subject is required/i),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      expect(mockFormAction).not.toHaveBeenCalled();
+    });
   });
 
   describe("clearing client errors", () => {
@@ -491,6 +503,18 @@ describe("AddTimetableBlock", () => {
       await fillValidForm(user);
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    });
+
+    it("does NOT show the AlertDialog when switching from a hidden day back to a visible day", async () => {
+      const user = userEvent.setup();
+      renderComponent({ ...defaultSettings, saturday: "false" });
+      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
+      await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      await waitFor(() => expect(mockFormAction).toHaveBeenCalled());
     });
 
     it("calls unhideDow and submits the form when 'Yes, unhide it' is clicked", async () => {
@@ -589,6 +613,8 @@ describe("AddTimetableBlock", () => {
       expect(formData.get("day_of_week")).toBe("1");
       expect(formData.get("subject")).toBe("Mathematics");
       expect(formData.get("location")).toBe("Room 202");
+      expect(formData.get("start_time")).toBe("09:30");
+      expect(formData.get("end_time")).toBe("10:30");
     });
   });
 });
