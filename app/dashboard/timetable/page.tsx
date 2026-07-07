@@ -30,9 +30,8 @@ export default async function timetablePage({
     redirect("/login");
   }
 
-  const timetable_sets: { id: string; title: string }[] | null = user_id
-    ? await getAllTimetableSets(user_id)
-    : null;
+  const timetable_sets: { id: string; title: string }[] | null =
+    await getAllTimetableSets(user_id);
 
   const settings = (await getUserSettings(user_id)) ?? null;
 
@@ -95,7 +94,7 @@ export default async function timetablePage({
               </Link>
             </div>
           </div>
-          <TimetableGrid events={events ?? []} settings={settings} />
+          <TimetableGrid events={events} settings={settings} />
         </div>
       ) : (
         <div className="items-justify-center flex flex-col items-center gap-4">

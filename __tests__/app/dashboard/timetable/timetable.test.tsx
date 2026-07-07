@@ -138,6 +138,14 @@ describe("TimetablePage", () => {
     ).toBeInTheDocument();
   });
 
+  it("fetches timetable sets and settings using the resolved user id", async () => {
+    mockSession("user-1");
+    const result = await TimetablePage({ searchParams: {} });
+    render(result);
+    expect(mockedGetAllTimetableSets).toHaveBeenCalledWith("user-1");
+    expect(mockedGetUserSettings).toHaveBeenCalledWith("user-1");
+  });
+
   it("shows the empty state when the user has no timetable sets", async () => {
     mockSession("user-1");
     mockedGetAllTimetableSets.mockResolvedValue([]);

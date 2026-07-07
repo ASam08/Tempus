@@ -64,6 +64,7 @@ import {
   deleteBlock,
   settingsSave,
   unhideDow,
+  setLastTimetableSet,
   updateSettings,
   markSetupComplete,
 } from "@/lib/actions";
@@ -125,6 +126,10 @@ function makeFormData(entries: Record<string, string>): FormData {
 }
 
 describe("ActionsTests", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe("createNewTimetableSet", () => {
     const validForm = makeFormData({ title: "My Set", description: "desc" });
 
@@ -178,6 +183,13 @@ describe("ActionsTests", () => {
       expect(sqlConn.insert).not.toHaveBeenCalled();
     });
 
+    it("returns a validation error (not a not-authenticated message) when the user is unauthenticated", async () => {
+      mockGetUserID.mockResolvedValueOnce(null);
+      const result = await createNewTimetableSet(undefined, validForm);
+      expect(result).toMatchObject({ errors: expect.any(Object) });
+      expect(sqlConn.insert).not.toHaveBeenCalled();
+    });
+
     it("returns error object when DB insert throws", async () => {
       (sqlConn.insert as jest.Mock).mockReturnValueOnce({
         values: jest.fn().mockRejectedValueOnce(new Error("db error")),
@@ -220,6 +232,23 @@ describe("ActionsTests", () => {
       expect(sqlConn.insert).toHaveBeenCalled();
       expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/timetable");
       expect(mockRedirect).toHaveBeenCalledWith("/dashboard/timetable");
+    });
+
+    it("inserts the validated field values mapped to the correct columns", async () => {
+      mockInsertChain();
+      await expect(
+        addTimetableBlock("set-uuid", initialState, validForm),
+      ).rejects.toThrow("NEXT_REDIRECT");
+      const valuesCalled = (sqlConn.insert as jest.Mock).mock.results[0].value
+        .values;
+      expect(valuesCalled).toHaveBeenCalledWith({
+        timetableSetId: "set-uuid",
+        dayOfWeek: 2,
+        subject: "Math",
+        location: "Room 1",
+        startTime: "09:00",
+        endTime: "10:00",
+      });
     });
 
     it("returns no-user sentinel when getUserID returns null", async () => {
@@ -632,6 +661,16 @@ describe("ActionsTests", () => {
       expect(result).toMatchObject({ errors: { end_time: expect.any(Array) } });
     });
 
+    it("returns validation errors when start_time is missing", async () => {
+      const result = await settingsSave(
+        initialState,
+        makeSettingsForm({ start_time: "" }),
+      );
+      expect(result).toMatchObject({
+        errors: { start_time: expect.any(Array) },
+      });
+    });
+
     it("calls updateSettings and revalidates on success", async () => {
       mockInsertWithConflictChain();
 
@@ -641,6 +680,31 @@ describe("ActionsTests", () => {
       expect(result).toMatchObject({
         message: "success",
         timestamp: expect.any(Number),
+      });
+    });
+
+    it("writes true/false per day based on which day fields were present", async () => {
+      mockInsertWithConflictChain();
+
+      await settingsSave(initialState, makeSettingsForm());
+
+      const insertMock = sqlConn.insert as jest.Mock;
+      const valuesCalled = insertMock.mock.results[0].value.values;
+      const rows: Array<{ settingKey: string; settingValue: string }> =
+        valuesCalled.mock.calls[0][0];
+      const byKey = Object.fromEntries(
+        rows.map((r) => [r.settingKey, r.settingValue]),
+      );
+      expect(byKey).toMatchObject({
+        start_time: "08:00",
+        end_time: "17:00",
+        monday: "true",
+        tuesday: "true",
+        wednesday: "false",
+        thursday: "false",
+        friday: "true",
+        saturday: "false",
+        sunday: "false",
       });
     });
   });
@@ -677,6 +741,44 @@ describe("ActionsTests", () => {
           }),
         ]),
       );
+    });
+  });
+
+  describe("setLastTimetableSet", () => {
+    it("returns not-authenticated when getUserID returns null", async () => {
+      mockGetUserID.mockResolvedValueOnce(null);
+      const result = await setLastTimetableSet("set-uuid");
+      expect(result).toMatchObject({ message: "User not authenticated." });
+      expect(sqlConn.insert).not.toHaveBeenCalled();
+    });
+
+    it("updates the last_timetable_set_id setting for the current user", async () => {
+      mockGetUserID.mockResolvedValueOnce("user-uuid");
+      mockInsertWithConflictChain();
+
+      const result = await setLastTimetableSet("set-uuid");
+
+      const insertMock = sqlConn.insert as jest.Mock;
+      const valuesCalled = insertMock.mock.results[0].value.values;
+      expect(valuesCalled).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            userId: "user-uuid",
+            settingKey: "last_timetable_set_id",
+            settingValue: "set-uuid",
+          }),
+        ]),
+      );
+      expect(result).toMatchObject({ message: "Last timetable set updated." });
+    });
+
+    it("does not revalidate any path (documents current behavior)", async () => {
+      mockGetUserID.mockResolvedValueOnce("user-uuid");
+      mockInsertWithConflictChain();
+
+      await setLastTimetableSet("set-uuid");
+
+      expect(mockRevalidatePath).not.toHaveBeenCalled();
     });
   });
 
