@@ -114,3 +114,5 @@ export type SignupFormState =
 export type UserRole = "user" | "admin";
 
 export type SortDirection = "asc" | "desc";
+
+export type RetrievedTimetableSets = { id: string; title: string }[] | null;

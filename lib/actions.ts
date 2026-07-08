@@ -4,12 +4,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import {
-  getTimetableSets,
   getCurrentBlock,
   getNextBlock,
   getUserID,
   getNextBreak,
   blockConflictCheck,
+  checkTimetableSetOwnership,
+  checkTimetableBlockOwnership,
 } from "@/lib/data";
 import { sqlConn } from "@/lib/db";
 import { dow } from "@/lib/constants";
@@ -99,6 +100,7 @@ const refinedTimetableBlock = originalTimetableBlockSchema
   );
 
 export async function addTimetableBlock(
+  setId: string,
   prevState: BlockState,
   formData: FormData,
 ) {
@@ -110,9 +112,17 @@ export async function addTimetableBlock(
       conflicts: [],
     };
   }
-  const set_id = await getTimetableSets(user_id);
+  const set_id = setId;
+  const checkSetOwnership = await checkTimetableSetOwnership(set_id, user_id);
+  if (!checkSetOwnership) {
+    return {
+      message: "User does not own the timetable set.",
+      errors: {},
+      conflicts: [],
+    };
+  }
   const validatedFields = refinedTimetableBlock.safeParse({
-    timetable_set_id: set_id[0].id,
+    timetable_set_id: set_id,
     day: formData.get("day_of_week"),
     subject: formData.get("subject"),
     location: formData.get("location"),
@@ -186,8 +196,6 @@ export async function updateTimetableBlock(
       conflicts: [],
     };
   }
-
-  console.log(formData);
 
   let set_result;
   try {
@@ -295,66 +303,47 @@ export async function updateTimetableBlock(
   redirect("/dashboard/timetable");
 }
 
-export async function fetchCurrentBlock(dayOfWeek: number, time: string) {
+type BlockRequestType = "current" | "next" | "next-break";
+
+export async function fetchDashboardCard(
+  type: BlockRequestType,
+  setId: string,
+  dayOfWeek: number,
+  time: string,
+) {
   const user_id = await getUserID();
-  if (!user_id) {
-    console.error("No user found.");
-    return { reason: "no-user" } as const;
+  if (!user_id) return { reason: "no-user" } as const;
+
+  const owns = await checkTimetableSetOwnership(setId, user_id);
+  if (!owns) return { reason: "no-ownership" } as const;
+
+  switch (type) {
+    case "current":
+      return getCurrentBlock(setId, dayOfWeek, time);
+    case "next":
+      return getNextBlock(setId, dayOfWeek, time);
+    case "next-break":
+      return getNextBreak(setId, dayOfWeek, time);
+    default:
+      return { reason: "invalid-type" } as const;
   }
-  const sets = await getTimetableSets(user_id);
-
-  // Defensive guard
-  if (!Array.isArray(sets) || sets.length === 0) {
-    console.warn("No timetable sets found for user:", user_id);
-    return { reason: "no-set" } as const;
-  }
-
-  const timetableSetId = sets[0].id;
-
-  return getCurrentBlock(timetableSetId, dayOfWeek, time);
-}
-
-export async function fetchNextBlock(dayOfWeek: number, time: string) {
-  const user_id = await getUserID();
-  if (!user_id) {
-    console.error("No user found.");
-    return { reason: "no-user" } as const;
-  }
-  const sets = await getTimetableSets(user_id);
-
-  // Defensive guard
-  if (!Array.isArray(sets) || sets.length === 0) {
-    console.warn("No timetable sets found for user:", user_id);
-    return { reason: "no-set" } as const;
-  }
-
-  const timetableSetId = sets[0].id;
-
-  return getNextBlock(timetableSetId, dayOfWeek, time);
-}
-
-export async function fetchNextBreak(dayOfWeek: number, time: string) {
-  const user_id = await getUserID();
-  if (!user_id) {
-    // Explicit sentinel so callers can distinguish "no user" from "no next break"
-    console.error("No user found.");
-    return { reason: "no-user" } as const;
-  }
-  const sets = await getTimetableSets(user_id);
-
-  // Defensive guard
-  if (!Array.isArray(sets) || sets.length === 0) {
-    console.warn("No timetable sets found for user:", user_id);
-    return { reason: "no-set" } as const;
-  }
-
-  const timetableSetId = sets[0].id;
-
-  return getNextBreak(timetableSetId, dayOfWeek, time);
 }
 
 export async function deleteBlock(id: string) {
   const blockId = id;
+
+  const user_id = await getUserID();
+  if (!user_id) {
+    return { message: "User not authenticated." };
+  }
+
+  const ownsBlock = await checkTimetableBlockOwnership(blockId, user_id);
+  if (!ownsBlock) {
+    console.warn(
+      `WARN: User ${user_id} tried to delete block ${blockId} but does not own it.`,
+    );
+    return { message: "User does not own this timetable block." };
+  }
 
   try {
     await sqlConn
@@ -423,15 +412,27 @@ export async function settingsSave(
   return { message: result?.message, timestamp: Date.now() };
 }
 
+const DAY_KEYS = new Set(dow);
+
 export async function unhideDow(dayKey: string) {
+  const user_id = await getUserID();
+  if (!user_id) return { message: "User not authenticated." };
+
+  if (!DAY_KEYS.has(dayKey)) {
+    return { message: "Invalid day." };
+  }
+
+  await updateSettings(user_id, [[dayKey, "true"]]);
+  revalidatePath("/dashboard/settings");
+}
+
+export async function setLastTimetableSet(setId: string) {
   const user_id = await getUserID();
   if (!user_id) {
     return { message: "User not authenticated." };
   }
-
-  await updateSettings(user_id, [[dayKey, "true"]]);
-
-  revalidatePath("/dashboard/settings");
+  await updateSettings(user_id, [["last_timetable_set_id", setId]]);
+  return { message: "Last timetable set updated." };
 }
 
 export async function updateSettings(
@@ -448,6 +449,7 @@ export async function updateSettings(
     "friday",
     "saturday",
     "sunday",
+    "last_timetable_set_id",
   ]);
 
   const rows = data
