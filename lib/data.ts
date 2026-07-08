@@ -239,7 +239,7 @@ export async function checkTimetableSetOwnership(
 ): Promise<boolean> {
   try {
     const result = await sqlConn
-      .select()
+      .select({ id: schema.timetableSets.id })
       .from(schema.timetableSets)
       .where(
         and(
@@ -251,6 +251,32 @@ export async function checkTimetableSetOwnership(
     return result.length > 0;
   } catch (error) {
     console.error("Error checking timetable set ownership:", error);
+    return false;
+  }
+}
+
+export async function checkTimetableBlockOwnership(
+  block_id: string,
+  user_id: string,
+): Promise<boolean> {
+  try {
+    const result = await sqlConn
+      .select({ id: schema.timetableBlocks.id })
+      .from(schema.timetableBlocks)
+      .innerJoin(
+        schema.timetableSets,
+        eq(schema.timetableBlocks.timetableSetId, schema.timetableSets.id),
+      )
+      .where(
+        and(
+          eq(schema.timetableBlocks.id, block_id),
+          eq(schema.timetableSets.ownerId, user_id),
+        ),
+      )
+      .limit(1);
+    return result.length > 0;
+  } catch (error) {
+    console.error("Error checking timetable block ownership:", error);
     return false;
   }
 }

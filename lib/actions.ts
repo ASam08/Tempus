@@ -10,6 +10,7 @@ import {
   getNextBreak,
   blockConflictCheck,
   checkTimetableSetOwnership,
+  checkTimetableBlockOwnership,
 } from "@/lib/data";
 import { sqlConn } from "@/lib/db";
 import { dow } from "@/lib/constants";
@@ -330,6 +331,19 @@ export async function fetchDashboardCard(
 
 export async function deleteBlock(id: string) {
   const blockId = id;
+
+  const user_id = await getUserID();
+  if (!user_id) {
+    return { message: "User not authenticated." };
+  }
+
+  const ownsBlock = await checkTimetableBlockOwnership(blockId, user_id);
+  if (!ownsBlock) {
+    console.warn(
+      `WARN: User ${user_id} tried to delete block ${blockId} but does not own it.`,
+    );
+    return { message: "User does not own this timetable block." };
+  }
 
   try {
     await sqlConn

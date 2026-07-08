@@ -1,5 +1,6 @@
 jest.mock("@/lib/data", () => ({
   checkTimetableSetOwnership: jest.fn(),
+  checkTimetableBlockOwnership: jest.fn(),
   getCurrentBlock: jest.fn(),
   getNextBlock: jest.fn(),
   getUserID: jest.fn(),
@@ -83,6 +84,7 @@ import { redirect } from "next/navigation";
 import { sqlConn } from "@/lib/db";
 import {
   checkTimetableSetOwnership,
+  checkTimetableBlockOwnership,
   getCurrentBlock,
   getNextBlock,
   getUserID,
@@ -93,6 +95,7 @@ const mockRevalidatePath = revalidatePath as jest.Mock;
 const mockRedirect = redirect as any as jest.Mock;
 const mockGetUserID = getUserID as jest.Mock;
 const mockCheckOwnership = checkTimetableSetOwnership as jest.Mock;
+const mockCheckBlockOwnership = checkTimetableBlockOwnership as jest.Mock;
 const mockGetCurrentBlock = getCurrentBlock as jest.Mock;
 const mockGetNextBlock = getNextBlock as jest.Mock;
 const mockGetNextBreak = getNextBreak as jest.Mock;
@@ -606,7 +609,34 @@ describe("ActionsTests", () => {
   });
 
   describe("deleteBlock", () => {
-    it("deletes the block and revalidates path", async () => {
+    beforeEach(() => {
+      mockGetUserID.mockResolvedValue("user-uuid");
+      mockCheckBlockOwnership.mockResolvedValue(true);
+    });
+
+    it("returns not-authenticated when getUserID returns null", async () => {
+      mockGetUserID.mockResolvedValueOnce(null);
+      const result = await deleteBlock("block-abc");
+      expect(result).toMatchObject({ message: "User not authenticated." });
+      expect(mockCheckBlockOwnership).not.toHaveBeenCalled();
+      expect(sqlConn.delete).not.toHaveBeenCalled();
+    });
+
+    it("returns an error and does not delete when the user does not own the block", async () => {
+      mockCheckBlockOwnership.mockResolvedValueOnce(false);
+      const result = await deleteBlock("block-abc");
+      expect(mockCheckBlockOwnership).toHaveBeenCalledWith(
+        "block-abc",
+        "user-uuid",
+      );
+      expect(result).toMatchObject({
+        message: "User does not own this timetable block.",
+      });
+      expect(sqlConn.delete).not.toHaveBeenCalled();
+      expect(mockRevalidatePath).not.toHaveBeenCalled();
+    });
+
+    it("deletes the block and revalidates path when the user owns it", async () => {
       mockDeleteChain();
       await deleteBlock("block-abc");
       expect(sqlConn.delete).toHaveBeenCalled();

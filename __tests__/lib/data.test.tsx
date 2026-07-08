@@ -57,6 +57,7 @@ import {
   blockConflictCheck,
   getBlockByID,
   checkTimetableSetOwnership,
+  checkTimetableBlockOwnership,
 } from "@/lib/data";
 
 const {
@@ -386,6 +387,37 @@ describe("DataTests", () => {
     it("returns false when the database throws", async () => {
       mockLimit.mockRejectedValueOnce(new Error("DB error"));
       const result = await checkTimetableSetOwnership("set-123", "user-123");
+      expect(result).toBe(false);
+      expect(console.error).toHaveBeenCalled();
+    });
+  });
+
+  describe("checkTimetableBlockOwnership", () => {
+    it("returns true when the user owns the timetable block", async () => {
+      mockLimit.mockResolvedValueOnce([{ id: "block-123" }]);
+      const result = await checkTimetableBlockOwnership(
+        "block-123",
+        "user-123",
+      );
+      expect(result).toBe(true);
+      expect(mockInnerJoin).toHaveBeenCalled();
+    });
+
+    it("returns false when the user does not own the timetable block", async () => {
+      mockLimit.mockResolvedValueOnce([]);
+      const result = await checkTimetableBlockOwnership(
+        "block-123",
+        "user-123",
+      );
+      expect(result).toBe(false);
+    });
+
+    it("returns false when the database throws", async () => {
+      mockLimit.mockRejectedValueOnce(new Error("DB error"));
+      const result = await checkTimetableBlockOwnership(
+        "block-123",
+        "user-123",
+      );
       expect(result).toBe(false);
       expect(console.error).toHaveBeenCalled();
     });
