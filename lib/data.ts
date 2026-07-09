@@ -7,7 +7,7 @@ import {
 } from "@/lib/definitions";
 import { sqlConn } from "@/lib/db";
 import * as schema from "@/db/schema";
-import { sql, and, eq, gt, gte, lt, lte, isNull, not } from "drizzle-orm";
+import { sql, and, eq, gt, gte, lt, lte, isNull, not, asc } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -21,13 +21,16 @@ export async function getUserID() {
   return user_id;
 }
 
-export async function getTimetableSets(user_id: string) {
+export async function getAllTimetableSets(user_id: string) {
   try {
     const result = await sqlConn
-      .select({ id: schema.timetableSets.id })
+      .select({
+        id: schema.timetableSets.id,
+        title: schema.timetableSets.title,
+      })
       .from(schema.timetableSets)
       .where(eq(schema.timetableSets.ownerId, user_id))
-      .limit(1);
+      .orderBy(asc(schema.timetableSets.title));
     return result;
   } catch (error) {
     console.error("Error fetching timetable sets:", error);
@@ -142,6 +145,7 @@ export async function getNextBreak(
     )
     .orderBy(t1.startTime)
     .limit(1);
+  console.log("Next break result:", result);
   return result[0] ?? null;
 }
 
@@ -226,5 +230,53 @@ export async function getBlockByID(block_id: string, user_id: string) {
   } catch (error) {
     console.error("Error fetching block by ID:", error);
     return null;
+  }
+}
+
+export async function checkTimetableSetOwnership(
+  timetable_set_id: string,
+  user_id: string,
+): Promise<boolean> {
+  try {
+    const result = await sqlConn
+      .select({ id: schema.timetableSets.id })
+      .from(schema.timetableSets)
+      .where(
+        and(
+          eq(schema.timetableSets.id, timetable_set_id),
+          eq(schema.timetableSets.ownerId, user_id),
+        ),
+      )
+      .limit(1);
+    return result.length > 0;
+  } catch (error) {
+    console.error("Error checking timetable set ownership:", error);
+    return false;
+  }
+}
+
+export async function checkTimetableBlockOwnership(
+  block_id: string,
+  user_id: string,
+): Promise<boolean> {
+  try {
+    const result = await sqlConn
+      .select({ id: schema.timetableBlocks.id })
+      .from(schema.timetableBlocks)
+      .innerJoin(
+        schema.timetableSets,
+        eq(schema.timetableBlocks.timetableSetId, schema.timetableSets.id),
+      )
+      .where(
+        and(
+          eq(schema.timetableBlocks.id, block_id),
+          eq(schema.timetableSets.ownerId, user_id),
+        ),
+      )
+      .limit(1);
+    return result.length > 0;
+  } catch (error) {
+    console.error("Error checking timetable block ownership:", error);
+    return false;
   }
 }

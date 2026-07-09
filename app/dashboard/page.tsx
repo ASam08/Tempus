@@ -8,17 +8,26 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LucideUser } from "lucide-react";
+import { getAllTimetableSets } from "@/lib/data";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
+  const user_id = session?.user?.id;
+  if (!user_id) {
+    redirect("/login");
+  }
+
   let admin: boolean = false;
 
   if (session?.user.role === "admin") {
     admin = true;
   }
+
+  const timetableSets = await getAllTimetableSets(user_id);
 
   return (
     <div className="flex h-full max-w-screen flex-col px-3 py-4 md:px-2">
@@ -39,11 +48,26 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
-      <div className="mt-4 flex flex-col gap-2 md:flex-row md:gap-4">
-        <CurrentCardClient />
-        <NextBreakCardClient />
-        <NextCardClient />
-      </div>
+      {timetableSets && timetableSets.length > 0 ? (
+        timetableSets.map((set) => (
+          <div key={set.id} className="mt-4 gap-2">
+            {set.title}
+            <div className="mt-4 flex flex-col gap-2 md:flex-row md:gap-4">
+              <CurrentCardClient setId={set.id} />
+              <NextBreakCardClient setId={set.id} />
+              <NextCardClient setId={set.id} />
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="mt-4 flex flex-col gap-2 md:flex-row md:gap-4">
+          <div className="w-full max-w-64 rounded-lg border-2 border-dashed p-4 md:w-1/3">
+            <p className="text-gray-400">
+              Nothing to see here, add a timetable to get started!
+            </p>
+          </div>
+        </div>
+      )}
       {admin && (
         <div className="my-4 flex">
           <Button className="flex">

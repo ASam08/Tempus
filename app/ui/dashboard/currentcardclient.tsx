@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchCurrentBlock } from "@/lib/actions";
+import { fetchDashboardCard } from "@/lib/actions";
 import { RetreivedTimetableBlocks } from "@/lib/definitions";
 import { LucidePlay } from "lucide-react";
 import { timeToMinutes } from "@/lib/utils";
 
-export default function CurrentCardClient() {
+export default function CurrentCardClient({ setId }: { setId: string }) {
   const [block, setBlock] = useState<RetreivedTimetableBlocks | null>(null);
   const [loading, setLoading] = useState(true);
   const [foundUserId, setFoundUserId] = useState(true);
@@ -18,7 +18,7 @@ export default function CurrentCardClient() {
     const dayOfWeek = jsDay === 0 ? 7 : jsDay;
     const time = now.toTimeString().slice(0, 8);
 
-    const current = await fetchCurrentBlock(dayOfWeek, time);
+    const current = await fetchDashboardCard("current", setId, dayOfWeek, time);
 
     if (current && "reason" in current) {
       setFoundUserId(false);
@@ -62,15 +62,7 @@ export default function CurrentCardClient() {
     return () => clearInterval(id);
   }, [endMinutes]);
 
-  if (!foundUserId) {
-    return (
-      <div className="w-full max-w-64 rounded-lg border-2 border-dashed p-4 md:w-1/3">
-        <p className="text-gray-400">
-          Nothing to see here, add a timetable to get started!
-        </p>
-      </div>
-    );
-  }
+  if (!foundUserId) return null;
 
   if (loading) {
     return (
