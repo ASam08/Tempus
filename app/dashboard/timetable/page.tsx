@@ -55,32 +55,18 @@ export default async function timetablePage({
   return (
     <div className="flex h-full flex-col px-3 py-4 md:px-2">
       <div className="mb-4 flex flex-col items-center justify-start gap-4 sm:flex-row">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-          Timetable
-        </h1>
-        {timetable_sets && timetable_sets.length > 1 && (
           <TimetableSetSelect
             timetableSets={timetable_sets}
             selectedSetId={selectedSetId}
           />
-        )}
       </div>
 
       {timetable_sets && timetable_sets.length > 0 ? (
         <div className="flex flex-col gap-2">
           <div className="flex-rows flex">
             <div className="flex grow">
-              <Link href="./timetable/new-timetable">
-                <Button className="hidden bg-blue-600 text-white sm:flex">
-                  <LucideGrid2X2Plus />
-                  Create New Timetable
-                </Button>
-                <Button className="flex bg-blue-600 text-white sm:hidden">
-                  <LucideGrid2X2Plus />
-                </Button>
-              </Link>
+              {/* TODO: placeholder for set description */}
             </div>
-
             <div className="flex grow justify-end">
               <Link
                 href={`/dashboard/timetable/add-block?setId=${selectedSetId}`}
