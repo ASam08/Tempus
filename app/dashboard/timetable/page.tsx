@@ -30,7 +30,7 @@ export default async function timetablePage({
     redirect("/login");
   }
 
-  const timetable_sets: { id: string; title: string }[] | null =
+  const timetable_sets: { id: string; title: string; description: string | null }[] | null =
     await getAllTimetableSets(user_id);
 
   const settings = (await getUserSettings(user_id)) ?? null;
@@ -40,6 +40,7 @@ export default async function timetablePage({
     settings?.last_timetable_set_id ??
     timetable_sets?.[0]?.id ??
     undefined;
+  const selectedSetDescription = timetable_sets?.find((set) => set.id === selectedSetId)?.description ?? null;
   let events: RetreivedTimetableBlocks[] = [];
   if (selectedSetId) {
     const isSetOwner = await checkTimetableSetOwnership(selectedSetId, user_id);
@@ -65,7 +66,11 @@ export default async function timetablePage({
         <div className="flex flex-col gap-2">
           <div className="flex-rows flex">
             <div className="flex grow">
-              {/* TODO: placeholder for set description */}
+              {selectedSetDescription && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {selectedSetDescription}
+                </p>
+              )}
             </div>
             <div className="flex grow justify-end">
               <Link

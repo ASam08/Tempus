@@ -27,6 +27,7 @@ export async function getAllTimetableSets(user_id: string) {
       .select({
         id: schema.timetableSets.id,
         title: schema.timetableSets.title,
+        description: schema.timetableSets.description,
       })
       .from(schema.timetableSets)
       .where(eq(schema.timetableSets.ownerId, user_id))
