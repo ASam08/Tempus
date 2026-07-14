@@ -36,24 +36,22 @@ export default async function timetablePage({
 
   const settings = (await getUserSettings(user_id)) ?? null;
 
-  const selectedSetId =
-    set ??
-    settings?.last_timetable_set_id ??
-    timetable_sets?.[0]?.id ??
-    undefined;
+  const requestedSetId = set ?? settings?.last_timetable_set_id ?? undefined;
+  const requestedSetIsValid = timetable_sets?.some(
+    (s) => s.id === requestedSetId,
+  );
+
+  const selectedSetId = requestedSetIsValid
+    ? requestedSetId
+    : timetable_sets?.[0]?.id;
+
   const selectedSetDescription =
     timetable_sets?.find((set) => set.id === selectedSetId)?.description ??
     null;
+
   let events: RetreivedTimetableBlocks[] = [];
   if (selectedSetId) {
-    const isSetOwner = await checkTimetableSetOwnership(selectedSetId, user_id);
-    if (isSetOwner === true) {
-      events = await getTimetableBlocks(selectedSetId);
-    } else {
-      console.warn(
-        `WARN: User ${user_id} tried to show timetable set ${selectedSetId} but does not own it.`,
-      );
-    }
+    events = await getTimetableBlocks(selectedSetId);
   }
 
   return (
@@ -65,7 +63,7 @@ export default async function timetablePage({
         />
       </div>
 
-      {timetable_sets && timetable_sets.length > 0 ? (
+      {timetable_sets && timetable_sets.length > 0 && selectedSetId ? (
         <div className="flex flex-col gap-2">
           <div className="flex-rows flex">
             <div className="flex grow">

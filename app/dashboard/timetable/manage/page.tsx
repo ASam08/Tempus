@@ -19,12 +19,11 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { getPaginationItems } from "@/lib/utils";
-import AdminActions from "@/components/ui/dashboard/admin/adminactions";
 import SortableHeader from "@/components/ui/dashboard/admin/sortableheader";
 import { getAllTimetableSets } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { LucideEdit2, LucideTrash2 } from "lucide-react";
+import SetManageActions from "@/app/ui/timetable/setmanageactions";
 
 export default async function AdminDashboard({
   searchParams,
@@ -99,11 +98,7 @@ export default async function AdminDashboard({
                     {timetable.description}
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    {/* <AdminActions {...timetable} currentUserId={userId} /> */}
-                    <div className="flex gap-2">
-                      <LucideEdit2 className="hover:text-blue-600" />
-                      <LucideTrash2 className="hover:text-blue-600" />
-                    </div>
+                    <SetManageActions {...timetable} />
                   </TableCell>
                 </TableRow>
               ))}
