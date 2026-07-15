@@ -4,7 +4,6 @@ import { LucideGrid2X2Plus } from "lucide-react";
 import { TimetableGrid } from "@/app/ui/timetable/newtimetable";
 import {
   getAllTimetableSets,
-  checkTimetableSetOwnership,
   getTimetableBlocks,
   getUserSettings,
 } from "@/lib/data";

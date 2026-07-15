@@ -120,6 +120,62 @@ const refinedTimetableBlock = originalTimetableBlockSchema
     },
   );
 
+export async function updateTimetableSet(
+  setId: string,
+  prevState: any,
+  formData: FormData,
+) {
+  const user_id = await getUserID();
+  if (!user_id) {
+    return { message: "User not authenticated." };
+  }
+
+  const ownsSet = await checkTimetableSetOwnership(setId, user_id);
+  if (!ownsSet) {
+    return { message: "User does not own the timetable set." };
+  }
+
+  const validatedFields = createTimetableSet.safeParse({
+    owner_id: user_id,
+    title: formData.get("title"),
+    description: formData.get("description"),
+  });
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Invalid input data.",
+    };
+  }
+
+  const { title, description } = validatedFields.data;
+
+  try {
+    await sqlConn
+      .update(schema.timetableSets)
+      .set({
+        title: title,
+        description: description ?? null,
+      })
+      .where(
+        and(
+          eq(schema.timetableSets.id, setId),
+          eq(schema.timetableSets.ownerId, user_id),
+        ),
+      );
+
+    console.log(`Timetable set ${setId} updated successfully`);
+  } catch (error) {
+    console.error("Error updating timetable set:", error);
+    return {
+      message: "Error updating timetable set.",
+      error,
+    };
+  }
+
+  revalidatePath("/dashboard/timetable");
+  redirect(`/dashboard/timetable?set=${setId}`);
+}
+
 export async function deleteTimetableSet(setId: string) {
   const user_id = await getUserID();
   if (!user_id) {

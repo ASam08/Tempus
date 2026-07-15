@@ -13,16 +13,19 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { deleteTimetableSet } from "@/lib/actions";
+import { useRouter } from "next/navigation";
 
 export default function SetManageActions(timetable: {
   id: string;
   title: string;
   description: string | null;
 }) {
+  const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   function handleEdit() {
     console.log("Edit action triggered for timetable set:", timetable.title);
+    router.push(`/dashboard/timetable/edit/${timetable.id}`);
   }
 
   function handleDelete() {
