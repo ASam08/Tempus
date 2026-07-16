@@ -75,14 +75,7 @@ export async function createNewTimetableSet(
     };
   }
 
-  try {
-    await updateSettings(owner_id, [["last_timetable_set_id", newSetId]]);
-  } catch (error) {
-    console.warn(
-      `Timetable set ${newSetId} created, but failed to update settings:`,
-      error,
-    );
-  }
+  await updateSettings(owner_id, [["last_timetable_set_id", newSetId]]);
 
   revalidatePath("/dashboard/timetable");
   redirect(`/dashboard/timetable?set=${newSetId}`);

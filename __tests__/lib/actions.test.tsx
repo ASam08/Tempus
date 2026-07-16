@@ -6,6 +6,7 @@ jest.mock("@/lib/data", () => ({
   getUserID: jest.fn(),
   getNextBreak: jest.fn(),
   blockConflictCheck: jest.fn(),
+  getUserSettings: jest.fn(),
 }));
 
 jest.mock("@/lib/db", () => ({
@@ -59,6 +60,8 @@ jest.mock("@/lib/utils", () => ({
 
 import {
   createNewTimetableSet,
+  updateTimetableSet,
+  deleteTimetableSet,
   addTimetableBlock,
   updateTimetableBlock,
   fetchDashboardCard,
@@ -90,6 +93,7 @@ import {
   getUserID,
   getNextBreak,
   blockConflictCheck,
+  getUserSettings,
 } from "@/lib/data";
 const mockRevalidatePath = revalidatePath as jest.Mock;
 const mockRedirect = redirect as any as jest.Mock;
@@ -100,6 +104,7 @@ const mockGetCurrentBlock = getCurrentBlock as jest.Mock;
 const mockGetNextBlock = getNextBlock as jest.Mock;
 const mockGetNextBreak = getNextBreak as jest.Mock;
 const mockBlockConflictCheck = blockConflictCheck as jest.Mock;
+const mockGetUserSettings = getUserSettings as jest.Mock;
 
 function mockInsertChain(resolvedValue: unknown = undefined) {
   const valuesMethod = jest.fn().mockResolvedValue(resolvedValue);
@@ -114,6 +119,36 @@ function mockInsertWithConflictChain(resolvedValue: unknown = undefined) {
     .mockReturnValue({ onConflictDoUpdate: onConflictMethod });
   (sqlConn.insert as jest.Mock).mockReturnValue({ values: valuesMethod });
   return { valuesMethod, onConflictMethod };
+}
+
+function mockCreateSetInsertChain(
+  newSetRow: { id: string } | undefined,
+  settingsInsertResolvedValue: unknown = undefined,
+) {
+  const returningMethod = jest
+    .fn()
+    .mockResolvedValue(newSetRow ? [newSetRow] : []);
+  const setValuesMethod = jest
+    .fn()
+    .mockReturnValue({ returning: returningMethod });
+
+  const onConflictMethod = jest
+    .fn()
+    .mockResolvedValue(settingsInsertResolvedValue);
+  const settingsValuesMethod = jest
+    .fn()
+    .mockReturnValue({ onConflictDoUpdate: onConflictMethod });
+
+  (sqlConn.insert as jest.Mock)
+    .mockReturnValueOnce({ values: setValuesMethod })
+    .mockReturnValueOnce({ values: settingsValuesMethod });
+
+  return {
+    setValuesMethod,
+    returningMethod,
+    settingsValuesMethod,
+    onConflictMethod,
+  };
 }
 
 function mockDeleteChain(resolvedValue: unknown = undefined) {
@@ -140,18 +175,22 @@ describe("ActionsTests", () => {
       mockGetUserID.mockResolvedValue("user-uuid");
     });
 
-    it("inserts set, revalidates, and redirects on success", async () => {
-      mockInsertChain();
+    it("inserts set, revalidates, and redirects with the new set id on success", async () => {
+      mockCreateSetInsertChain({ id: "new-set-uuid" });
       await expect(createNewTimetableSet(undefined, validForm)).rejects.toThrow(
         "NEXT_REDIRECT",
       );
-      expect(sqlConn.insert).toHaveBeenCalled();
+      expect(sqlConn.insert).toHaveBeenCalledTimes(2);
       expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/timetable");
-      expect(mockRedirect).toHaveBeenCalledWith("/dashboard/timetable");
+      expect(mockRedirect).toHaveBeenCalledWith(
+        "/dashboard/timetable?set=new-set-uuid",
+      );
     });
 
     it("inserts with the provided description when one is given", async () => {
-      mockInsertChain();
+      const { setValuesMethod } = mockCreateSetInsertChain({
+        id: "new-set-uuid",
+      });
       const form = makeFormData({
         title: "My Set",
         description: "a description",
@@ -159,23 +198,65 @@ describe("ActionsTests", () => {
       await expect(createNewTimetableSet(undefined, form)).rejects.toThrow(
         "NEXT_REDIRECT",
       );
-      const valuesCalled = (sqlConn.insert as jest.Mock).mock.results[0].value
-        .values;
-      expect(valuesCalled).toHaveBeenCalledWith(
+      expect(setValuesMethod).toHaveBeenCalledWith(
         expect.objectContaining({ description: "a description" }),
       );
     });
 
     it("inserts with null description when none is provided", async () => {
-      mockInsertChain();
+      const { setValuesMethod } = mockCreateSetInsertChain({
+        id: "new-set-uuid",
+      });
       const form = makeFormData({ title: "My Set" });
       await expect(createNewTimetableSet(undefined, form)).rejects.toThrow(
         "NEXT_REDIRECT",
       );
-      const valuesCalled = (sqlConn.insert as jest.Mock).mock.results[0].value
-        .values;
-      expect(valuesCalled).toHaveBeenCalledWith(
+      expect(setValuesMethod).toHaveBeenCalledWith(
         expect.objectContaining({ description: null }),
+      );
+    });
+
+    it("updates the last_timetable_set_id setting to the newly created set id", async () => {
+      const { settingsValuesMethod } = mockCreateSetInsertChain({
+        id: "new-set-uuid",
+      });
+      await expect(createNewTimetableSet(undefined, validForm)).rejects.toThrow(
+        "NEXT_REDIRECT",
+      );
+      expect(settingsValuesMethod).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            userId: "user-uuid",
+            settingKey: "last_timetable_set_id",
+            settingValue: "new-set-uuid",
+          }),
+        ]),
+      );
+    });
+
+    it("still redirects with the new set id even when updating settings afterwards fails", async () => {
+      const returningMethod = jest
+        .fn()
+        .mockResolvedValue([{ id: "new-set-uuid" }]);
+      const setValuesMethod = jest
+        .fn()
+        .mockReturnValue({ returning: returningMethod });
+      (sqlConn.insert as jest.Mock)
+        .mockReturnValueOnce({ values: setValuesMethod })
+        .mockReturnValueOnce({
+          values: jest.fn().mockReturnValue({
+            onConflictDoUpdate: jest
+              .fn()
+              .mockRejectedValueOnce(new Error("settings db error")),
+          }),
+        });
+
+      await expect(createNewTimetableSet(undefined, validForm)).rejects.toThrow(
+        "NEXT_REDIRECT",
+      );
+
+      expect(mockRedirect).toHaveBeenCalledWith(
+        "/dashboard/timetable?set=new-set-uuid",
       );
     });
 
@@ -195,12 +276,212 @@ describe("ActionsTests", () => {
 
     it("returns error object when DB insert throws", async () => {
       (sqlConn.insert as jest.Mock).mockReturnValueOnce({
-        values: jest.fn().mockRejectedValueOnce(new Error("db error")),
+        values: jest.fn().mockReturnValue({
+          returning: jest.fn().mockRejectedValueOnce(new Error("db error")),
+        }),
       });
       const result = await createNewTimetableSet(undefined, validForm);
       expect(result).toMatchObject({
         message: "Error creating timetable set.",
       });
+      expect(mockRedirect).not.toHaveBeenCalled();
+    });
+
+    it("returns error object when the insert returns no row", async () => {
+      (sqlConn.insert as jest.Mock).mockReturnValueOnce({
+        values: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValueOnce([]),
+        }),
+      });
+      const result = await createNewTimetableSet(undefined, validForm);
+      expect(result).toMatchObject({
+        message: "Error creating timetable set.",
+      });
+      expect(mockRedirect).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("updateTimetableSet", () => {
+    const validForm = makeFormData({
+      title: "Updated Set",
+      description: "desc",
+    });
+
+    beforeEach(() => {
+      mockGetUserID.mockResolvedValue("user-uuid");
+      mockCheckOwnership.mockResolvedValue(true);
+    });
+
+    it("updates the set, revalidates, and redirects with the set id on success", async () => {
+      const whereMethod = jest.fn().mockResolvedValue(undefined);
+      const setMethod = jest.fn().mockReturnValue({ where: whereMethod });
+      (sqlConn.update as jest.Mock).mockReturnValue({ set: setMethod });
+
+      await expect(
+        updateTimetableSet("set-uuid", undefined, validForm),
+      ).rejects.toThrow("NEXT_REDIRECT");
+
+      expect(mockCheckOwnership).toHaveBeenCalledWith("set-uuid", "user-uuid");
+      expect(setMethod).toHaveBeenCalledWith({
+        title: "Updated Set",
+        description: "desc",
+      });
+      expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/timetable");
+      expect(mockRedirect).toHaveBeenCalledWith(
+        "/dashboard/timetable?set=set-uuid",
+      );
+    });
+
+    it("updates with null description when none is provided", async () => {
+      const whereMethod = jest.fn().mockResolvedValue(undefined);
+      const setMethod = jest.fn().mockReturnValue({ where: whereMethod });
+      (sqlConn.update as jest.Mock).mockReturnValue({ set: setMethod });
+      const form = makeFormData({ title: "Updated Set" });
+
+      await expect(
+        updateTimetableSet("set-uuid", undefined, form),
+      ).rejects.toThrow("NEXT_REDIRECT");
+
+      expect(setMethod).toHaveBeenCalledWith(
+        expect.objectContaining({ description: null }),
+      );
+    });
+
+    it("returns not-authenticated when getUserID returns null", async () => {
+      mockGetUserID.mockResolvedValueOnce(null);
+      const result = await updateTimetableSet("set-uuid", undefined, validForm);
+      expect(result).toMatchObject({ message: "User not authenticated." });
+      expect(mockCheckOwnership).not.toHaveBeenCalled();
+    });
+
+    it("returns an error and does not update when the user does not own the timetable set", async () => {
+      mockCheckOwnership.mockResolvedValueOnce(false);
+      const result = await updateTimetableSet("set-uuid", undefined, validForm);
+      expect(result).toMatchObject({
+        message: "User does not own the timetable set.",
+      });
+      expect(sqlConn.update).not.toHaveBeenCalled();
+    });
+
+    it("returns validation errors when title is empty", async () => {
+      const form = makeFormData({ title: "", description: "" });
+      const result = await updateTimetableSet("set-uuid", undefined, form);
+      expect(result).toMatchObject({
+        errors: expect.any(Object),
+        message: "Invalid input data.",
+      });
+      expect(sqlConn.update).not.toHaveBeenCalled();
+    });
+
+    it("returns an error object when the DB update throws", async () => {
+      const setMethod = jest.fn().mockReturnValue({
+        where: jest.fn().mockRejectedValue(new Error("db error")),
+      });
+      (sqlConn.update as jest.Mock).mockReturnValue({ set: setMethod });
+
+      const result = await updateTimetableSet("set-uuid", undefined, validForm);
+      expect(result).toMatchObject({
+        message: "Error updating timetable set.",
+      });
+      expect(mockRedirect).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("deleteTimetableSet", () => {
+    beforeEach(() => {
+      mockGetUserID.mockResolvedValue("user-uuid");
+      mockCheckOwnership.mockResolvedValue(true);
+      mockGetUserSettings.mockResolvedValue({
+        last_timetable_set_id: "other-set-uuid",
+      });
+    });
+
+    it("deletes the set, revalidates, and redirects on success", async () => {
+      mockDeleteChain();
+      await expect(deleteTimetableSet("set-uuid")).rejects.toThrow(
+        "NEXT_REDIRECT",
+      );
+      expect(mockCheckOwnership).toHaveBeenCalledWith("set-uuid", "user-uuid");
+      expect(sqlConn.delete).toHaveBeenCalled();
+      expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/timetable");
+      expect(mockRedirect).toHaveBeenCalledWith("/dashboard/timetable");
+    });
+
+    it("returns not-authenticated when getUserID returns null", async () => {
+      mockGetUserID.mockResolvedValueOnce(null);
+      const result = await deleteTimetableSet("set-uuid");
+      expect(result).toMatchObject({ message: "User not authenticated." });
+      expect(mockCheckOwnership).not.toHaveBeenCalled();
+      expect(sqlConn.delete).not.toHaveBeenCalled();
+    });
+
+    it("returns an error and does not delete when the user does not own the set", async () => {
+      mockCheckOwnership.mockResolvedValueOnce(false);
+      const result = await deleteTimetableSet("set-uuid");
+      expect(result).toMatchObject({
+        message: "User does not own the timetable set.",
+      });
+      expect(sqlConn.delete).not.toHaveBeenCalled();
+      expect(mockRevalidatePath).not.toHaveBeenCalled();
+    });
+
+    it("returns an error object when the DB delete throws", async () => {
+      (sqlConn.delete as jest.Mock).mockReturnValueOnce({
+        where: jest.fn().mockRejectedValueOnce(new Error("db error")),
+      });
+      const result = await deleteTimetableSet("set-uuid");
+      expect(result).toMatchObject({
+        message: "Error deleting timetable set.",
+      });
+      expect(mockRevalidatePath).not.toHaveBeenCalled();
+      expect(mockRedirect).not.toHaveBeenCalled();
+    });
+
+    it("clears last_timetable_set_id when it references the deleted set", async () => {
+      mockDeleteChain();
+      mockGetUserSettings.mockResolvedValueOnce({
+        last_timetable_set_id: "set-uuid",
+      });
+      mockInsertWithConflictChain();
+
+      await expect(deleteTimetableSet("set-uuid")).rejects.toThrow(
+        "NEXT_REDIRECT",
+      );
+
+      const insertMock = sqlConn.insert as jest.Mock;
+      const valuesCalled = insertMock.mock.results[0].value.values;
+      expect(valuesCalled).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            settingKey: "last_timetable_set_id",
+            settingValue: "",
+          }),
+        ]),
+      );
+    });
+
+    it("does not touch settings when last_timetable_set_id references a different set", async () => {
+      mockDeleteChain();
+      mockGetUserSettings.mockResolvedValueOnce({
+        last_timetable_set_id: "other-set-uuid",
+      });
+
+      await expect(deleteTimetableSet("set-uuid")).rejects.toThrow(
+        "NEXT_REDIRECT",
+      );
+
+      expect(sqlConn.insert).not.toHaveBeenCalled();
+    });
+
+    it("still redirects even when clearing the settings reference fails", async () => {
+      mockDeleteChain();
+      mockGetUserSettings.mockRejectedValueOnce(new Error("settings error"));
+
+      await expect(deleteTimetableSet("set-uuid")).rejects.toThrow(
+        "NEXT_REDIRECT",
+      );
+
+      expect(mockRedirect).toHaveBeenCalledWith("/dashboard/timetable");
     });
   });
 

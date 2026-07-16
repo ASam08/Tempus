@@ -24,12 +24,10 @@ export default function SetManageActions(timetable: {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   function handleEdit() {
-    console.log("Edit action triggered for timetable set:", timetable.title);
     router.push(`/dashboard/timetable/edit/${timetable.id}`);
   }
 
   function handleDelete() {
-    console.log("Delete action triggered for timetable set:", timetable.title);
     deleteTimetableSet(timetable.id);
   }
 
