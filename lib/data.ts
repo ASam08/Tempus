@@ -27,6 +27,7 @@ export async function getAllTimetableSets(user_id: string) {
       .select({
         id: schema.timetableSets.id,
         title: schema.timetableSets.title,
+        description: schema.timetableSets.description,
       })
       .from(schema.timetableSets)
       .where(eq(schema.timetableSets.ownerId, user_id))
@@ -229,6 +230,29 @@ export async function getBlockByID(block_id: string, user_id: string) {
     return result[0] ?? null;
   } catch (error) {
     console.error("Error fetching block by ID:", error);
+    return null;
+  }
+}
+
+export async function getTimetableSetByID(set_id: string, user_id: string) {
+  try {
+    const result = await sqlConn
+      .select({
+        id: schema.timetableSets.id,
+        title: schema.timetableSets.title,
+        description: schema.timetableSets.description,
+      })
+      .from(schema.timetableSets)
+      .where(
+        and(
+          eq(schema.timetableSets.id, set_id),
+          eq(schema.timetableSets.ownerId, user_id),
+        ),
+      )
+      .limit(1);
+    return result[0] ?? null;
+  } catch (error) {
+    console.error("Error fetching timetable set by ID:", error);
     return null;
   }
 }

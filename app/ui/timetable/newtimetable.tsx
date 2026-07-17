@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { RetreivedTimetableBlocks } from "@/lib/definitions";
-import { LucideEdit2, LucideX } from "lucide-react";
+import { LucideEdit2, LucideX, PlusCircle } from "lucide-react";
 import { deleteBlock } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import Link from "next/link";
 
 const slotMinutes = 15;
 
@@ -32,9 +33,11 @@ function timeToRow(time: string, startHour: number) {
 export function TimetableGrid({
   events = [],
   settings,
+  setId,
 }: {
   events?: RetreivedTimetableBlocks[];
   settings: Record<string, string> | null;
+  setId: string;
 }) {
   const [editMode, setEditMode] = useState(false);
   const [width, setWidth] = useState(1200);
@@ -103,6 +106,16 @@ export function TimetableGrid({
   return (
     <div className="max-h-full">
       <div className="mb-1 flex w-full grow">
+        <div className="flex grow">
+          <Link href={`/dashboard/timetable/add-block?setId=${setId}`}>
+            <Button className="hidden bg-blue-600 text-white sm:flex">
+              <PlusCircle /> Add Block
+            </Button>
+            <Button className="flex bg-blue-600 text-white sm:hidden">
+              <PlusCircle />
+            </Button>
+          </Link>
+        </div>
         <div className="flex grow justify-end">
           <Button
             onClick={() => setEditMode((d) => !d)}
@@ -174,7 +187,7 @@ export function TimetableGrid({
             return (
               <div
                 key={e.id}
-                className={`m-[1px] flex h-full flex-col overflow-hidden rounded-lg border border-blue-100 px-1 py-0.5 text-xs text-white dark:border-blue-900 ${e.day_of_week == dayOfWeek ? "bg-blue-600" : "bg-blue-800"} `}
+                className={`m-px flex h-full flex-col overflow-hidden rounded-lg border border-blue-100 px-1 py-0.5 text-xs text-white dark:border-blue-900 ${e.day_of_week == dayOfWeek ? "bg-blue-600" : "bg-blue-800"} `}
                 style={{
                   gridColumn: dayIndex,
                   gridRow: `${start + 2} / ${end + 2}`,
@@ -236,13 +249,17 @@ export function TimetableGrid({
       >
         <AlertDialogContent data-testid="alert-dialog-content">
           <AlertDialogHeader>
-            <AlertDialogTitle data-testid="alert-dialog-title">Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle data-testid="alert-dialog-title">
+              Are you sure?
+            </AlertDialogTitle>
             <AlertDialogDescription data-testid="alert-dialog-description">
               Do you want to delete this block?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="alert-dialog-cancel">Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="alert-dialog-cancel">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={handleDeleteBlock}

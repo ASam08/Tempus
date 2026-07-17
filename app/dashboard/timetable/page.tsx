@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { LucideGrid2X2Plus, PlusCircle } from "lucide-react";
+import { LucideGrid2X2Plus } from "lucide-react";
 import { TimetableGrid } from "@/app/ui/timetable/newtimetable";
 import {
   getAllTimetableSets,
-  checkTimetableSetOwnership,
   getTimetableBlocks,
   getUserSettings,
 } from "@/lib/data";
@@ -30,71 +29,55 @@ export default async function timetablePage({
     redirect("/login");
   }
 
-  const timetable_sets: { id: string; title: string }[] | null =
-    await getAllTimetableSets(user_id);
+  const timetable_sets:
+    | { id: string; title: string; description: string | null }[]
+    | null = await getAllTimetableSets(user_id);
 
   const settings = (await getUserSettings(user_id)) ?? null;
 
-  const selectedSetId =
-    set ??
-    settings?.last_timetable_set_id ??
-    timetable_sets?.[0]?.id ??
-    undefined;
+  const requestedSetId = set ?? settings?.last_timetable_set_id ?? undefined;
+  const requestedSetIsValid = timetable_sets?.some(
+    (s) => s.id === requestedSetId,
+  );
+
+  const selectedSetId = requestedSetIsValid
+    ? requestedSetId
+    : timetable_sets?.[0]?.id;
+
+  const selectedSetDescription =
+    timetable_sets?.find((set) => set.id === selectedSetId)?.description ??
+    null;
+
   let events: RetreivedTimetableBlocks[] = [];
   if (selectedSetId) {
-    const isSetOwner = await checkTimetableSetOwnership(selectedSetId, user_id);
-    if (isSetOwner === true) {
-      events = await getTimetableBlocks(selectedSetId);
-    } else {
-      console.warn(
-        `WARN: User ${user_id} tried to show timetable set ${selectedSetId} but does not own it.`,
-      );
-    }
+    events = await getTimetableBlocks(selectedSetId);
   }
 
   return (
     <div className="flex h-full flex-col px-3 py-4 md:px-2">
       <div className="mb-4 flex flex-col items-center justify-start gap-4 sm:flex-row">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-          Timetable
-        </h1>
-        {timetable_sets && timetable_sets.length > 1 && (
-          <TimetableSetSelect
-            timetableSets={timetable_sets}
-            selectedSetId={selectedSetId}
-          />
-        )}
+        <TimetableSetSelect
+          timetableSets={timetable_sets}
+          selectedSetId={selectedSetId}
+        />
       </div>
 
-      {timetable_sets && timetable_sets.length > 0 ? (
+      {timetable_sets && timetable_sets.length > 0 && selectedSetId ? (
         <div className="flex flex-col gap-2">
           <div className="flex-rows flex">
             <div className="flex grow">
-              <Link href="./timetable/new-timetable">
-                <Button className="hidden bg-blue-600 text-white sm:flex">
-                  <LucideGrid2X2Plus />
-                  Create New Timetable
-                </Button>
-                <Button className="flex bg-blue-600 text-white sm:hidden">
-                  <LucideGrid2X2Plus />
-                </Button>
-              </Link>
-            </div>
-
-            <div className="flex grow justify-end">
-              <Link
-                href={`/dashboard/timetable/add-block?setId=${selectedSetId}`}
-              >
-                <Button className="hidden bg-blue-600 text-white sm:flex">
-                  <PlusCircle /> Add Timetable Block
-                </Button>
-                <Button className="flex bg-blue-600 text-white sm:hidden">
-                  <PlusCircle />
-                </Button>
-              </Link>
+              {selectedSetDescription && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {selectedSetDescription}
+                </p>
+              )}
             </div>
           </div>
-          <TimetableGrid events={events} settings={settings} />
+          <TimetableGrid
+            events={events}
+            settings={settings}
+            setId={selectedSetId}
+          />
         </div>
       ) : (
         <div className="items-justify-center flex flex-col items-center gap-4">

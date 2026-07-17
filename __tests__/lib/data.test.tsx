@@ -56,6 +56,7 @@ import {
   getUserSettings,
   blockConflictCheck,
   getBlockByID,
+  getTimetableSetByID,
   checkTimetableSetOwnership,
   checkTimetableBlockOwnership,
 } from "@/lib/data";
@@ -119,7 +120,9 @@ describe("DataTests", () => {
 
   describe("getAllTimetableSets", () => {
     it("returns timetable sets for a user", async () => {
-      const fakeSets = [{ id: "set-123" }];
+      const fakeSets = [
+        { id: "set-123", title: "Semester 1", description: "Main timetable" },
+      ];
       mockOrderBy.mockResolvedValueOnce(fakeSets);
       const result = await getAllTimetableSets("user-123");
       expect(result).toEqual(fakeSets);
@@ -366,6 +369,32 @@ describe("DataTests", () => {
     it("returns null when the database throws", async () => {
       mockLimit.mockRejectedValueOnce(new Error("DB error"));
       const result = await getBlockByID("block-1", "user-123");
+      expect(result).toBeNull();
+      expect(console.error).toHaveBeenCalled();
+    });
+  });
+
+  describe("getTimetableSetByID", () => {
+    it("returns the timetable set when found", async () => {
+      const fakeSet = {
+        id: "set-123",
+        title: "Semester 1",
+        description: "Main timetable",
+      };
+      mockLimit.mockResolvedValueOnce([fakeSet]);
+      const result = await getTimetableSetByID("set-123", "user-123");
+      expect(result).toEqual(fakeSet);
+    });
+
+    it("returns null when no timetable set is found", async () => {
+      mockLimit.mockResolvedValueOnce([]);
+      const result = await getTimetableSetByID("set-123", "user-123");
+      expect(result).toBeNull();
+    });
+
+    it("returns null when the database throws", async () => {
+      mockLimit.mockRejectedValueOnce(new Error("DB error"));
+      const result = await getTimetableSetByID("set-123", "user-123");
       expect(result).toBeNull();
       expect(console.error).toHaveBeenCalled();
     });

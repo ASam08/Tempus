@@ -9,6 +9,7 @@ import {
   getUserID,
   getNextBreak,
   blockConflictCheck,
+  getUserSettings,
   checkTimetableSetOwnership,
   checkTimetableBlockOwnership,
 } from "@/lib/data";
@@ -48,12 +49,23 @@ export async function createNewTimetableSet(
 
   const { owner_id, title, description } = validatedFields.data;
 
+  let newSetId: string;
+
   try {
-    await sqlConn.insert(schema.timetableSets).values({
-      ownerId: owner_id,
-      title: title,
-      description: description ?? null,
-    });
+    const [newSet] = await sqlConn
+      .insert(schema.timetableSets)
+      .values({
+        ownerId: owner_id,
+        title: title,
+        description: description ?? null,
+      })
+      .returning({ id: schema.timetableSets.id });
+
+    if (!newSet) {
+      throw new Error("Insert returned no row");
+    }
+
+    newSetId = newSet.id;
     console.log(`Timetable set ${title} created successfully`);
   } catch (error) {
     console.error("Error creating timetable set:", error);
@@ -63,8 +75,10 @@ export async function createNewTimetableSet(
     };
   }
 
+  await updateSettings(owner_id, [["last_timetable_set_id", newSetId]]);
+
   revalidatePath("/dashboard/timetable");
-  redirect("/dashboard/timetable");
+  redirect(`/dashboard/timetable?set=${newSetId}`);
 }
 
 const originalTimetableBlockSchema = z.object({
@@ -98,6 +112,110 @@ const refinedTimetableBlock = originalTimetableBlockSchema
       path: ["end_time"],
     },
   );
+
+export async function updateTimetableSet(
+  setId: string,
+  prevState: any,
+  formData: FormData,
+) {
+  const user_id = await getUserID();
+  if (!user_id) {
+    return { message: "User not authenticated." };
+  }
+
+  const ownsSet = await checkTimetableSetOwnership(setId, user_id);
+  if (!ownsSet) {
+    return { message: "User does not own the timetable set." };
+  }
+
+  const validatedFields = createTimetableSet.safeParse({
+    owner_id: user_id,
+    title: formData.get("title"),
+    description: formData.get("description"),
+  });
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Invalid input data.",
+    };
+  }
+
+  const { title, description } = validatedFields.data;
+
+  try {
+    await sqlConn
+      .update(schema.timetableSets)
+      .set({
+        title: title,
+        description: description ?? null,
+      })
+      .where(
+        and(
+          eq(schema.timetableSets.id, setId),
+          eq(schema.timetableSets.ownerId, user_id),
+        ),
+      );
+
+    console.log(`Timetable set ${setId} updated successfully`);
+  } catch (error) {
+    console.error("Error updating timetable set:", error);
+    return {
+      message: "Error updating timetable set.",
+      error,
+    };
+  }
+
+  revalidatePath("/dashboard/timetable");
+  redirect(`/dashboard/timetable?set=${setId}`);
+}
+
+export async function deleteTimetableSet(setId: string) {
+  const user_id = await getUserID();
+  if (!user_id) {
+    return { message: "User not authenticated." };
+  }
+
+  const ownsSet = await checkTimetableSetOwnership(setId, user_id);
+  if (!ownsSet) {
+    console.warn(
+      `User ${user_id} attempted to delete timetable set ${setId} but does not own the timetable set.`,
+    );
+    return { message: "User does not own the timetable set." };
+  }
+
+  try {
+    await sqlConn
+      .delete(schema.timetableSets)
+      .where(
+        and(
+          eq(schema.timetableSets.id, setId),
+          eq(schema.timetableSets.ownerId, user_id),
+        ),
+      );
+    console.log(`Timetable set ${setId} deleted successfully`);
+  } catch (error) {
+    console.error("Error deleting timetable set:", error);
+    return { message: "Error deleting timetable set." };
+  }
+
+  try {
+    const settingsSetId = await getUserSettings(user_id).then(
+      (settings) => settings?.last_timetable_set_id,
+    );
+    if (settingsSetId === setId) {
+      await updateSettings(user_id, [["last_timetable_set_id", ""]]);
+    }
+  } catch (error) {
+    console.error(
+      "Timetable set %s deleted, but failed to clear settings reference:",
+      setId,
+      error,
+    );
+  }
+
+  revalidatePath("/dashboard/timetable");
+  redirect("/dashboard/timetable");
+}
 
 export async function addTimetableBlock(
   setId: string,

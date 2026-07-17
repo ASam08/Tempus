@@ -25,7 +25,7 @@ export const alertDialogMock = () => {
         </AlertDialogContext.Provider>
       ) : testId ? (
         <div data-testid={testId} data-open="false" />
-        ) : null,
+      ) : null,
     AlertDialogContent: ({
       children,
       "data-testid": testId,
@@ -127,16 +127,16 @@ export const buttonMock = {
 };
 
 export const cardMock = {
-    Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    CardHeader: ({ children }: { children: React.ReactNode }) => (
-        <div>{children}</div>
-    ),
-    CardTitle: ({ children }: { children: React.ReactNode }) => (
-        <h1>{children}</h1>
-    ),
-    CardContent: ({ children }: { children: React.ReactNode }) => (
-        <div>{children}</div>
-    ),
+  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  CardHeader: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  CardTitle: ({ children }: { children: React.ReactNode }) => (
+    <h1>{children}</h1>
+  ),
+  CardContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 };
 
 export const checkboxMock = {
@@ -179,7 +179,13 @@ export const dropdownMenuMock = (() => {
         </DropdownContext.Provider>
       );
     },
-    DropdownMenuTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => {
+    DropdownMenuTrigger: ({
+      children,
+      asChild,
+    }: {
+      children: React.ReactNode;
+      asChild?: boolean;
+    }) => {
       const { setOpen } = React.useContext(DropdownContext);
       if (asChild && React.isValidElement(children)) {
         return React.cloneElement(
@@ -209,22 +215,40 @@ export const dropdownMenuMock = (() => {
       const { subOpen } = React.useContext(SubContext);
       return subOpen ? <div>{children}</div> : null;
     },
-    DropdownMenuPortal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    DropdownMenuItem: ({ children, onClick, onSelect, variant }: {
+    DropdownMenuPortal: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
+    ),
+    DropdownMenuItem: ({
+      children,
+      onClick,
+      onSelect,
+      variant,
+    }: {
       children: React.ReactNode;
       onClick?: () => void;
       onSelect?: () => void;
       variant?: string;
     }) => (
-      <button type="button" role="menuitem" onClick={onClick ?? onSelect} data-variant={variant}>
+      <button
+        type="button"
+        role="menuitem"
+        onClick={onClick ?? onSelect}
+        data-variant={variant}
+      >
         {children}
       </button>
     ),
-    DropdownMenuLabel: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-      <div className={className}>{children}</div>
-    ),
+    DropdownMenuLabel: ({
+      children,
+      className,
+    }: {
+      children: React.ReactNode;
+      className?: string;
+    }) => <div className={className}>{children}</div>,
     DropdownMenuSeparator: () => <hr />,
-    DropdownMenuGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DropdownMenuGroup: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
   };
 })();
 
@@ -310,47 +334,48 @@ export const popoverMock = {
 };
 
 export const selectMock = {
-    Select: ({
-        children,
-        onValueChange,
-        name,
-        onOpenChange,
-        defaultValue,
-    }: {
-        children: React.ReactNode;
-        onValueChange?: (v: string) => void;
-        name?: string;
-        onOpenChange?: () => void;
-        defaultValue?: string;
-    }) => (
-        <select
-            name={name}
-            aria-label={name ?? "select"}
-            title={name ?? "select"}
-            defaultValue={defaultValue ?? ""}
-            onChange={(e) => {
-                onOpenChange?.();
-                onValueChange?.(e.target.value);
-            }}
-        >
-            {!defaultValue && <option value="" disabled />}
-            {children}
-        </select>
-    ),
-    SelectTrigger: ({ children }: { children: React.ReactNode }) => (
-        <>{children}</>
-    ),
-    SelectValue: ({ placeholder }: { placeholder?: string }) => null,
-    SelectContent: ({ children }: { children: React.ReactNode }) => (
-        <>{children}</>
-    ),
-    SelectItem: ({
-        value,
-        children,
-    }: {
-        value: string;
-        children: React.ReactNode;
-    }) => <option value={value}>{children}</option>,
+  Select: ({
+    children,
+    onValueChange,
+    name,
+    onOpenChange,
+    defaultValue,
+  }: {
+    children: React.ReactNode;
+    onValueChange?: (v: string) => void;
+    name?: string;
+    onOpenChange?: () => void;
+    defaultValue?: string;
+  }) => (
+    <select
+      name={name}
+      aria-label={name ?? "select"}
+      title={name ?? "select"}
+      defaultValue={defaultValue ?? ""}
+      onChange={(e) => {
+        onOpenChange?.();
+        onValueChange?.(e.target.value);
+      }}
+    >
+      {!defaultValue && <option value="" disabled />}
+      {children}
+    </select>
+  ),
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+  SelectValue: ({ placeholder }: { placeholder?: string }) => null,
+  SelectContent: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+  SelectItem: ({
+    value,
+    children,
+  }: {
+    value: string;
+    children: React.ReactNode;
+  }) => <option value={value}>{children}</option>,
+  SelectSeparator: () => <hr role="separator" />,
 };
 
 export const tableMock = {
