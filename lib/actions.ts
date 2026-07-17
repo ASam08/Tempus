@@ -207,7 +207,8 @@ export async function deleteTimetableSet(setId: string) {
     }
   } catch (error) {
     console.error(
-      `Timetable set ${setId} deleted, but failed to clear settings reference:`,
+      "Timetable set %s deleted, but failed to clear settings reference:",
+      setId,
       error,
     );
   }
