@@ -24,8 +24,9 @@ import { getAllTimetableSets } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import SetManageActions from "@/app/ui/timetable/setmanageactions";
+import { LucidePlus } from "lucide-react";
 
-export default async function AdminDashboard({
+export default async function ManageTimetablesPage({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -68,6 +69,16 @@ export default async function AdminDashboard({
       <h1 className="mb-4 flex flex-wrap text-xl font-bold text-gray-800 md:text-2xl dark:text-gray-200">
         Manage Timetables
       </h1>
+      <div className="mb-4 flex">
+        <Link href="/dashboard/timetable/new-timetable">
+          <Button className="hidden sm:flex">
+            <LucidePlus /> Create New
+          </Button>
+          <Button className="flex sm:hidden">
+            <LucidePlus />
+          </Button>
+        </Link>
+      </div>
       <div>
         <div className="overflow-auto rounded-xl border border-stone-300 dark:border-gray-700">
           <Table>

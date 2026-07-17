@@ -23,6 +23,7 @@ jest.mock("@/components/ui/select", () => {
     SelectValue: selectMock.SelectValue,
     SelectContent: selectMock.SelectContent,
     SelectItem: selectMock.SelectItem,
+    SelectSeparator: selectMock.SelectSeparator,
   };
 });
 
@@ -49,14 +50,24 @@ describe("TimetableSetSelect", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders only the placeholder option when timetableSets is empty", () => {
-    render(<TimetableSetSelect timetableSets={[]} />);
-    expect(screen.getAllByRole("option")).toHaveLength(1);
+  it("always renders the create-new and manage options", () => {
+    render(<TimetableSetSelect timetableSets={timetableSets} />);
+    expect(
+      screen.getByRole("option", { name: "Create new" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Manage timetables" }),
+    ).toBeInTheDocument();
   });
 
-  it("renders only the placeholder option when timetableSets is null", () => {
+  it("renders only the placeholder, create-new and manage options when timetableSets is empty", () => {
+    render(<TimetableSetSelect timetableSets={[]} />);
+    expect(screen.getAllByRole("option")).toHaveLength(3);
+  });
+
+  it("renders only the placeholder, create-new and manage options when timetableSets is null", () => {
     render(<TimetableSetSelect timetableSets={null} />);
-    expect(screen.getAllByRole("option")).toHaveLength(1);
+    expect(screen.getAllByRole("option")).toHaveLength(3);
   });
 
   it("passes the selectedSetId through to the underlying Select", () => {
@@ -87,5 +98,27 @@ describe("TimetableSetSelect", () => {
     await user.selectOptions(screen.getByRole("combobox"), "2");
 
     expect(mockPush).toHaveBeenCalledWith("/timetables?set=2");
+  });
+
+  it("redirects to the new timetable page when create-new is selected, without persisting a selection", async () => {
+    const user = userEvent.setup();
+    render(<TimetableSetSelect timetableSets={timetableSets} />);
+
+    await user.selectOptions(screen.getByRole("combobox"), "create-new");
+
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/timetable/new-timetable");
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(setLastTimetableSet).not.toHaveBeenCalled();
+  });
+
+  it("redirects to the manage timetables page when manage is selected, without persisting a selection", async () => {
+    const user = userEvent.setup();
+    render(<TimetableSetSelect timetableSets={timetableSets} />);
+
+    await user.selectOptions(screen.getByRole("combobox"), "manage");
+
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/timetable/manage");
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(setLastTimetableSet).not.toHaveBeenCalled();
   });
 });
