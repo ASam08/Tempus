@@ -1,15 +1,7 @@
-import {
-  LucideGrid,
-  LucideHome,
-  LucideLogOut,
-  LucideSettings,
-} from "lucide-react";
+import { LucideGrid, LucideHome } from "lucide-react";
 import Link from "next/link";
 import TempusLogo from "@/components/branding/tempuslogo";
 import TempusLogoBrand from "@/components/branding/tempuslogobrand";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 export default function SideNav() {
   return (
@@ -42,28 +34,6 @@ export default function SideNav() {
         <LucideGrid />
         <span className="hidden md:flex md:pl-2">Timetable</span>
       </Link>
-      <Link
-        href="/dashboard/settings"
-        className="mb-4 flex flex-row rounded-xl border-2 border-stone-500 bg-stone-400 p-2 font-semibold text-blue-600 xl:text-xl dark:border-gray-700 dark:bg-gray-800 dark:text-blue-400"
-      >
-        <LucideSettings />
-        <span className="hidden md:flex md:pl-2">Settings</span>
-      </Link>
-      <form
-        className="flex flex-col"
-        action={async () => {
-          "use server";
-          await auth.api.signOut({
-            headers: await headers(),
-          });
-          redirect("/login");
-        }}
-      >
-        <button className="mb-4 flex flex-row rounded-xl border-2 border-stone-500 bg-stone-400 p-2 font-semibold text-blue-600 xl:text-xl dark:border-gray-700 dark:bg-gray-800 dark:text-blue-400">
-          <LucideLogOut />
-          <span className="hidden md:flex md:pl-2">Sign Out</span>
-        </button>
-      </form>
     </div>
   );
 }

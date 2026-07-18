@@ -33,7 +33,7 @@ export default function RootLayout({
           <Toaster />
           {/* <div className="flex"> */}
           {/* <div className="fixed top-2 left-2 justify-start md:top-2"></div> */}
-          <div className="fixed top-2 right-2 justify-end md:top-4 md:right-4">
+          <div className="fixed right-2 bottom-2 justify-end md:right-4 md:bottom-4">
             <ModeToggle />
           </div>
           {/* </div> */}
