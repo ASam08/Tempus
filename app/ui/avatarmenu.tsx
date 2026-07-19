@@ -12,7 +12,12 @@ import {
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { LucideLogOut, LucideUser2, LucideSettings } from "lucide-react";
+import {
+  LucideLogOut,
+  LucideUser2,
+  LucideSettings,
+  LucideUsers,
+} from "lucide-react";
 import Link from "next/link";
 
 export async function AvatarDropdown() {
@@ -23,8 +28,15 @@ export async function AvatarDropdown() {
     return null;
   }
 
-  const firstName = session.user.name?.split(" ")[0] ?? "User";
-  const lastName = session.user.name?.split(" ")[1] ?? "";
+  let admin: boolean = false;
+
+  if (session?.user.role === "admin") {
+    admin = true;
+  }
+
+  const namesplit = session.user.name?.split(" ");
+  const firstName = namesplit?.[0]?.toUpperCase() ?? "User";
+  const lastName = namesplit?.[namesplit.length - 1]?.toUpperCase() ?? "";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -54,6 +66,19 @@ export async function AvatarDropdown() {
           </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        {admin && (
+          <>
+            <DropdownMenuGroup>
+              <Link href="/dashboard/admin">
+                <DropdownMenuItem className="cursor-pointer">
+                  <LucideUsers />
+                  Admin
+                </DropdownMenuItem>
+              </Link>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuGroup>
           <DropdownMenuItem
             className="cursor-pointer"
