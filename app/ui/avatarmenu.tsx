@@ -54,10 +54,12 @@ export async function AvatarDropdown() {
           <DropdownMenuLabel>
             {firstName} {lastName}
           </DropdownMenuLabel>
-          <DropdownMenuItem className="cursor-pointer">
-            <LucideUser2 />
-            Account
-          </DropdownMenuItem>
+          <Link href="/dashboard/account">
+            <DropdownMenuItem className="cursor-pointer">
+              <LucideUser2 />
+              Account
+            </DropdownMenuItem>
+          </Link>
           <Link href="/dashboard/settings">
             <DropdownMenuItem className="cursor-pointer">
               <LucideSettings />
