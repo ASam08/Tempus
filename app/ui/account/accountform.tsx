@@ -12,9 +12,27 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { PasswordRequirementsHover } from "@/components/general/password-requirements-hover";
 import { useRouter } from "next/navigation";
+import { z } from "zod";
+import { passwordSchema } from "@/lib/schema";
 
-type FormType = { type: "detail" | "password" };
+type FormType = { type: "details" | "password" };
 type FormErrors = Partial<Record<FormType["type"], string>>;
+
+const NewPasswordSchema = z
+  .object({
+    currentPassword: z.string(),
+    newPassword: passwordSchema,
+    confirmPassword: z.string(),
+    revokeSessions: z.boolean(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+const detailsSchema = z.object({
+  name: z.string().trim().min(1, "Name cannot be empty"),
+});
 
 async function handleOutcome(
   form: HTMLFormElement,
@@ -64,11 +82,15 @@ export default function AccountForm({ user }: { user: User }) {
           revokeSessions: formData.get("revoke-sessions") === "on",
         };
 
-        if (raw.newPassword !== raw.confirmPassword) {
-          setErrors((prev) => ({
-            ...prev,
-            password: "Passwords do not match.",
-          }));
+        const validated = NewPasswordSchema.safeParse(raw);
+        if (!validated.success) {
+          const fieldErrors = validated.error.flatten().fieldErrors;
+          const messages = Object.values(fieldErrors).flat();
+          const message =
+            messages.length > 0
+              ? `New password must:\n${messages.join("\n")}`
+              : "Invalid input.";
+          setErrors((prev) => ({ ...prev, password: message }));
           return;
         }
 
@@ -77,9 +99,9 @@ export default function AccountForm({ user }: { user: User }) {
             form,
             () =>
               authClient.changePassword({
-                newPassword: raw.newPassword,
-                currentPassword: raw.currentPassword,
-                revokeOtherSessions: raw.revokeSessions,
+                newPassword: validated.data.newPassword,
+                currentPassword: validated.data.currentPassword,
+                revokeOtherSessions: validated.data.revokeSessions,
               }),
             "Password updated.",
             "Failed to update password.",
@@ -88,20 +110,30 @@ export default function AccountForm({ user }: { user: User }) {
         return;
       }
 
-      case "detail": {
+      case "details": {
         const raw = {
           name: formData.get("name") as string,
-          email: formData.get("email") as string,
+          // email: formData.get("email") as string,
         };
+
+        const validated = detailsSchema.safeParse(raw);
+        if (!validated.success) {
+          const fieldErrors = validated.error.flatten().fieldErrors;
+          const messages = Object.values(fieldErrors).flat();
+          const message =
+            messages.length > 0 ? messages.join("\n") : "Invalid input.";
+          setErrors((prev) => ({ ...prev, details: message }));
+          return;
+        }
 
         const details: { name?: string; email?: string } = {};
 
         if (raw.name !== user.name) {
           details.name = raw.name;
         }
-        if (raw.email !== user.email) {
-          details.email = raw.email;
-        }
+        // if (raw.email !== user.email) {
+        //   details.email = raw.email;
+        // }
 
         if (Object.keys(details).length === 0) {
           return;
@@ -137,7 +169,7 @@ export default function AccountForm({ user }: { user: User }) {
           <div className="gap-4 text-lg font-bold">Details</div>
           <Separator />
           <form
-            onSubmit={(e) => handleFormSubmit(e, { type: "detail" })}
+            onSubmit={(e) => handleFormSubmit(e, { type: "details" })}
             className="mt-4 grid gap-3"
           >
             <Field className="grid gap-3">
@@ -162,6 +194,11 @@ export default function AccountForm({ user }: { user: User }) {
                 disabled
               />
             </Field>
+            {errors.details && (
+              <p className="text-destructive text-sm whitespace-pre-line">
+                {errors.details}
+              </p>
+            )}
             <div className="flex flex-row gap-4 py-4">
               <Button variant="outline" type="button">
                 Cancel
@@ -215,7 +252,9 @@ export default function AccountForm({ user }: { user: User }) {
               </FieldLabel>
             </Field>
             {errors.password && (
-              <p className="text-destructive text-sm">{errors.password}</p>
+              <p className="text-destructive text-sm whitespace-pre-line">
+                {errors.password}
+              </p>
             )}
             <div className="flex flex-row gap-4 py-4">
               <Button variant="outline" type="button">
