@@ -153,6 +153,7 @@ export default function AccountForm({ user }: { user: User }) {
 
       default: {
         const _exhaustive: never = formType.type;
+        /* istanbul ignore next */
         throw new Error(`Unhandled form type: ${_exhaustive}`);
       }
     }

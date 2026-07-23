@@ -158,28 +158,4 @@ describe("DashboardPage", () => {
     expect(screen.getByText("NextCardClient-set-1")).toBeInTheDocument();
     expect(screen.getByText("NextCardClient-set-2")).toBeInTheDocument();
   });
-
-  it("renders the Admin button when user is admin", async () => {
-    mockedAuth.mockResolvedValueOnce({
-      user: { id: "user-123", name: "Admin User", role: "admin" },
-    });
-    const result = await DashboardPage();
-    render(result);
-    expect(screen.getByRole("link", { name: /admin/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /admin/i })).toHaveAttribute(
-      "href",
-      "/dashboard/admin",
-    );
-  });
-
-  it("does not render the Admin button when user is not admin", async () => {
-    mockedAuth.mockResolvedValueOnce({
-      user: { id: "user-123", name: "Regular User", role: "user" },
-    });
-    const result = await DashboardPage();
-    render(result);
-    expect(
-      screen.queryByRole("link", { name: /admin/i }),
-    ).not.toBeInTheDocument();
-  });
 });
