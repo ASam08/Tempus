@@ -42,7 +42,7 @@ jest.mock("next/link", () => {
   );
 });
 
-import SideNav from "@/app/ui/dashboard/sidenav";
+import TopNav from "@/app/ui/dashboard/topnav";
 import { redirect } from "next/navigation";
 
 describe("SideNav Component", () => {
@@ -54,33 +54,33 @@ describe("SideNav Component", () => {
   });
 
   it("renders navigation links correctly", () => {
-    const { getByText } = render(<SideNav />);
+    const { getByText } = render(<TopNav />);
     expect(getByText("Home")).toBeInTheDocument();
     expect(getByText("Timetable")).toBeInTheDocument();
     expect(getByText("Settings")).toBeInTheDocument();
   });
 
   it("renders TempusLogo and TempusLogoBrand", () => {
-    const { getByText } = render(<SideNav />);
+    const { getByText } = render(<TopNav />);
     expect(getByText("TempusLogo")).toBeInTheDocument();
     expect(getByText("TempusLogoBrand")).toBeInTheDocument();
   });
 
   it("renders icons correctly", () => {
-    const { getByText } = render(<SideNav />);
+    const { getByText } = render(<TopNav />);
     expect(getByText("LucideHome")).toBeInTheDocument();
     expect(getByText("LucideGrid")).toBeInTheDocument();
     expect(getByText("LucideSettings")).toBeInTheDocument();
   });
 
   it("renders logout button correctly", () => {
-    const { getByText } = render(<SideNav />);
+    const { getByText } = render(<TopNav />);
     expect(getByText("LucideLogOut")).toBeInTheDocument();
     expect(getByText("Sign Out")).toBeInTheDocument();
   });
 
   it("links point to correct destinations", () => {
-    const { getByRole } = render(<SideNav />);
+    const { getByRole } = render(<TopNav />);
     expect(getByRole("link", { name: /home/i })).toHaveAttribute(
       "href",
       "/dashboard",
@@ -102,7 +102,7 @@ describe("SideNav Component", () => {
     (headers as jest.Mock).mockResolvedValue(mockHeaders);
     (redirect as unknown as jest.Mock).mockImplementation(() => {});
 
-    const { getByRole } = render(<SideNav />);
+    const { getByRole } = render(<TopNav />);
 
     await act(async () => {
       getByRole("button").click();

@@ -11,11 +11,14 @@ export default function TempusLogoBrand({
   className = "",
   showTagline = true,
 }: TempusLogoProps) {
+  const contentHeight = showTagline ? 178 : 142;
+
   return (
     <svg
       width={width}
-      height={height}
-      viewBox="0 0 455 178"
+      height={showTagline ? height : (height * contentHeight) / 178}
+      viewBox={`0 0 455 ${contentHeight}`}
+      preserveAspectRatio="xMidYMin meet"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
