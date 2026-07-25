@@ -1,3 +1,5 @@
+"use client";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,9 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 import {
   LucideLogOut,
   LucideUser2,
@@ -20,23 +21,24 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export async function AvatarDropdown() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+export function AvatarDropdown() {
+  const { data: session } = authClient.useSession();
+  const router = useRouter();
+
   if (!session?.user) {
     return null;
   }
 
   let admin: boolean = false;
 
-  if (session?.user.role === "admin") {
+  if (session.user.role === "admin") {
     admin = true;
   }
 
   const namesplit = session.user.name?.split(" ");
   const firstName = namesplit?.[0]?.toUpperCase() ?? "User";
   const lastName = namesplit?.[namesplit.length - 1]?.toUpperCase() ?? "";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -86,11 +88,8 @@ export async function AvatarDropdown() {
             className="cursor-pointer"
             variant="destructive"
             onClick={async () => {
-              "use server";
-              await auth.api.signOut({
-                headers: await headers(),
-              });
-              redirect("/login");
+              await authClient.signOut();
+              router.push("/login");
             }}
           >
             <LucideLogOut />

@@ -103,7 +103,11 @@ export const auth = betterAuth({
     useSecureCookies: process.env.TEMPUS_URL?.startsWith("https") ?? false,
   },
 
-  trustedOrigins: [process.env.TEMPUS_URL ?? "http://localhost:3000"],
+  trustedOrigins: [
+    process.env.TEMPUS_URL ?? "http://localhost:3000",
+    ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",") ?? []),
+  ],
+
   baseURL: "http://localhost:3000",
 });
 
