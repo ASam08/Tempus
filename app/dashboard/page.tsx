@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   const timetableSets = await getAllTimetableSets(user_id);
 
   return (
-    <div className="flex h-full max-w-screen flex-col px-3 py-4 md:px-2">
+    <div className="flex h-full max-w-screen flex-col px-3 md:px-2">
       <h1 className="flex flex-wrap text-2xl font-bold text-gray-800 md:mb-4 dark:text-gray-200">
         Dashboard
       </h1>

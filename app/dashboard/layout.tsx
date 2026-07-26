@@ -1,5 +1,4 @@
 import TopNav from "@/app/ui/dashboard/topnav";
-import { AvatarDropdown } from "@/app/ui/avatarmenu";
 
 export default function Layout({
   children,
@@ -10,7 +9,7 @@ export default function Layout({
         <TopNav />
       </div>
 
-      <div className="grow p-1 md:overflow-y-auto md:p-6">{children}</div>
+      <div className="grow py-2 md:overflow-y-auto md:px-4">{children}</div>
     </div>
   );
 }

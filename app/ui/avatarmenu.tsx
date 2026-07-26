@@ -43,7 +43,7 @@ export function AvatarDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full">
-          <Avatar size="lg">
+          <Avatar size="default">
             <AvatarFallback>
               {firstName.charAt(0)}
               {lastName.charAt(0)}

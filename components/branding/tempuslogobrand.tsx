@@ -119,9 +119,9 @@ export default function TempusLogoBrand({
       {/* Wordmark - switches between dark and light text */}
       <text
         x="170"
-        y="92"
+        y="98"
         fontFamily="'Geist', latin"
-        fontSize="52"
+        fontSize="78"
         fontWeight="500"
         letterSpacing="-1"
         className="fill-[#1a1a1a] dark:fill-white"

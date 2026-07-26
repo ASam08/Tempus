@@ -16,18 +16,18 @@ const navLinks = [
 export default function TopNav() {
   const pathname = usePathname();
   return (
-    <div className="dark:shadow-accent flex max-w-screen flex-row gap-2 bg-stone-300 shadow-sm dark:bg-gray-900">
+    <div className="flex max-w-screen flex-row gap-2 bg-stone-300 dark:bg-gray-900">
       <Link
         href="/dashboard"
         className="flex flex-row items-center self-center p-1"
       >
         <TempusLogoBrand
-          width={200}
-          height={70}
+          width={100}
+          height={40}
           showTagline={false}
           className="hidden md:inline"
         />
-        <TempusLogo width={50} height={50} className="inline md:hidden" />
+        <TempusLogo width={40} height={40} className="inline md:hidden" />
       </Link>
       {navLinks.map(({ href, label, icon: Icon }) => {
         const isActive = pathname === href;
@@ -36,18 +36,18 @@ export default function TopNav() {
             key={href}
             href={href}
             aria-current={isActive ? "page" : undefined}
-            className={`flex flex-row self-center p-2 text-xl font-semibold ${
+            className={`flex flex-row self-center p-2 ${
               isActive
                 ? "text-blue-600 underline decoration-2 underline-offset-4"
                 : "text-primary"
             }`}
           >
-            <Icon height={31} width={31} />
+            <Icon height={27} width={27} />
             <span className="hidden self-center md:flex md:pl-2">{label}</span>
           </Link>
         );
       })}
-      <div className="flex grow justify-end self-center p-2 md:pr-3">
+      <div className="flex grow justify-end self-center md:pr-3">
         <AvatarDropdown />
       </div>
     </div>

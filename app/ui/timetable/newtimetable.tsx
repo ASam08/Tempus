@@ -108,11 +108,8 @@ export function TimetableGrid({
       <div className="mb-1 flex w-full grow">
         <div className="flex grow">
           <Link href={`/dashboard/timetable/add-block?setId=${setId}`}>
-            <Button className="hidden bg-blue-600 text-white sm:flex">
-              <PlusCircle /> Add Block
-            </Button>
-            <Button className="flex bg-blue-600 text-white sm:hidden">
-              <PlusCircle />
+            <Button>
+              <PlusCircle /> <span className="hidden sm:flex">Add Block</span>
             </Button>
           </Link>
         </div>
@@ -121,7 +118,7 @@ export function TimetableGrid({
             onClick={() => setEditMode((d) => !d)}
             data-testid="edit-button"
             className={`px-3 py-1 text-sm font-medium ${
-              editMode ? "bg-red-600 text-white" : "bg-blue-600 text-white"
+              editMode && "bg-red-600 text-white hover:bg-red-800"
             } `}
           >
             <LucideEdit2 />{" "}
