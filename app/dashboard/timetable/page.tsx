@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { LucideGrid2X2Plus } from "lucide-react";
-import { TimetableGrid } from "@/app/ui/timetable/newtimetable";
+import { TimetableGrid } from "@/app/ui/timetable/timetablegrid";
 import {
   getAllTimetableSets,
   getTimetableBlocks,

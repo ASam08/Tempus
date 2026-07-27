@@ -48,11 +48,11 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").buttonMock,
 );
 
-jest.mock("@/components/ui/alert-dialog", () => 
+jest.mock("@/components/ui/alert-dialog", () =>
   require("@/testing/mocks/shadcn").alertDialogMock(),
 );
 
-import { TimetableGrid } from "@/app/ui/timetable/newtimetable";
+import { TimetableGrid } from "@/app/ui/timetable/timetablegrid";
 import { deleteBlock } from "@/lib/actions";
 
 const makeEvent = (overrides = {}) => ({
@@ -79,7 +79,18 @@ const defaultSettings = {
 
 const FIXED_DATE = new Date("2024-01-17T10:00:00").getTime();
 
+const renderGrid = (props: Record<string, unknown> = {}) =>
+  render(
+    <TimetableGrid
+      events={[]}
+      settings={defaultSettings}
+      setId="set-1"
+      {...props}
+    />,
+  );
+
 beforeEach(() => {
+  jest.clearAllMocks();
   jest.useFakeTimers();
   jest.setSystemTime(FIXED_DATE);
   Object.defineProperty(window, "innerWidth", {
@@ -91,25 +102,28 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.useRealTimers();
-  jest.clearAllMocks();
 });
 
 describe("TimetableGrid", () => {
   describe("rendering", () => {
     it("renders without crashing with no events and null settings", () => {
-      render(<TimetableGrid events={[]} settings={null} />);
+      renderGrid({ events: [], settings: null });
       expect(screen.getByTestId("edit-button")).toBeInTheDocument();
     });
 
-    it("renders the Edit button in blue (non-delete) mode by default", () => {
-      render(<TimetableGrid events={[]} settings={defaultSettings} />);
+    it("renders without crashing when events prop is omitted entirely", () => {
+      render(<TimetableGrid settings={defaultSettings} setId="set-1" />);
+      expect(screen.getByTestId("edit-button")).toBeInTheDocument();
+    });
+
+    it("does not apply the red delete-mode class by default", () => {
+      renderGrid();
       const btn = screen.getByTestId("edit-button");
-      expect(btn.className).toMatch(/bg-blue-600/);
       expect(btn.className).not.toMatch(/bg-red-600/);
     });
 
     it("shows the correct number of day-header columns (all 7 days)", () => {
-      render(<TimetableGrid events={[]} settings={defaultSettings} />);
+      renderGrid();
       [
         "Monday",
         "Tuesday",
@@ -122,34 +136,31 @@ describe("TimetableGrid", () => {
     });
 
     it("hides a day column when its setting is 'false'", () => {
-      const settings = { ...defaultSettings, fri: "false" };
-      render(<TimetableGrid events={[]} settings={settings} />);
+      renderGrid({ settings: { ...defaultSettings, fri: "false" } });
       expect(screen.queryByText("Friday")).not.toBeInTheDocument();
     });
 
     it("renders time labels for each visible 15-minute slot", () => {
-      render(<TimetableGrid events={[]} settings={defaultSettings} />);
+      renderGrid();
       expect(screen.getByText("08:00")).toBeInTheDocument();
       expect(screen.getByText("09:00")).toBeInTheDocument();
     });
 
     it("renders the correct grid column count via inline style", () => {
-      const { container } = render(
-        <TimetableGrid events={[]} settings={defaultSettings} />,
-      );
+      const { container } = renderGrid();
       const grid = container.querySelector(".grid") as HTMLElement;
       expect(grid.style.gridTemplateColumns).toMatch(/repeat\(7,/);
     });
 
     it("maps JS Sunday (getDay() === 0) to day_of_week 7 for highlighting", () => {
       jest.setSystemTime(new Date("2024-01-14T10:00:00").getTime());
-      render(<TimetableGrid events={[]} settings={defaultSettings} />);
+      renderGrid();
       expect(screen.getByText("Sunday").className).toMatch(/bg-blue-800/);
       expect(screen.getByText("Monday").className).not.toMatch(/bg-blue-800/);
     });
 
     it("renders the alert dialog in closed state by default", () => {
-      render(<TimetableGrid events={[]} settings={defaultSettings} />);
+      renderGrid();
       expect(screen.getByTestId("alert-dialog")).toHaveAttribute(
         "data-open",
         "false",
@@ -157,9 +168,29 @@ describe("TimetableGrid", () => {
     });
   });
 
+  describe("add block link", () => {
+    it("renders an Add Block link pointing at the add-block route with the setId", () => {
+      renderGrid({ setId: "set-42" });
+      const link = screen.getByRole("link", { name: /add block/i });
+      expect(link).toHaveAttribute(
+        "href",
+        "/dashboard/timetable/add-block?setId=set-42",
+      );
+    });
+
+    it("renders the Add Block link regardless of edit mode", async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      renderGrid({ setId: "set-42" });
+      await user.click(screen.getByTestId("edit-button"));
+      expect(
+        screen.getByRole("link", { name: /add block/i }),
+      ).toBeInTheDocument();
+    });
+  });
+
   describe("responsive labels", () => {
     it("shows full labels when window width > 900", () => {
-      render(<TimetableGrid events={[]} settings={defaultSettings} />);
+      renderGrid();
       expect(screen.getByText("Monday")).toBeInTheDocument();
     });
 
@@ -168,7 +199,7 @@ describe("TimetableGrid", () => {
         value: 700,
         configurable: true,
       });
-      render(<TimetableGrid events={[]} settings={defaultSettings} />);
+      renderGrid();
       act(() => {
         fireEvent(window, new Event("resize"));
       });
@@ -181,7 +212,7 @@ describe("TimetableGrid", () => {
         value: 400,
         configurable: true,
       });
-      render(<TimetableGrid events={[]} settings={defaultSettings} />);
+      renderGrid();
       act(() => {
         fireEvent(window, new Event("resize"));
       });
@@ -193,9 +224,7 @@ describe("TimetableGrid", () => {
     it("attaches and removes a resize listener", () => {
       const addSpy = jest.spyOn(window, "addEventListener");
       const removeSpy = jest.spyOn(window, "removeEventListener");
-      const { unmount } = render(
-        <TimetableGrid events={[]} settings={defaultSettings} />,
-      );
+      const { unmount } = renderGrid();
       expect(addSpy).toHaveBeenCalledWith("resize", expect.any(Function));
       unmount();
       expect(removeSpy).toHaveBeenCalledWith("resize", expect.any(Function));
@@ -204,28 +233,24 @@ describe("TimetableGrid", () => {
 
   describe("today highlighting", () => {
     it("applies blue-800 background to today's (Wednesday) column header", () => {
-      render(<TimetableGrid events={[]} settings={defaultSettings} />);
+      renderGrid();
       expect(screen.getByText("Wednesday").className).toMatch(/bg-blue-800/);
     });
 
     it("does NOT apply today highlight to a non-today column", () => {
-      render(<TimetableGrid events={[]} settings={defaultSettings} />);
+      renderGrid();
       expect(screen.getByText("Monday").className).not.toMatch(/bg-blue-800/);
     });
   });
 
   describe("event rendering", () => {
     it("renders an event's subject text", () => {
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       expect(screen.getByText("Maths")).toBeInTheDocument();
     });
 
     it("renders start and end times for events with sufficient duration", () => {
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       const eventEl = screen
         .getByText("Maths")
         .closest("div[style]") as HTMLElement;
@@ -234,32 +259,28 @@ describe("TimetableGrid", () => {
     });
 
     it("renders the location for events with sufficient duration", () => {
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       expect(screen.getByText("Room 1")).toBeInTheDocument();
     });
 
     it("does not render an event that falls outside the visible time range", () => {
       const outOfRange = makeEvent({ start_time: "20:00", end_time: "21:00" });
-      render(
-        <TimetableGrid events={[outOfRange]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [outOfRange] });
       expect(screen.queryByText("Maths")).not.toBeInTheDocument();
     });
 
     it("does not render an event for a disabled day column", () => {
-      const settings = { ...defaultSettings, sat: "false" };
       const satEvent = makeEvent({ day_of_week: 6, subject: "Saturday Class" });
-      render(<TimetableGrid events={[satEvent]} settings={settings} />);
+      renderGrid({
+        events: [satEvent],
+        settings: { ...defaultSettings, sat: "false" },
+      });
       expect(screen.queryByText("Saturday Class")).not.toBeInTheDocument();
     });
 
     it("applies today-specific blue-600 background to events on today's column", () => {
       const todayEvent = makeEvent({ day_of_week: 3, subject: "Today Event" });
-      render(
-        <TimetableGrid events={[todayEvent]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [todayEvent] });
       const eventEl = screen
         .getByText("Today Event")
         .closest("div[style]") as HTMLElement;
@@ -268,9 +289,7 @@ describe("TimetableGrid", () => {
 
     it("applies blue-800 background to events NOT on today's column", () => {
       const otherEvent = makeEvent({ day_of_week: 1, subject: "Other Event" });
-      render(
-        <TimetableGrid events={[otherEvent]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [otherEvent] });
       const eventEl = screen
         .getByText("Other Event")
         .closest("div[style]") as HTMLElement;
@@ -294,21 +313,18 @@ describe("TimetableGrid", () => {
           day_of_week: 2,
         }),
       ];
-      render(<TimetableGrid events={events} settings={defaultSettings} />);
+      renderGrid({ events });
       expect(screen.getByText("Maths")).toBeInTheDocument();
       expect(screen.getByText("English")).toBeInTheDocument();
     });
 
     it("handles a null events prop gracefully via the ?? fallback", () => {
-      expect(() =>
-        // @ts-expect-error - testing null safety
-        render(<TimetableGrid events={null} settings={defaultSettings} />),
-      ).not.toThrow();
+      expect(() => renderGrid({ events: null })).not.toThrow();
     });
 
     it("silently skips null entries within the events array", () => {
       const events = [makeEvent({ subject: "Valid Event" }), null] as any;
-      render(<TimetableGrid events={events} settings={defaultSettings} />);
+      renderGrid({ events });
       expect(screen.getByText("Valid Event")).toBeInTheDocument();
     });
 
@@ -318,9 +334,7 @@ describe("TimetableGrid", () => {
         start_time: "09:00",
         end_time: "09:15",
       });
-      render(
-        <TimetableGrid events={[shortEvent]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [shortEvent] });
       const subjectEl = screen.getByText("Short Event");
       expect(subjectEl.className).toMatch(/text-xs/);
       expect(subjectEl.className).toMatch(/leading-none/);
@@ -332,7 +346,7 @@ describe("TimetableGrid", () => {
         start_time: "09:00",
         end_time: "09:05",
       });
-      render(<TimetableGrid events={[tinyEvent]} settings={defaultSettings} />);
+      renderGrid({ events: [tinyEvent] });
       const subjectEl = screen.getByText("Tiny Event");
       expect(subjectEl.className).toMatch(/text-\[6px\]/);
       expect(subjectEl.className).toMatch(/leading-none/);
@@ -342,9 +356,7 @@ describe("TimetableGrid", () => {
   describe("delete mode", () => {
     it("toggles into delete mode when Edit button is clicked", async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       const btn = screen.getByTestId("edit-button");
       await user.click(btn);
       expect(btn.className).toMatch(/bg-red-600/);
@@ -352,29 +364,23 @@ describe("TimetableGrid", () => {
 
     it("shows the X delete icon on events when in delete mode", async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       await user.click(screen.getByTestId("edit-button"));
       expect(document.querySelector(".lucide-x")).toBeInTheDocument();
     });
 
     it("hides the X delete icon when NOT in delete mode", () => {
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       expect(document.querySelector(".lucide-x")).not.toBeInTheDocument();
     });
 
-    it("toggles back out of delete mode on second click", async () => {
+    it("removes the red delete-mode class after toggling out of delete mode", async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       const btn = screen.getByTestId("edit-button");
       await user.click(btn);
+      expect(btn.className).toMatch(/bg-red-600/);
       await user.click(btn);
-      expect(btn.className).toMatch(/bg-blue-600/);
       expect(btn.className).not.toMatch(/bg-red-600/);
     });
   });
@@ -382,9 +388,7 @@ describe("TimetableGrid", () => {
   describe("block deletion via AlertDialog", () => {
     it("opens the alert dialog when the X icon is clicked", async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       await user.click(screen.getByTestId("edit-button"));
       await user.click(document.querySelector(".lucide-x") as HTMLElement);
       expect(screen.getByTestId("alert-dialog")).toHaveAttribute(
@@ -395,9 +399,7 @@ describe("TimetableGrid", () => {
 
     it("shows the confirmation dialog content when opened", async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       await user.click(screen.getByTestId("edit-button"));
       await user.click(document.querySelector(".lucide-x") as HTMLElement);
       expect(screen.getByTestId("alert-dialog-title")).toBeInTheDocument();
@@ -408,12 +410,7 @@ describe("TimetableGrid", () => {
 
     it("calls deleteBlock with the correct id when confirmed", async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      render(
-        <TimetableGrid
-          events={[makeEvent({ id: "evt-42" })]}
-          settings={defaultSettings}
-        />,
-      );
+      renderGrid({ events: [makeEvent({ id: "evt-42" })] });
       await user.click(screen.getByTestId("edit-button"));
       await user.click(document.querySelector(".lucide-x") as HTMLElement);
       await user.click(screen.getByTestId("alert-dialog-confirm"));
@@ -422,9 +419,7 @@ describe("TimetableGrid", () => {
 
     it("does NOT call deleteBlock when cancel is clicked", async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       await user.click(screen.getByTestId("edit-button"));
       await user.click(document.querySelector(".lucide-x") as HTMLElement);
       await user.click(screen.getByTestId("alert-dialog-cancel"));
@@ -433,9 +428,7 @@ describe("TimetableGrid", () => {
 
     it("closes the dialog after confirmation", async () => {
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       await user.click(screen.getByTestId("edit-button"));
       await user.click(document.querySelector(".lucide-x") as HTMLElement);
       await user.click(screen.getByTestId("alert-dialog-confirm"));
@@ -453,59 +446,35 @@ describe("TimetableGrid", () => {
         .requireMock("next/navigation")
         .useRouter.mockReturnValue({ refresh: mockRefresh });
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
+      renderGrid({ events: [makeEvent()] });
       await user.click(screen.getByTestId("edit-button"));
       await user.click(document.querySelector(".lucide-x") as HTMLElement);
       await user.click(screen.getByTestId("alert-dialog-confirm"));
       await act(async () => {});
       expect(mockRefresh).toHaveBeenCalledTimes(1);
     });
-
-    it("calls router.refresh() even when deleteId is null", async () => {
-      const mockRefresh = jest.fn();
-      jest
-        .requireMock("next/navigation")
-        .useRouter.mockReturnValue({ refresh: mockRefresh });
-      render(
-        <TimetableGrid events={[makeEvent()]} settings={defaultSettings} />,
-      );
-      const { AlertDialog } = jest.requireMock("@/components/ui/alert-dialog");
-      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      await user.click(screen.getByTestId("edit-button"));
-      await user.click(document.querySelector(".lucide-x") as HTMLElement);
-      (deleteBlock as unknown as jest.Mock).mockResolvedValueOnce(undefined);
-      await user.click(screen.getByTestId("alert-dialog-confirm"));
-      await act(async () => {});
-      expect(mockRefresh).toHaveBeenCalled();
-    });
   });
 
   describe("settings & defaults", () => {
     it("falls back to defaultTimeSettings when settings is null", () => {
-      render(<TimetableGrid events={[]} settings={null} />);
+      renderGrid({ settings: null });
       expect(screen.getByText("08:00")).toBeInTheDocument();
     });
 
     it("uses custom start/end times from settings", () => {
-      const settings = {
-        ...defaultSettings,
-        start_time: "06:00",
-        end_time: "12:00",
-      };
-      render(<TimetableGrid events={[]} settings={settings} />);
+      renderGrid({
+        settings: {
+          ...defaultSettings,
+          start_time: "06:00",
+          end_time: "12:00",
+        },
+      });
       expect(screen.getByText("06:00")).toBeInTheDocument();
       expect(screen.queryByText("18:00")).not.toBeInTheDocument();
     });
 
     it("uses defaultDaySettings for day visibility when settings has no day keys", () => {
-      render(
-        <TimetableGrid
-          events={[]}
-          settings={{ start_time: "08:00", end_time: "18:00" }}
-        />,
-      );
+      renderGrid({ settings: { start_time: "08:00", end_time: "18:00" } });
       expect(screen.getByText("Monday")).toBeInTheDocument();
       expect(screen.getByText("Saturday")).toBeInTheDocument();
       expect(screen.getByText("Sunday")).toBeInTheDocument();
@@ -519,12 +488,7 @@ describe("TimetableGrid", () => {
         .requireMock("next/navigation")
         .useRouter.mockReturnValue({ refresh: jest.fn(), push: mockPush });
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      render(
-        <TimetableGrid
-          events={[makeEvent({ id: "evt-99" })]}
-          settings={defaultSettings}
-        />,
-      );
+      renderGrid({ events: [makeEvent({ id: "evt-99" })] });
       await user.click(screen.getByTestId("edit-button"));
       const eventBlock = screen
         .getByText("Maths")

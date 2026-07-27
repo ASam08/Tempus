@@ -46,7 +46,7 @@ jest.mock("@/components/ui/button", () => ({
   }) => <button className={className}>{children}</button>,
 }));
 
-jest.mock("@/app/ui/timetable/newtimetable", () => ({
+jest.mock("@/app/ui/timetable/timetablegrid", () => ({
   TimetableGrid: jest.fn(
     ({
       events,
@@ -89,7 +89,7 @@ import {
   getTimetableBlocks,
   getUserSettings,
 } from "@/lib/data";
-import { TimetableGrid } from "@/app/ui/timetable/newtimetable";
+import { TimetableGrid } from "@/app/ui/timetable/timetablegrid";
 import TimetableSetSelect from "@/app/ui/timetable/timetablesetselect";
 
 const mockedGetSession = auth.api.getSession as any as jest.Mock;
