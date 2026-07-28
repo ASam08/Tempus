@@ -65,7 +65,7 @@ export default async function ManageTimetablesPage({
   const totalPages = Math.ceil(totalTimetables / pageSize);
 
   return (
-    <div className="flex h-full max-w-screen flex-col px-3 py-4 md:px-2">
+    <div className="flex h-full max-w-screen flex-col px-3 md:px-2">
       <h1 className="mb-4 flex flex-wrap text-xl font-bold text-gray-800 md:text-2xl dark:text-gray-200">
         Manage Timetables
       </h1>

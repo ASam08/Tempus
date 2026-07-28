@@ -27,7 +27,7 @@ export default async function EditBlockPage({
   const boundAction = updateTimetableBlock.bind(null, blockID);
 
   return (
-    <div className="flex h-full max-w-2xl flex-col px-3 py-4 md:px-2">
+    <div className="flex h-full max-w-2xl flex-col px-3 md:px-2">
       <EditTimetableBlockForm
         action={boundAction}
         settings={settings}

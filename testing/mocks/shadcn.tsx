@@ -92,6 +92,15 @@ export const alertDialogMock = () => {
   };
 };
 
+export const avatarMock = {
+  Avatar: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="avatar">{children}</div>
+  ),
+  AvatarFallback: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="avatar-fallback">{children}</div>
+  ),
+};
+
 export const buttonMock = {
   Button: ({
     children,
@@ -261,6 +270,9 @@ export const fieldMock = {
     children: React.ReactNode;
     htmlFor?: string;
   }) => <label htmlFor={htmlFor}>{children}</label>,
+  FieldDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
 };
 
 export const hoverCardMock = {
@@ -378,6 +390,10 @@ export const selectMock = {
   SelectSeparator: () => <hr role="separator" />,
 };
 
+export const separatorMock = {
+  Separator: () => <hr role="separator" />,
+};
+
 export const tableMock = {
   __esModule: true,
   Table: ({ children }: { children: React.ReactNode }) => (
@@ -399,6 +415,62 @@ export const tableMock = {
     <td>{children}</td>
   ),
 };
+
+export const tabsMock = (() => {
+  const TabsContext = React.createContext<{
+    value: string;
+    setValue: (v: string) => void;
+  }>({ value: "", setValue: () => {} });
+
+  return {
+    Tabs: ({
+      children,
+      defaultValue,
+    }: {
+      children: React.ReactNode;
+      defaultValue?: string;
+    }) => {
+      const [value, setValue] = React.useState(defaultValue ?? "");
+      return (
+        <TabsContext.Provider value={{ value, setValue }}>
+          {children}
+        </TabsContext.Provider>
+      );
+    },
+    TabsList: ({ children }: { children: React.ReactNode }) => (
+      <div role="tablist">{children}</div>
+    ),
+    TabsTrigger: ({
+      children,
+      value,
+    }: {
+      children: React.ReactNode;
+      value: string;
+    }) => {
+      const { value: active, setValue } = React.useContext(TabsContext);
+      return (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={active === value}
+          onClick={() => setValue(value)}
+        >
+          {children}
+        </button>
+      );
+    },
+    TabsContent: ({
+      children,
+      value,
+    }: {
+      children: React.ReactNode;
+      value: string;
+    }) => {
+      const { value: active } = React.useContext(TabsContext);
+      return active === value ? <>{children}</> : null;
+    },
+  };
+})();
 
 export const textareaMock = {
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (

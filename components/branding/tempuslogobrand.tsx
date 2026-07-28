@@ -11,11 +11,14 @@ export default function TempusLogoBrand({
   className = "",
   showTagline = true,
 }: TempusLogoProps) {
+  const contentHeight = showTagline ? 178 : 142;
+
   return (
     <svg
       width={width}
-      height={height}
-      viewBox="0 0 455 178"
+      height={showTagline ? height : (height * contentHeight) / 178}
+      viewBox={`0 0 455 ${contentHeight}`}
+      preserveAspectRatio="xMidYMin meet"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
@@ -116,9 +119,9 @@ export default function TempusLogoBrand({
       {/* Wordmark - switches between dark and light text */}
       <text
         x="170"
-        y="92"
+        y="98"
         fontFamily="'Geist', latin"
-        fontSize="52"
+        fontSize="78"
         fontWeight="500"
         letterSpacing="-1"
         className="fill-[#1a1a1a] dark:fill-white"

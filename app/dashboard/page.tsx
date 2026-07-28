@@ -5,9 +5,6 @@ import NextCardClient from "../ui/dashboard/nextcardclient";
 import NextBreakCardClient from "../ui/dashboard/nextbreakcardclient";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { LucideUser } from "lucide-react";
 import { getAllTimetableSets } from "@/lib/data";
 import { redirect } from "next/navigation";
 
@@ -21,16 +18,10 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  let admin: boolean = false;
-
-  if (session?.user.role === "admin") {
-    admin = true;
-  }
-
   const timetableSets = await getAllTimetableSets(user_id);
 
   return (
-    <div className="flex h-full max-w-screen flex-col px-3 py-4 md:px-2">
+    <div className="flex h-full max-w-screen flex-col px-3 md:px-2">
       <h1 className="flex flex-wrap text-2xl font-bold text-gray-800 md:mb-4 dark:text-gray-200">
         Dashboard
       </h1>
@@ -66,15 +57,6 @@ export default async function DashboardPage() {
               Nothing to see here, add a timetable to get started!
             </p>
           </div>
-        </div>
-      )}
-      {admin && (
-        <div className="my-4 flex">
-          <Button className="flex">
-            <Link className="flex" href="/dashboard/admin">
-              <LucideUser className="mr-2" /> Admin
-            </Link>
-          </Button>
         </div>
       )}
     </div>
