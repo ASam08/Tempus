@@ -1,8 +1,21 @@
+import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AvatarDropdown } from "@/app/ui/avatarmenu";
-import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+
+jest.mock(
+  "@/components/ui/avatar",
+  () => require("@/testing/mocks/shadcn").avatarMock,
+);
+
+jest.mock(
+  "@/components/ui/button",
+  () => require("@/testing/mocks/shadcn").buttonMock,
+);
+
+jest.mock(
+  "@/components/ui/dropdown-menu",
+  () => require("@/testing/mocks/shadcn").dropdownMenuMock,
+);
 
 jest.mock("@/lib/auth-client", () => ({
   authClient: {
@@ -15,27 +28,6 @@ jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock("next/link", () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  );
-});
-
-jest.mock(
-  "@/components/ui/button",
-  () => require("@/testing/mocks/shadcn").buttonMock,
-);
-
-jest.mock(
-  "@/components/ui/dropdown-menu",
-  () => require("@/testing/mocks/shadcn").dropdownMenuMock,
-);
-
-jest.mock(
-  "@/components/ui/avatar",
-  () => require("@/testing/mocks/shadcn").avatarMock,
-);
-
 jest.mock("lucide-react", () => ({
   LucideLogOut: () => <div>LucideLogOut</div>,
   LucideUser2: () => <div>LucideUser2</div>,
@@ -43,24 +35,34 @@ jest.mock("lucide-react", () => ({
   LucideUsers: () => <div>LucideUsers</div>,
 }));
 
+jest.mock("next/link", () => {
+  return ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  );
+});
+
+import { AvatarDropdown } from "@/app/ui/avatarmenu";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+
 const mockUseSession = authClient.useSession as unknown as jest.Mock;
 const mockSignOut = authClient.signOut as unknown as jest.Mock;
 const mockUseRouter = useRouter as unknown as jest.Mock;
 const mockPush = jest.fn();
 
-describe("AvatarDropdown", () => {
+describe("AvatarDropdown Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseRouter.mockReturnValue({ push: mockPush });
   });
 
-  it("returns null when there is no session data", () => {
+  it("renders nothing when there is no session data", () => {
     mockUseSession.mockReturnValue({ data: null });
     const { container } = render(<AvatarDropdown />);
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("returns null when the session has no user", () => {
+  it("renders nothing when the session has no user", () => {
     mockUseSession.mockReturnValue({ data: {} });
     const { container } = render(<AvatarDropdown />);
     expect(container).toBeEmptyDOMElement();
@@ -68,7 +70,7 @@ describe("AvatarDropdown", () => {
 
   it("renders initials from a multi-word name", () => {
     mockUseSession.mockReturnValue({
-      data: { user: { name: "John Smith", role: "user" } },
+      data: { user: { name: "Jane Smith", role: "user" } },
     });
     render(<AvatarDropdown />);
     expect(screen.getByTestId("avatar-fallback")).toHaveTextContent("JS");
@@ -90,16 +92,16 @@ describe("AvatarDropdown", () => {
 
   it("shows the user's formatted name in the dropdown label", async () => {
     mockUseSession.mockReturnValue({
-      data: { user: { name: "John Smith", role: "user" } },
+      data: { user: { name: "Jane Smith", role: "user" } },
     });
     render(<AvatarDropdown />);
     await userEvent.click(screen.getByRole("button"));
-    expect(screen.getByText("JOHN SMITH")).toBeInTheDocument();
+    expect(screen.getByText("JANE SMITH")).toBeInTheDocument();
   });
 
   it("renders Account and Settings links but no Admin link for a non-admin user", async () => {
     mockUseSession.mockReturnValue({
-      data: { user: { name: "John Smith", role: "user" } },
+      data: { user: { name: "Jane Smith", role: "user" } },
     });
     render(<AvatarDropdown />);
     await userEvent.click(screen.getByRole("button"));
@@ -118,7 +120,7 @@ describe("AvatarDropdown", () => {
 
   it("renders an Admin link when the user has the admin role", async () => {
     mockUseSession.mockReturnValue({
-      data: { user: { name: "John Smith", role: "admin" } },
+      data: { user: { name: "Jane Smith", role: "admin" } },
     });
     render(<AvatarDropdown />);
     await userEvent.click(screen.getByRole("button"));
@@ -130,7 +132,7 @@ describe("AvatarDropdown", () => {
 
   it("signs out and pushes to /login when Sign out is clicked", async () => {
     mockUseSession.mockReturnValue({
-      data: { user: { name: "John Smith", role: "user" } },
+      data: { user: { name: "Jane Smith", role: "user" } },
     });
     mockSignOut.mockResolvedValue(undefined);
 

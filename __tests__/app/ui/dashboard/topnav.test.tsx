@@ -1,38 +1,29 @@
 import "@testing-library/jest-dom";
 import { render } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 
-jest.mock(
-  "@/components/ui/avatar",
-  () => require("@/testing/mocks/shadcn").avatarMock,
-);
-
-jest.mock(
-  "@/components/ui/button",
-  () => require("@/testing/mocks/shadcn").buttonMock,
-);
-
-jest.mock(
-  "@/components/ui/dropdown-menu",
-  () => require("@/testing/mocks/shadcn").dropdownMenuMock,
-);
-
-jest.mock("@/lib/auth-client", () => ({
-  authClient: {
-    useSession: jest.fn(),
-    signOut: jest.fn(),
-  },
+jest.mock("@/components/branding/tempuslogo", () => ({
+  __esModule: true,
+  default: () => <div>TempusLogo</div>,
 }));
 
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
+jest.mock("@/components/branding/tempuslogobrand", () => ({
+  __esModule: true,
+  default: () => <div>TempusLogoBrand</div>,
+}));
+
+jest.mock("@/app/ui/avatarmenu", () => ({
+  __esModule: true,
+  AvatarDropdown: () => <div>AvatarDropdown</div>,
 }));
 
 jest.mock("lucide-react", () => ({
-  LucideLogOut: () => <div>LucideLogOut</div>,
-  LucideUser2: () => <div>LucideUser2</div>,
+  LucideGrid: () => <div>LucideGrid</div>,
+  LucideHome: () => <div>LucideHome</div>,
   LucideSettings: () => <div>LucideSettings</div>,
-  LucideUsers: () => <div>LucideUsers</div>,
+}));
+
+jest.mock("next/navigation", () => ({
+  usePathname: jest.fn(),
 }));
 
 jest.mock("next/link", () => {
@@ -51,128 +42,86 @@ jest.mock("next/link", () => {
   );
 });
 
-import { AvatarDropdown } from "@/app/ui/avatarmenu";
-import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import TopNav from "@/app/ui/dashboard/topnav";
+import { usePathname } from "next/navigation";
 
-describe("AvatarDropdown Component", () => {
-  const mockPush = jest.fn();
-
+describe("TopNav Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+    (usePathname as jest.Mock).mockReturnValue("/dashboard");
   });
 
-  it("renders nothing when there is no session data", () => {
-    (authClient.useSession as jest.Mock).mockReturnValue({ data: null });
-    const { container } = render(<AvatarDropdown />);
-    expect(container).toBeEmptyDOMElement();
+  it("renders navigation links correctly", () => {
+    const { getByText } = render(<TopNav />);
+    expect(getByText("Home")).toBeInTheDocument();
+    expect(getByText("Timetable")).toBeInTheDocument();
+    expect(getByText("Settings")).toBeInTheDocument();
   });
 
-  it("renders nothing when the session has no user", () => {
-    (authClient.useSession as jest.Mock).mockReturnValue({
-      data: { user: null },
-    });
-    const { container } = render(<AvatarDropdown />);
-    expect(container).toBeEmptyDOMElement();
+  it("renders TempusLogo and TempusLogoBrand", () => {
+    const { getByText } = render(<TopNav />);
+    expect(getByText("TempusLogo")).toBeInTheDocument();
+    expect(getByText("TempusLogoBrand")).toBeInTheDocument();
   });
 
-  it("renders initials from a full first and last name", () => {
-    (authClient.useSession as jest.Mock).mockReturnValue({
-      data: { user: { name: "Jane Smith", role: "user" } },
-    });
-    const { getByText } = render(<AvatarDropdown />);
-    expect(getByText("JS")).toBeInTheDocument();
+  it("renders icons correctly", () => {
+    const { getByText } = render(<TopNav />);
+    expect(getByText("LucideHome")).toBeInTheDocument();
+    expect(getByText("LucideGrid")).toBeInTheDocument();
+    expect(getByText("LucideSettings")).toBeInTheDocument();
   });
 
-  it("renders duplicated initials when the user has a single name", () => {
-    (authClient.useSession as jest.Mock).mockReturnValue({
-      data: { user: { name: "Madonna", role: "user" } },
-    });
-    const { getByText } = render(<AvatarDropdown />);
-    expect(getByText("MM")).toBeInTheDocument();
+  it("renders the AvatarDropdown", () => {
+    const { getByText } = render(<TopNav />);
+    expect(getByText("AvatarDropdown")).toBeInTheDocument();
   });
 
-  it("falls back to a 'User' initial when the user has no name", () => {
-    (authClient.useSession as jest.Mock).mockReturnValue({
-      data: { user: { name: undefined, role: "user" } },
-    });
-    const { getByText } = render(<AvatarDropdown />);
-    expect(getByText("U")).toBeInTheDocument();
+  it("links point to correct destinations", () => {
+    const { getByRole } = render(<TopNav />);
+    expect(getByRole("link", { name: /home/i })).toHaveAttribute(
+      "href",
+      "/dashboard",
+    );
+    expect(getByRole("link", { name: /timetable/i })).toHaveAttribute(
+      "href",
+      "/dashboard/timetable",
+    );
+    expect(getByRole("link", { name: /settings/i })).toHaveAttribute(
+      "href",
+      "/dashboard/settings",
+    );
   });
 
-  it("opens the menu and shows Account and Settings links but no Admin link for a non-admin user", async () => {
-    const user = userEvent.setup();
-    (authClient.useSession as jest.Mock).mockReturnValue({
-      data: { user: { name: "Jane Smith", role: "user" } },
-    });
-    const { getByRole, queryByText, getByText } = render(<AvatarDropdown />);
+  it("marks the active link with aria-current and active styling", () => {
+    (usePathname as jest.Mock).mockReturnValue("/dashboard/timetable");
+    const { getByRole } = render(<TopNav />);
 
-    await user.click(getByRole("button"));
+    const activeLink = getByRole("link", { name: /timetable/i });
+    expect(activeLink).toHaveAttribute("aria-current", "page");
+    expect(activeLink).toHaveClass(
+      "text-blue-600",
+      "underline",
+      "decoration-2",
+      "underline-offset-4",
+    );
 
-    expect(
-      getByText((_, element) => element?.textContent === "JANE SMITH"),
-    ).toBeInTheDocument();
-    expect(getByRole("menuitem", { name: /account/i })).toBeInTheDocument();
-    expect(getByRole("menuitem", { name: /settings/i })).toBeInTheDocument();
-    expect(queryByText(/admin/i)).not.toBeInTheDocument();
+    const inactiveLink = getByRole("link", { name: /home/i });
+    expect(inactiveLink).not.toHaveAttribute("aria-current");
+    expect(inactiveLink).toHaveClass("text-primary");
   });
 
-  it("shows the Admin link when the user has the admin role", async () => {
-    const user = userEvent.setup();
-    (authClient.useSession as jest.Mock).mockReturnValue({
-      data: { user: { name: "Jane Smith", role: "admin" } },
-    });
-    const { getByRole } = render(<AvatarDropdown />);
+  it("does not mark any link active when pathname matches none", () => {
+    (usePathname as jest.Mock).mockReturnValue("/other-page");
+    const { getByRole } = render(<TopNav />);
 
-    await user.click(getByRole("button"));
-
-    expect(getByRole("menuitem", { name: /admin/i })).toBeInTheDocument();
-  });
-
-  it("links Account and Settings menu items to the correct destinations", async () => {
-    const user = userEvent.setup();
-    (authClient.useSession as jest.Mock).mockReturnValue({
-      data: { user: { name: "Jane Smith", role: "user" } },
-    });
-    const { getByRole } = render(<AvatarDropdown />);
-
-    await user.click(getByRole("button"));
-
-    expect(
-      getByRole("menuitem", { name: /account/i }).closest("a"),
-    ).toHaveAttribute("href", "/dashboard/account");
-    expect(
-      getByRole("menuitem", { name: /settings/i }).closest("a"),
-    ).toHaveAttribute("href", "/dashboard/settings");
-  });
-
-  it("links the Admin menu item to the admin dashboard", async () => {
-    const user = userEvent.setup();
-    (authClient.useSession as jest.Mock).mockReturnValue({
-      data: { user: { name: "Jane Smith", role: "admin" } },
-    });
-    const { getByRole } = render(<AvatarDropdown />);
-
-    await user.click(getByRole("button"));
-
-    expect(
-      getByRole("menuitem", { name: /admin/i }).closest("a"),
-    ).toHaveAttribute("href", "/dashboard/admin");
-  });
-
-  it("signs the user out and redirects to /login when Sign out is clicked", async () => {
-    const user = userEvent.setup();
-    (authClient.useSession as jest.Mock).mockReturnValue({
-      data: { user: { name: "Jane Smith", role: "user" } },
-    });
-    (authClient.signOut as jest.Mock).mockResolvedValue(undefined);
-    const { getByRole } = render(<AvatarDropdown />);
-
-    await user.click(getByRole("button"));
-    await user.click(getByRole("menuitem", { name: /sign out/i }));
-
-    expect(authClient.signOut).toHaveBeenCalled();
-    expect(mockPush).toHaveBeenCalledWith("/login");
+    expect(getByRole("link", { name: /home/i })).not.toHaveAttribute(
+      "aria-current",
+    );
+    expect(getByRole("link", { name: /timetable/i })).not.toHaveAttribute(
+      "aria-current",
+    );
+    expect(getByRole("link", { name: /settings/i })).not.toHaveAttribute(
+      "aria-current",
+    );
   });
 });

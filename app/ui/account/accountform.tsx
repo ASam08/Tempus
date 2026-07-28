@@ -86,10 +86,7 @@ export default function AccountForm({ user }: { user: User }) {
         if (!validated.success) {
           const fieldErrors = validated.error.flatten().fieldErrors;
           const messages = Object.values(fieldErrors).flat();
-          const message =
-            messages.length > 0
-              ? `New password must:\n${messages.join("\n")}`
-              : "Invalid input.";
+          const message = `New password must:\n${messages.join("\n")}`;
           setErrors((prev) => ({ ...prev, password: message }));
           return;
         }
@@ -151,11 +148,8 @@ export default function AccountForm({ user }: { user: User }) {
         return;
       }
 
-      default: {
-        const _exhaustive: never = formType.type;
-        /* istanbul ignore next */
-        throw new Error(`Unhandled form type: ${_exhaustive}`);
-      }
+      default:
+        throw new Error(`Unhandled form type: ${(formType as FormType).type}`);
     }
   }
 
