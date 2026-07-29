@@ -6,8 +6,9 @@ A simple, self-hostable weekly timetable app. Whether you're a student keeping t
 
 ## Features
 
-- **Dashboard** - see what's happening right now, whether you're on a break, or what's coming up next
+- **Dashboard** - see what's happening right now across all your timetables, whether you're on a break, or what's coming up next
 - **Weekly timetable grid** - a full week-at-a-glance view with blocks laid out by time
+- **Mutliple timetables** - add multiple timetables and switch between them with ease
 - **Add & delete blocks** - fill in a subject, location, start time, and end time for any slot
 - **Customisable view** - set your own timetable start and end time, and days of the week in Settings so the grid only shows the hours and days that matter to you
 - **Dark mode** - easy on the eyes, day or night
@@ -23,13 +24,13 @@ A simple, self-hostable weekly timetable app. Whether you're a student keeping t
 
 ![Dashboard](./public/screenshots/dashboard.png)
 
-> See what's on right now, whether you're on a break, and what's coming up next, with a live clock.
+> See what's on right now across all your timetables, whether you're on a break, and what's coming up next, with a live clock.
 
 ### Timetable
 
 ![Timetable](./public/screenshots/timetable.png)
 
-> Your whole week at a glance. Today's column is highlighted so you always know where you are.
+> Your whole week at a glance. Today's column is highlighted so you always know where you are. Set up multiple timetables and easily switch between them.
 
 ### Adding a Block
 
@@ -42,6 +43,12 @@ A simple, self-hostable weekly timetable app. Whether you're a student keeping t
 ![Settings](./public/screenshots/settings.png)
 
 > Set your timetable's start & end time and days of the week so the grid fits your actual week.
+
+### Account
+
+![Account](./public/screenshots/account.png)
+
+> Update your details or password. (Update email coming soon).
 
 ### Admin User Management
 
