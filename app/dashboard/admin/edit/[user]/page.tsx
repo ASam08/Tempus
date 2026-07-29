@@ -51,7 +51,7 @@ export default async function AdminUserPage({
           Banned for: {chosenUser.banReason || "No reason provided"}
         </span>
       )}
-      <div className="flex flex-col gap-4 md:flex-row-reverse">
+      <div className="flex flex-col gap-4 md:flex-row-reverse md:justify-end">
         <div className="pt-7.5">
           <AdminActions
             {...chosenUser}
