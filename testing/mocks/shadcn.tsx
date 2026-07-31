@@ -1,4 +1,5 @@
 import React from "react";
+import { buttonVariants } from "@/components/ui/button";
 
 export const alertDialogMock = () => {
   const AlertDialogContext = React.createContext(
@@ -124,9 +125,7 @@ export const buttonMock = {
     <button
       type={type ?? "button"}
       onClick={onClick}
-      data-variant={variant}
-      data-size={size}
-      className={className}
+      className={buttonVariants({ variant, size, className } as never)}
       disabled={disabled}
       data-testid={testId}
     >

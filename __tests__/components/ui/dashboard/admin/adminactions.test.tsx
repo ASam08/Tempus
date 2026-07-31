@@ -38,7 +38,7 @@ jest.mock("@/lib/defaults", () => ({
   ],
 }));
 
-jest.mock("@/components/ui/alert-dialog", () => 
+jest.mock("@/components/ui/alert-dialog", () =>
   require("@/testing/mocks/shadcn").alertDialogMock(),
 );
 
@@ -283,7 +283,7 @@ describe("AdminActions", () => {
     await openDropdown();
     await userEvent.click(screen.getByRole("menuitem", { name: /delete/i }));
     const deleteBtn = screen.getByRole("button", { name: /delete user/i });
-    expect(deleteBtn).toHaveAttribute("data-variant", "destructive");
+    expect(deleteBtn.className).toContain("bg-destructive/10");
   });
 
   it("navigates to edit page when Edit is clicked", async () => {

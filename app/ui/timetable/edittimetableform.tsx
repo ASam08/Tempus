@@ -44,8 +44,12 @@ export default function EditTimetable({
         </div>
       </div>
       <div className="flex flex-row gap-4 py-4">
-        <Button variant="outline" asChild>
-          <Link href="/dashboard/timetable">Cancel</Link>
+        <Button
+          variant="outline"
+          nativeButton={false}
+          render={<Link href="/dashboard/timetable" />}
+        >
+          Cancel
         </Button>
         <Button type="submit">Save changes</Button>
       </div>

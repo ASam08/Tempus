@@ -184,9 +184,13 @@ export default function SettingsFormClient({
       </div>
 
       <div className="flex flex-row gap-4 py-4">
-        <Link href="/dashboard/timetable">
-          <Button variant="outline">Cancel</Button>
-        </Link>
+        <Button
+          variant="outline"
+          nativeButton={false}
+          render={<Link href="/dashboard/timetable" />}
+        >
+          Cancel
+        </Button>
         <Button type="submit" disabled={!!error}>
           Save changes
         </Button>
