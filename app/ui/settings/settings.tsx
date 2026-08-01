@@ -124,10 +124,13 @@ export default function SettingsFormClient({
           <div className="">
             <div>
               <div className="hidden md:inline">
-                <HoverCard openDelay={10} closeDelay={100}>
-                  <HoverCardTrigger asChild>
-                    <LucideCircleQuestionMark className="size-4" />
-                  </HoverCardTrigger>
+                <HoverCard>
+                  <HoverCardTrigger
+                    delay={10}
+                    closeDelay={100}
+                    aria-label="Help: start and end time"
+                    render={<LucideCircleQuestionMark className="size-4" />}
+                  />
                   <HoverCardContent className="max-w-xl text-xs" side="right">
                     Start and End times are used to determine the hours shown on
                     the timetable.
@@ -136,9 +139,11 @@ export default function SettingsFormClient({
               </div>
               <div className="md:hidden">
                 <Popover>
-                  <PopoverTrigger asChild>
-                    <LucideCircleQuestionMark className="size-4" />
-                  </PopoverTrigger>
+                  <PopoverTrigger
+                    nativeButton={false}
+                    aria-label="Help: start and end time"
+                    render={<LucideCircleQuestionMark className="size-4" />}
+                  />
                   <PopoverContent className="max-w-xl text-xs">
                     Start and End times are used to determine the hours shown on
                     the timetable.
