@@ -121,7 +121,7 @@ export default function EditTimetableBlock({
 
           <Select
             name="day_of_week"
-            onValueChange={(value: string) => checkDowHidden(value)}
+            onValueChange={(value: string | null, _event) => checkDowHidden(String(value))}
             onOpenChange={() => clearClientErrors("day")}
             defaultValue={String(dowName)}
             key={String(dowName)}
@@ -130,7 +130,7 @@ export default function EditTimetableBlock({
               <SelectValue placeholder={String(dowName)} />
             </SelectTrigger>
 
-            <SelectContent position="popper">
+            <SelectContent alignItemWithTrigger={false}>
               {dow.map((day) => (
                 <SelectItem key={day.dow} value={String(day.dow)}>
                   {day.label}

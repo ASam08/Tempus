@@ -29,6 +29,8 @@ export default function SetManageActions(timetable: {
 
   function handleDelete() {
     deleteTimetableSet(timetable.id);
+    setIsDeleteDialogOpen(false);
+    // TODO: Add a toast notifcation for failed deletion
   }
 
   return (

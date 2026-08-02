@@ -116,14 +116,16 @@ export default function AddTimetableBlock({
 
           <Select
             name="day_of_week"
-            onValueChange={(value: string) => checkDowHidden(value)}
+            onValueChange={(value: string | null, _event) =>
+              checkDowHidden(String(value))
+            }
             onOpenChange={() => clearClientErrors("day")}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a day" />
             </SelectTrigger>
 
-            <SelectContent position="popper">
+            <SelectContent alignItemWithTrigger={false}>
               {dow.map((day) => (
                 <SelectItem key={day.dow} value={String(day.dow)}>
                   {day.label}

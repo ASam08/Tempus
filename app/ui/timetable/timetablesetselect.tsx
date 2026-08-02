@@ -27,7 +27,8 @@ export default function TimetableSetSelect({
   const router = useRouter();
   const pathname = usePathname();
 
-  function handleValueChange(value: string) {
+  function handleValueChange(value: string | null, _eventDetails?: any) {
+    if (value === null) return;
     if (REDIRECT_VALUES.has(value)) {
       switch (value) {
         case "create-new":

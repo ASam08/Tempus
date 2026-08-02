@@ -41,16 +41,18 @@ export function AvatarDropdown() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <Avatar size="default">
-            <AvatarFallback>
-              {firstName.charAt(0)}
-              {lastName.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Avatar size="default">
+              <AvatarFallback>
+                {firstName.charAt(0)}
+                {lastName.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        }
+      />
       <DropdownMenuContent className="w-32">
         <DropdownMenuGroup>
           <DropdownMenuLabel>

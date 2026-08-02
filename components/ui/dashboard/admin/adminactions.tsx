@@ -134,7 +134,7 @@ export default function AdminActions({
       </AlertDialog>
 
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger>
           {trigger ?? (
             <Button variant="ghost" size="icon" className="size-8">
               <MoreHorizontalIcon />
