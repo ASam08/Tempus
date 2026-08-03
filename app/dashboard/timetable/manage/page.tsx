@@ -159,6 +159,7 @@ export default async function ManageTimetablesPage({
         <div className="mt-4 flex flex-col items-center justify-between gap-4 md:flex-row">
           <Button
             variant="outline"
+            nativeButton={false}
             render={<Link href="/dashboard/timetable">Back to Timetables</Link>}
           />
           <div className="text-right text-sm">

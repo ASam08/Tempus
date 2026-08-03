@@ -33,7 +33,7 @@ import { useState } from "react";
 
 type AdminActionsProps = User & {
   currentUserId: string;
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
   hideEdit?: boolean;
 };
 
@@ -134,14 +134,16 @@ export default function AdminActions({
       </AlertDialog>
 
       <DropdownMenu>
-        <DropdownMenuTrigger>
-          {trigger ?? (
-            <Button variant="ghost" size="icon" className="size-8">
-              <MoreHorizontalIcon />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          )}
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            trigger ?? (
+              <Button variant="ghost" size="icon" className="size-8">
+                <MoreHorizontalIcon />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            )
+          }
+        />
         <DropdownMenuContent className="w-36" align="end">
           {hideEdit !== true && (
             <DropdownMenuItem onClick={() => editUser(user.id)}>
@@ -160,18 +162,16 @@ export default function AdminActions({
                 ) : (
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>Ban</DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {defaultBanReasons.map((reason) => (
-                          <DropdownMenuItem
-                            key={reason}
-                            onClick={() => banUser(user.id, reason)}
-                          >
-                            {reason}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      {defaultBanReasons.map((reason) => (
+                        <DropdownMenuItem
+                          key={reason}
+                          onClick={() => banUser(user.id, reason)}
+                        >
+                          {reason}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
                   </DropdownMenuSub>
                 )}
               </DropdownMenuGroup>

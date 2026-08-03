@@ -50,6 +50,10 @@ export default function EditTimetableBlock({
   const formRef = useRef<HTMLFormElement>(null);
 
   const dow = dowKeyValue;
+  const dayItems = dow.map((day) => ({
+    value: String(day.dow),
+    label: day.label,
+  }));
 
   const checkDowHidden = (day: string) => {
     const lowerDay = dow.filter((d) => String(d.dow) === day)[0]?.key;
@@ -121,7 +125,10 @@ export default function EditTimetableBlock({
 
           <Select
             name="day_of_week"
-            onValueChange={(value: string | null, _event) => checkDowHidden(String(value))}
+            items={dayItems}
+            onValueChange={(value) => {
+              if (value) checkDowHidden(String(value));
+            }}
             onOpenChange={() => clearClientErrors("day")}
             defaultValue={String(dowName)}
             key={String(dowName)}
@@ -131,9 +138,9 @@ export default function EditTimetableBlock({
             </SelectTrigger>
 
             <SelectContent alignItemWithTrigger={false}>
-              {dow.map((day) => (
-                <SelectItem key={day.dow} value={String(day.dow)}>
-                  {day.label}
+              {dayItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
                 </SelectItem>
               ))}
             </SelectContent>

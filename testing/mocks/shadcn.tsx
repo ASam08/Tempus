@@ -101,6 +101,10 @@ export const avatarMock = {
   ),
 };
 
+const { buttonVariants } = jest.requireActual(
+  "@/components/ui/button",
+) as typeof import("@/components/ui/button");
+
 export const buttonMock = {
   Button: ({
     children,
@@ -110,29 +114,49 @@ export const buttonMock = {
     className,
     disabled,
     type,
+    render,
     "data-testid": testId,
   }: {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     onClick?: () => void;
     variant?: string;
     size?: string;
     className?: string;
     disabled?: boolean;
     type?: "button" | "submit" | "reset";
+    render?: React.ReactElement;
     "data-testid"?: string;
-  }) => (
-    <button
-      type={type ?? "button"}
-      onClick={onClick}
-      data-variant={variant}
-      data-size={size}
-      className={className}
-      disabled={disabled}
-      data-testid={testId}
-    >
-      {children}
-    </button>
-  ),
+  }) => {
+    const computedClassName = buttonVariants({
+      variant,
+      size,
+      className,
+    } as never);
+
+    if (render && React.isValidElement(render)) {
+      return React.cloneElement(
+        render as React.ReactElement<Record<string, unknown>>,
+        {
+          className: computedClassName,
+          onClick,
+          "data-testid": testId,
+          children,
+        },
+      );
+    }
+
+    return (
+      <button
+        type={type ?? "button"}
+        onClick={onClick}
+        className={computedClassName}
+        disabled={disabled}
+        data-testid={testId}
+      >
+        {children}
+      </button>
+    );
+  },
 };
 
 export const cardMock = {

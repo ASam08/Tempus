@@ -27,7 +27,18 @@ export default function TimetableSetSelect({
   const router = useRouter();
   const pathname = usePathname();
 
-  function handleValueChange(value: string | null, _eventDetails?: any) {
+  const setItems = (timetableSets ?? []).map((set) => ({
+    value: set.id,
+    label: set.title,
+  }));
+
+  const items = [
+    ...setItems,
+    { value: "create-new", label: "Create new" },
+    { value: "manage", label: "Manage timetables" },
+  ];
+
+  function handleValueChange(value: string | null) {
     if (value === null) return;
     if (REDIRECT_VALUES.has(value)) {
       switch (value) {
@@ -47,14 +58,18 @@ export default function TimetableSetSelect({
 
   return (
     <div>
-      <Select onValueChange={handleValueChange} value={selectedSetId}>
+      <Select
+        items={items}
+        onValueChange={handleValueChange}
+        value={selectedSetId}
+      >
         <SelectTrigger className="w-45">
           <SelectValue placeholder="Select a timetable" />
         </SelectTrigger>
-        <SelectContent>
-          {timetableSets?.map((set) => (
-            <SelectItem key={set.id} value={set.id}>
-              {set.title}
+        <SelectContent alignItemWithTrigger={false}>
+          {setItems.map((set) => (
+            <SelectItem key={set.value} value={set.value}>
+              {set.label}
             </SelectItem>
           ))}
           <SelectSeparator />
