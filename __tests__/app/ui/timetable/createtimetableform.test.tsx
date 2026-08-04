@@ -62,7 +62,10 @@ describe("CreateTimetable", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /cancel/i })).toHaveAttribute(
+      "href",
+      "/dashboard/timetable",
+    );
     expect(
       screen.getByRole("button", { name: /save changes/i }),
     ).toBeInTheDocument();

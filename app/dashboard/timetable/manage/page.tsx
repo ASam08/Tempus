@@ -160,8 +160,10 @@ export default async function ManageTimetablesPage({
           <Button
             variant="outline"
             nativeButton={false}
-            render={<Link href="/dashboard/timetable">Back to Timetables</Link>}
-          />
+            render={<Link href="/dashboard/timetable" />}
+          >
+            Back to Timetables
+          </Button>
           <div className="text-right text-sm">
             {totalTimetables} total timetables
           </div>
