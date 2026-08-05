@@ -50,6 +50,10 @@ export default function EditTimetableBlock({
   const formRef = useRef<HTMLFormElement>(null);
 
   const dow = dowKeyValue;
+  const dayItems = dow.map((day) => ({
+    value: String(day.dow),
+    label: day.label,
+  }));
 
   const checkDowHidden = (day: string) => {
     const lowerDay = dow.filter((d) => String(d.dow) === day)[0]?.key;
@@ -121,7 +125,10 @@ export default function EditTimetableBlock({
 
           <Select
             name="day_of_week"
-            onValueChange={(value: string) => checkDowHidden(value)}
+            items={dayItems}
+            onValueChange={(value) => {
+              if (value) checkDowHidden(String(value));
+            }}
             onOpenChange={() => clearClientErrors("day")}
             defaultValue={String(dowName)}
             key={String(dowName)}
@@ -130,10 +137,10 @@ export default function EditTimetableBlock({
               <SelectValue placeholder={String(dowName)} />
             </SelectTrigger>
 
-            <SelectContent position="popper">
-              {dow.map((day) => (
-                <SelectItem key={day.dow} value={String(day.dow)}>
-                  {day.label}
+            <SelectContent alignItemWithTrigger={false}>
+              {dayItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -267,9 +274,13 @@ export default function EditTimetableBlock({
         </div>
       </div>
       <div className="flex flex-row gap-4 py-4">
-        <Link href="/dashboard/timetable">
-          <Button variant="outline">Cancel</Button>
-        </Link>
+        <Button
+          variant="outline"
+          nativeButton={false}
+          render={<Link href="/dashboard/timetable" />}
+        >
+          Cancel
+        </Button>
         <Button
           type="button"
           onClick={() => {

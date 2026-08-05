@@ -121,4 +121,14 @@ describe("TimetableSetSelect", () => {
     expect(mockPush).toHaveBeenCalledTimes(1);
     expect(setLastTimetableSet).not.toHaveBeenCalled();
   });
+
+  it("does not navigate or persist when the underlying select emits a null value", async () => {
+    const user = userEvent.setup();
+    render(<TimetableSetSelect timetableSets={timetableSets} />);
+
+    await user.selectOptions(screen.getByRole("combobox"), "");
+
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(setLastTimetableSet).not.toHaveBeenCalled();
+  });
 });

@@ -16,7 +16,10 @@ export function PasswordRequirementsHover() {
       <div className="hidden md:flex">
         <HoverCard>
           <HoverCardTrigger>
-            <LucideInfo className="text-muted-foreground h-4 w-4" />
+            <LucideInfo
+              className="text-muted-foreground h-4 w-4"
+              aria-label="Password requirements"
+            />
           </HoverCardTrigger>
           <HoverCardContent className="w-full max-w-lg">
             <p className="text-sm">Password must:</p>
@@ -31,7 +34,7 @@ export function PasswordRequirementsHover() {
       </div>
       <div className="md:hidden">
         <Popover>
-          <PopoverTrigger>
+          <PopoverTrigger aria-label="Password requirements">
             <LucideInfo className="text-muted-foreground h-4 w-4" />
           </PopoverTrigger>
           <PopoverContent className="w-full max-w-lg">

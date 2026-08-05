@@ -57,31 +57,43 @@ export const alertDialogMock = () => {
       children,
       onClick,
       variant,
+      size,
+      className,
       "data-testid": testId,
     }: {
       children: React.ReactNode;
       onClick?: () => void;
       variant?: string;
+      size?: string;
+      className?: string;
       "data-testid"?: string;
     }) => (
-      <button onClick={onClick} data-variant={variant} data-testid={testId}>
+      <button
+        onClick={onClick}
+        className={buttonVariants({ variant, size, className } as never)}
+        data-testid={testId}
+      >
         {children}
       </button>
     ),
     AlertDialogCancel: ({
       children,
       variant,
+      size,
+      className,
       "data-testid": testId,
     }: {
       children: React.ReactNode;
       variant?: string;
+      size?: string;
+      className?: string;
       "data-testid"?: string;
     }) => {
       const onOpenChange = React.useContext(AlertDialogContext);
       return (
         <button
           type="button"
-          data-variant={variant}
+          className={buttonVariants({ variant, size, className } as never)}
           data-testid={testId}
           onClick={() => onOpenChange?.(false)}
         >
@@ -101,6 +113,10 @@ export const avatarMock = {
   ),
 };
 
+const { buttonVariants } = jest.requireActual(
+  "@/components/ui/button",
+) as typeof import("@/components/ui/button");
+
 export const buttonMock = {
   Button: ({
     children,
@@ -110,29 +126,49 @@ export const buttonMock = {
     className,
     disabled,
     type,
+    render,
     "data-testid": testId,
   }: {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     onClick?: () => void;
     variant?: string;
     size?: string;
     className?: string;
     disabled?: boolean;
     type?: "button" | "submit" | "reset";
+    render?: React.ReactElement;
     "data-testid"?: string;
-  }) => (
-    <button
-      type={type ?? "button"}
-      onClick={onClick}
-      data-variant={variant}
-      data-size={size}
-      className={className}
-      disabled={disabled}
-      data-testid={testId}
-    >
-      {children}
-    </button>
-  ),
+  }) => {
+    const computedClassName = buttonVariants({
+      variant,
+      size,
+      className,
+    } as never);
+
+    if (render && React.isValidElement(render)) {
+      return React.cloneElement(
+        render as React.ReactElement<Record<string, unknown>>,
+        {
+          className: computedClassName,
+          onClick,
+          "data-testid": testId,
+          children,
+        },
+      );
+    }
+
+    return (
+      <button
+        type={type ?? "button"}
+        onClick={onClick}
+        className={computedClassName}
+        disabled={disabled}
+        data-testid={testId}
+      >
+        {children}
+      </button>
+    );
+  },
 };
 
 export const cardMock = {
@@ -152,17 +188,23 @@ export const checkboxMock = {
   Checkbox: ({
     id,
     name,
+    checked,
     defaultChecked,
+    onCheckedChange,
   }: {
-    id: string;
-    name: string;
-    defaultChecked: boolean;
+    id?: string;
+    name?: string;
+    checked?: boolean;
+    defaultChecked?: boolean;
+    onCheckedChange?: (checked: boolean) => void;
   }) => (
     <input
       type="checkbox"
       id={id}
       name={name}
+      checked={checked}
       defaultChecked={defaultChecked}
+      onChange={(e) => onCheckedChange?.(e.target.checked)}
       aria-label={name}
     />
   ),
@@ -190,15 +232,15 @@ export const dropdownMenuMock = (() => {
     },
     DropdownMenuTrigger: ({
       children,
-      asChild,
+      render,
     }: {
-      children: React.ReactNode;
-      asChild?: boolean;
+      children?: React.ReactNode;
+      render?: React.ReactElement;
     }) => {
       const { setOpen } = React.useContext(DropdownContext);
-      if (asChild && React.isValidElement(children)) {
+      if (render && React.isValidElement(render)) {
         return React.cloneElement(
-          children as React.ReactElement<{ onClick?: () => void }>,
+          render as React.ReactElement<{ onClick?: () => void }>,
           { onClick: () => setOpen(true) },
         );
       }
@@ -279,9 +321,29 @@ export const hoverCardMock = {
   HoverCard: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
-  HoverCardTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  HoverCardTrigger: ({
+    children,
+    render,
+    onClick,
+    "aria-label": ariaLabel,
+  }: {
+    children?: React.ReactNode;
+    render?: React.ReactElement;
+    onClick?: () => void;
+    "aria-label"?: string;
+  }) => {
+    if (render && React.isValidElement(render)) {
+      return React.cloneElement(
+        render as React.ReactElement<Record<string, unknown>>,
+        { onClick, "aria-label": ariaLabel },
+      );
+    }
+    return (
+      <div onClick={onClick} aria-label={ariaLabel}>
+        {children}
+      </div>
+    );
+  },
   HoverCardContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -337,9 +399,29 @@ export const popoverMock = {
   Popover: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
-  PopoverTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  PopoverTrigger: ({
+    children,
+    render,
+    onClick,
+    "aria-label": ariaLabel,
+  }: {
+    children?: React.ReactNode;
+    render?: React.ReactElement;
+    onClick?: () => void;
+    "aria-label"?: string;
+  }) => {
+    if (render && React.isValidElement(render)) {
+      return React.cloneElement(
+        render as React.ReactElement<Record<string, unknown>>,
+        { onClick, "aria-label": ariaLabel },
+      );
+    }
+    return (
+      <div onClick={onClick} aria-label={ariaLabel}>
+        {children}
+      </div>
+    );
+  },
   PopoverContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -354,7 +436,7 @@ export const selectMock = {
     defaultValue,
   }: {
     children: React.ReactNode;
-    onValueChange?: (v: string) => void;
+    onValueChange?: (v: string | null) => void;
     name?: string;
     onOpenChange?: () => void;
     defaultValue?: string;
@@ -366,10 +448,10 @@ export const selectMock = {
       defaultValue={defaultValue ?? ""}
       onChange={(e) => {
         onOpenChange?.();
-        onValueChange?.(e.target.value);
+        onValueChange?.(e.target.value === "" ? null : e.target.value);
       }}
     >
-      {!defaultValue && <option value="" disabled />}
+      <option value="" />
       {children}
     </select>
   ),
