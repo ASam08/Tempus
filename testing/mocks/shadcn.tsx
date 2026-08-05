@@ -436,7 +436,7 @@ export const selectMock = {
     defaultValue,
   }: {
     children: React.ReactNode;
-    onValueChange?: (v: string) => void;
+    onValueChange?: (v: string | null) => void;
     name?: string;
     onOpenChange?: () => void;
     defaultValue?: string;
@@ -448,10 +448,10 @@ export const selectMock = {
       defaultValue={defaultValue ?? ""}
       onChange={(e) => {
         onOpenChange?.();
-        onValueChange?.(e.target.value);
+        onValueChange?.(e.target.value === "" ? null : e.target.value);
       }}
     >
-      {!defaultValue && <option value="" disabled />}
+      <option value="" />
       {children}
     </select>
   ),

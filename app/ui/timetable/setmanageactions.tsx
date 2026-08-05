@@ -37,11 +37,11 @@ export default function SetManageActions(timetable: {
     <div>
       <div className="flex gap-2">
         <LucideEdit2
-          className="cursor-pointer hover:text-blue-600"
+          className="size-5 cursor-pointer hover:text-blue-600"
           onClick={handleEdit}
         />
         <LucideTrash2
-          className="cursor-pointer hover:text-blue-600"
+          className="size-5 cursor-pointer hover:text-blue-600"
           onClick={() => setIsDeleteDialogOpen(true)}
         />
       </div>
