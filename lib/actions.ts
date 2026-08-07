@@ -214,7 +214,7 @@ export async function deleteTimetableSet(setId: string) {
   }
 
   revalidatePath("/dashboard/timetable");
-  redirect("/dashboard/timetable");
+  return { message: null };
 }
 
 export async function addTimetableBlock(

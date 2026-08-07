@@ -1,10 +1,12 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
 const mockPush = jest.fn();
 const mockDeleteTimetableSet = jest.fn();
+const mockToastSuccess = jest.fn();
+const mockToastError = jest.fn();
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(() => ({ push: mockPush })),
@@ -12,6 +14,13 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("@/lib/actions", () => ({
   deleteTimetableSet: (...args: unknown[]) => mockDeleteTimetableSet(...args),
+}));
+
+jest.mock("sonner", () => ({
+  toast: {
+    success: (...args: unknown[]) => mockToastSuccess(...args),
+    error: (...args: unknown[]) => mockToastError(...args),
+  },
 }));
 
 jest.mock("@/components/ui/alert-dialog", () =>
@@ -41,11 +50,12 @@ function renderComponent(
 describe("SetManageActions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, "log").mockImplementation(() => {});
+    mockDeleteTimetableSet.mockResolvedValue({ message: null });
+    jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    (console.log as jest.Mock).mockRestore();
+    (console.error as jest.Mock).mockRestore();
   });
 
   describe("rendering", () => {
@@ -118,8 +128,10 @@ describe("SetManageActions", () => {
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
       expect(mockDeleteTimetableSet).not.toHaveBeenCalled();
     });
+  });
 
-    it("calls deleteTimetableSet with the timetable id when Delete is confirmed", async () => {
+  describe("delete confirmed - success", () => {
+    it("calls deleteTimetableSet with the timetable id", async () => {
       const user = userEvent.setup();
       const { deleteIcon } = renderComponent({
         ...defaultTimetable,
@@ -128,6 +140,151 @@ describe("SetManageActions", () => {
       fireEvent.click(deleteIcon);
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
       expect(mockDeleteTimetableSet).toHaveBeenCalledWith("timetable-99");
+    });
+
+    it("closes the dialog after a successful delete", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent();
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
+    });
+
+    it("shows a success toast with the timetable title", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent({
+        ...defaultTimetable,
+        title: "Semester Two",
+      });
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() =>
+        expect(mockToastSuccess).toHaveBeenCalledWith(
+          'Timetable "Semester Two" deleted successfully.',
+          expect.objectContaining({ position: "top-center" }),
+        ),
+      );
+    });
+
+    it("navigates to the timetable dashboard", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent();
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() =>
+        expect(mockPush).toHaveBeenCalledWith("/dashboard/timetable"),
+      );
+    });
+
+    it("does NOT show an error toast", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent();
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() => expect(mockToastSuccess).toHaveBeenCalled());
+      expect(mockToastError).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("delete confirmed - server returns an error message", () => {
+    beforeEach(() => {
+      mockDeleteTimetableSet.mockResolvedValue({
+        message: "Timetable is in use and cannot be deleted.",
+      });
+    });
+
+    it("shows an error toast with the returned message", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent();
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Timetable is in use and cannot be deleted.",
+          expect.objectContaining({ position: "top-center" }),
+        ),
+      );
+    });
+
+    it("closes the dialog", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent();
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
+    });
+
+    it("does NOT navigate away", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent();
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() => expect(mockToastError).toHaveBeenCalled());
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it("does NOT show a success toast", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent();
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() => expect(mockToastError).toHaveBeenCalled());
+      expect(mockToastSuccess).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("delete confirmed - unexpected error thrown", () => {
+    beforeEach(() => {
+      mockDeleteTimetableSet.mockRejectedValue(new Error("Network error"));
+    });
+
+    it("logs the unexpected error", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent();
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() =>
+        expect(console.error).toHaveBeenCalledWith(
+          "Unexpected error deleting timetable set:",
+          expect.any(Error),
+        ),
+      );
+    });
+
+    it("closes the dialog", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent();
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
+    });
+
+    it("shows a generic error toast", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent();
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith(
+          "Something went wrong. Please try again.",
+          expect.objectContaining({ position: "top-center" }),
+        ),
+      );
+    });
+
+    it("does NOT navigate away", async () => {
+      const user = userEvent.setup();
+      const { deleteIcon } = renderComponent();
+      fireEvent.click(deleteIcon);
+      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await waitFor(() => expect(mockToastError).toHaveBeenCalled());
+      expect(mockPush).not.toHaveBeenCalled();
     });
   });
 });
