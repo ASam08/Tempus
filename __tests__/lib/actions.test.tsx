@@ -396,15 +396,14 @@ describe("ActionsTests", () => {
       });
     });
 
-    it("deletes the set, revalidates, and redirects on success", async () => {
+    it("deletes the set, revalidates, and returns a null message on success", async () => {
       mockDeleteChain();
-      await expect(deleteTimetableSet("set-uuid")).rejects.toThrow(
-        "NEXT_REDIRECT",
-      );
+      const result = await deleteTimetableSet("set-uuid");
       expect(mockCheckOwnership).toHaveBeenCalledWith("set-uuid", "user-uuid");
       expect(sqlConn.delete).toHaveBeenCalled();
       expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/timetable");
-      expect(mockRedirect).toHaveBeenCalledWith("/dashboard/timetable");
+      expect(mockRedirect).not.toHaveBeenCalled();
+      expect(result).toEqual({ message: null });
     });
 
     it("returns not-authenticated when getUserID returns null", async () => {
@@ -444,9 +443,7 @@ describe("ActionsTests", () => {
       });
       mockInsertWithConflictChain();
 
-      await expect(deleteTimetableSet("set-uuid")).rejects.toThrow(
-        "NEXT_REDIRECT",
-      );
+      const result = await deleteTimetableSet("set-uuid");
 
       const insertMock = sqlConn.insert as jest.Mock;
       const valuesCalled = insertMock.mock.results[0].value.values;
@@ -458,6 +455,7 @@ describe("ActionsTests", () => {
           }),
         ]),
       );
+      expect(result).toEqual({ message: null });
     });
 
     it("does not touch settings when last_timetable_set_id references a different set", async () => {
@@ -466,22 +464,20 @@ describe("ActionsTests", () => {
         last_timetable_set_id: "other-set-uuid",
       });
 
-      await expect(deleteTimetableSet("set-uuid")).rejects.toThrow(
-        "NEXT_REDIRECT",
-      );
+      const result = await deleteTimetableSet("set-uuid");
 
       expect(sqlConn.insert).not.toHaveBeenCalled();
+      expect(result).toEqual({ message: null });
     });
 
-    it("still redirects even when clearing the settings reference fails", async () => {
+    it("still succeeds and revalidates even when clearing the settings reference fails", async () => {
       mockDeleteChain();
       mockGetUserSettings.mockRejectedValueOnce(new Error("settings error"));
 
-      await expect(deleteTimetableSet("set-uuid")).rejects.toThrow(
-        "NEXT_REDIRECT",
-      );
+      const result = await deleteTimetableSet("set-uuid");
 
-      expect(mockRedirect).toHaveBeenCalledWith("/dashboard/timetable");
+      expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/timetable");
+      expect(result).toEqual({ message: null });
     });
   });
 
