@@ -6,17 +6,9 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { colourStyles } from "@/lib/constants";
 
-const COLOUR_STYLES: Record<string, string> = {
-  red: "bg-red-600 focus:bg-red-700 dark:bg-red-600 dark:focus:bg-red-700 hover:bg-red-700 dark:hover:bg-red-700",
-  blue: "bg-blue-600 focus:bg-blue-700 dark:bg-blue-600 dark:focus:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-700",
-  green:
-    "bg-green-600 focus:bg-green-700 dark:bg-green-600 dark:focus:bg-green-700 hover:bg-green-700 dark:hover:bg-green-700",
-  yellow:
-    "bg-yellow-600 focus:bg-yellow-700 dark:bg-yellow-600 dark:focus:bg-yellow-700 hover:bg-yellow-700 dark:hover:bg-yellow-700",
-};
-
-const colours = Object.keys(COLOUR_STYLES);
+const colours = Object.keys(colourStyles);
 
 export default function ColourPicker({
   defaultColour,
@@ -26,24 +18,25 @@ export default function ColourPicker({
   const [currentlySelectedColour, setCurrentlySelectedColour] =
     useState(defaultColour);
 
-  const colours = ["red", "blue", "green", "yellow"];
-
   return (
     <Select
-      defaultValue={currentlySelectedColour}
+      value={currentlySelectedColour}
       onValueChange={(value) => {
         if (value) setCurrentlySelectedColour(value);
       }}
     >
-      <SelectTrigger className={COLOUR_STYLES[currentlySelectedColour]}>
+      <SelectTrigger
+        className={` ${colourStyles[currentlySelectedColour]} w-36`}
+      >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent alignItemWithTrigger={false}>
+      <SelectContent alignItemWithTrigger={false} align="start">
         {colours.map((colour) => (
           <SelectItem
             key={colour}
             value={colour}
-            className={COLOUR_STYLES[colour]}
+            className={colourStyles[colour]}
+            aria-label={colour.charAt(0).toUpperCase() + colour.slice(1)}
           >
             {colour.charAt(0).toUpperCase() + colour.slice(1)}
           </SelectItem>

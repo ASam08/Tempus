@@ -33,3 +33,16 @@ export const dowShortened: {
   { key: "saturday", label: "Saturday", mid: "Sat", short: "S", dow: 6 },
   { key: "sunday", label: "Sunday", mid: "Sun", short: "Su", dow: 7 },
 ];
+
+export const colourStyles: Record<string, string> = {
+  red: "bg-red-600 focus:bg-red-700 dark:bg-red-600 dark:focus:bg-red-700 hover:bg-red-700 dark:hover:bg-red-700",
+  blue: "bg-blue-600 focus:bg-blue-700 dark:bg-blue-600 dark:focus:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-700",
+  green:
+    "bg-green-600 focus:bg-green-700 dark:bg-green-600 dark:focus:bg-green-700 hover:bg-green-700 dark:hover:bg-green-700",
+  yellow:
+    "bg-yellow-600 focus:bg-yellow-700 dark:bg-yellow-600 dark:focus:bg-yellow-700 hover:bg-yellow-700 dark:hover:bg-yellow-700",
+  orange:
+    "bg-orange-600 focus:bg-orange-700 dark:bg-orange-600 dark:focus:bg-orange-700 hover:bg-orange-700 dark:hover:bg-orange-700",
+  purple:
+    "bg-purple-600 focus:bg-purple-700 dark:bg-purple-600 dark:focus:bg-purple-700 hover:bg-purple-700 dark:hover:bg-purple-700",
+};
