@@ -1,3 +1,5 @@
+import type { timetableColours } from "@/lib/constants";
+
 export type User = {
   id: string;
   name: string;
@@ -63,6 +65,7 @@ export type RetreivedTimetableBlocks = {
   start_time: string;
   end_time: string;
   day_of_week: number;
+  colour: TimetableColour;
 };
 
 export type UserSettings = {
@@ -116,3 +119,5 @@ export type UserRole = "user" | "admin";
 export type SortDirection = "asc" | "desc";
 
 export type RetrievedTimetableSets = { id: string; title: string }[] | null;
+
+export type TimetableColour = (typeof timetableColours)[number];

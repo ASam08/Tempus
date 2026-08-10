@@ -28,6 +28,7 @@ import { dowKeyValue } from "@/lib/constants";
 import { defaultDaySettings } from "@/lib/defaults";
 import { BlockState, RetreivedTimetableBlocks } from "@/lib/definitions";
 import { timeToMinutes } from "@/lib/utils";
+import ColourPicker from "@/components/general/colour-picker";
 
 export default function EditTimetableBlock({
   action,
@@ -178,6 +179,10 @@ export default function EditTimetableBlock({
               <p className="text-sm text-red-500">{clientErrors.subject}</p>
             )}
           </div>
+        </div>
+        <div className="grid gap-3">
+          <Label htmlFor="colour">Colour</Label>
+          <ColourPicker defaultColour={currentBlock.colour} />
         </div>
         <div className="grid gap-3">
           <Label htmlFor="location">Location</Label>

@@ -14,11 +14,12 @@ import {
   checkTimetableBlockOwnership,
 } from "@/lib/data";
 import { sqlConn } from "@/lib/db";
-import { dow } from "@/lib/constants";
+import { dow, timetableColours } from "@/lib/constants";
 import { BlockState, SettingsState } from "@/lib/definitions";
 import * as schema from "@/db/schema";
 import { sql, eq, and } from "drizzle-orm";
 import { timeToMinutes } from "@/lib/utils";
+import { defaultBlockColour } from "./defaults";
 
 const TimetableSetSchema = z.object({
   id: z.string(),
@@ -93,6 +94,7 @@ const originalTimetableBlockSchema = z.object({
   location: z.string().min(1, "Location is required"),
   start_time: z.string().min(1, "Start time is required"),
   end_time: z.string().min(1, "End time is required"),
+  colour: z.enum(timetableColours, { error: "Please select a valid colour" }),
 });
 
 const refinedTimetableBlock = originalTimetableBlockSchema
@@ -246,6 +248,7 @@ export async function addTimetableBlock(
     location: formData.get("location"),
     start_time: formData.get("start_time"),
     end_time: formData.get("end_time"),
+    colour: formData.get("colour") ?? defaultBlockColour,
   });
   if (!validatedFields.success) {
     return {
@@ -254,8 +257,15 @@ export async function addTimetableBlock(
       conflicts: [],
     };
   }
-  const { timetable_set_id, day, subject, location, start_time, end_time } =
-    validatedFields.data;
+  const {
+    timetable_set_id,
+    day,
+    subject,
+    location,
+    start_time,
+    end_time,
+    colour,
+  } = validatedFields.data;
 
   const conflicts = await blockConflictCheck(
     timetable_set_id,
@@ -285,6 +295,7 @@ export async function addTimetableBlock(
       location: location,
       startTime: start_time,
       endTime: end_time,
+      colour: colour,
     });
     console.log(
       `Timetable block for ${subject} on ${day} created successfully`,
@@ -358,6 +369,7 @@ export async function updateTimetableBlock(
     location: formData.get("location"),
     start_time: formData.get("start_time"),
     end_time: formData.get("end_time"),
+    colour: formData.get("colour"),
   });
   if (!validatedFields.success) {
     return {
@@ -366,8 +378,15 @@ export async function updateTimetableBlock(
       conflicts: [],
     };
   }
-  const { timetable_set_id, day, subject, location, start_time, end_time } =
-    validatedFields.data;
+  const {
+    timetable_set_id,
+    day,
+    subject,
+    location,
+    start_time,
+    end_time,
+    colour,
+  } = validatedFields.data;
 
   const conflicts = await blockConflictCheck(
     timetable_set_id,
@@ -399,6 +418,7 @@ export async function updateTimetableBlock(
         location: location,
         startTime: start_time,
         endTime: end_time,
+        colour: colour,
       })
       .where(
         and(

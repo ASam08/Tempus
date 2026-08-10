@@ -6,14 +6,13 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { useState } from "react";
-import { colourStyles } from "@/lib/constants";
-
-const colours = Object.keys(colourStyles);
+import { colourStyles, timetableColours } from "@/lib/constants";
+import { TimetableColour } from "@/lib/definitions";
 
 export default function ColourPicker({
   defaultColour,
 }: {
-  defaultColour: string;
+  defaultColour: TimetableColour;
 }) {
   const [currentlySelectedColour, setCurrentlySelectedColour] =
     useState(defaultColour);
@@ -24,21 +23,21 @@ export default function ColourPicker({
       onValueChange={(value) => {
         if (value) setCurrentlySelectedColour(value);
       }}
+      name="colour"
     >
       <SelectTrigger
         className={` ${colourStyles[currentlySelectedColour]} w-36`}
       >
-        <SelectValue />
+        <SelectValue className="capitalize" />
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false} align="start">
-        {colours.map((colour) => (
+        {timetableColours.map((colour) => (
           <SelectItem
             key={colour}
             value={colour}
-            className={colourStyles[colour]}
-            aria-label={colour.charAt(0).toUpperCase() + colour.slice(1)}
+            className={` ${colourStyles[colour]} capitalize`}
           >
-            {colour.charAt(0).toUpperCase() + colour.slice(1)}
+            {colour}
           </SelectItem>
         ))}
       </SelectContent>
