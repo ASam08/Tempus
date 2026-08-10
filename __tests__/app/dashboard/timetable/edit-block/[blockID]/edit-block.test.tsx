@@ -35,6 +35,7 @@ const mockBlock: RetreivedTimetableBlocks = {
   day_of_week: 1,
   start_time: "09:00",
   end_time: "10:00",
+  colour: "blue",
 };
 const mockParams = Promise.resolve({ blockID: "block-1" });
 
