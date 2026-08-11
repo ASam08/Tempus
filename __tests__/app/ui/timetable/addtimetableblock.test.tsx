@@ -34,6 +34,16 @@ jest.mock("@/lib/constants", () => ({
     { dow: 6, key: "saturday", label: "Saturday" },
     { dow: 7, key: "sunday", label: "Sunday" },
   ],
+  // NOTE: placeholders — swap for the real values in @/lib/constants
+  timetableColours: ["blue", "red", "green", "yellow", "purple", "orange"],
+  colourStyles: {
+    blue: "bg-blue-500 text-white",
+    red: "bg-red-500 text-white",
+    green: "bg-green-500 text-white",
+    yellow: "bg-yellow-500 text-black",
+    purple: "bg-purple-500 text-white",
+    orange: "bg-orange-500 text-white",
+  },
 }));
 
 jest.mock("@/lib/defaults", () => ({
@@ -46,6 +56,8 @@ jest.mock("@/lib/defaults", () => ({
     saturday: false,
     sunday: false,
   },
+  // NOTE: swap "blue" for whatever the real @/lib/defaults constant is
+  defaultBlockColour: "blue",
 }));
 
 jest.mock(
@@ -114,7 +126,10 @@ function renderComponent(
 }
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
-  await user.selectOptions(screen.getByRole("combobox"), "1");
+  await user.selectOptions(
+    screen.getByRole("combobox", { name: "day_of_week" }),
+    "1",
+  );
   await user.type(screen.getByPlaceholderText("e.g. Maths"), "Mathematics");
   await user.type(screen.getByPlaceholderText("e.g. Room 101"), "Room 202");
 }
@@ -132,11 +147,24 @@ describe("AddTimetableBlock", () => {
 
     it("renders all form fields", () => {
       renderComponent();
-      expect(screen.getByRole("combobox")).toBeInTheDocument();
+      expect(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+      ).toBeInTheDocument();
       expect(screen.getByPlaceholderText("e.g. Maths")).toBeInTheDocument();
+      expect(
+        screen.getByRole("combobox", { name: "colour" }),
+      ).toBeInTheDocument();
       expect(screen.getByPlaceholderText("e.g. Room 101")).toBeInTheDocument();
       expect(screen.getByLabelText(/start time/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/finish time/i)).toBeInTheDocument();
+    });
+
+    it("renders the Colour field with the default colour", () => {
+      renderComponent();
+      expect(screen.getByText("Colour")).toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: "colour" })).toHaveValue(
+        "blue",
+      );
     });
 
     it("renders Cancel link pointing to /dashboard/timetable", () => {
@@ -171,7 +199,7 @@ describe("AddTimetableBlock", () => {
 
     it("renders all days of the week in the select", () => {
       renderComponent();
-      const select = screen.getByRole("combobox");
+      const select = screen.getByRole("combobox", { name: "day_of_week" });
       [
         "Monday",
         "Tuesday",
@@ -190,7 +218,7 @@ describe("AddTimetableBlock", () => {
     it("handles an unrecognised day value without crashing (covers label || '' fallback)", async () => {
       const user = userEvent.setup();
       renderComponent();
-      const select = screen.getByRole("combobox");
+      const select = screen.getByRole("combobox", { name: "day_of_week" });
       const option = document.createElement("option");
       option.value = "99";
       option.textContent = "Unknown";
@@ -304,7 +332,10 @@ describe("AddTimetableBlock", () => {
     it("shows an error when subject is empty", async () => {
       const user = userEvent.setup();
       renderComponent();
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
@@ -315,7 +346,10 @@ describe("AddTimetableBlock", () => {
     it("shows an error when subject is whitespace only", async () => {
       const user = userEvent.setup();
       renderComponent();
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "   ");
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
@@ -327,7 +361,10 @@ describe("AddTimetableBlock", () => {
     it("shows an error when location is empty", async () => {
       const user = userEvent.setup();
       renderComponent();
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
@@ -338,7 +375,10 @@ describe("AddTimetableBlock", () => {
     it("shows an error when start_time is cleared", async () => {
       const user = userEvent.setup();
       renderComponent();
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.clear(screen.getByLabelText(/start time/i));
@@ -351,7 +391,10 @@ describe("AddTimetableBlock", () => {
     it("shows an error when end_time is cleared", async () => {
       const user = userEvent.setup();
       renderComponent();
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.clear(screen.getByLabelText(/finish time/i));
@@ -409,7 +452,10 @@ describe("AddTimetableBlock", () => {
     it("shows validation errors instead of the AlertDialog when a hidden day is selected on an otherwise invalid form", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
         await screen.findByText(/subject is required/i),
@@ -423,7 +469,10 @@ describe("AddTimetableBlock", () => {
     it("clears the subject error when the subject input changes", async () => {
       const user = userEvent.setup();
       renderComponent();
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
@@ -438,7 +487,10 @@ describe("AddTimetableBlock", () => {
     it("clears the location error when the location input changes", async () => {
       const user = userEvent.setup();
       renderComponent();
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
@@ -478,7 +530,10 @@ describe("AddTimetableBlock", () => {
       expect(
         await screen.findByText(/please select a day/i),
       ).toBeInTheDocument();
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       expect(
         screen.queryByText(/please select a day/i),
       ).not.toBeInTheDocument();
@@ -489,7 +544,10 @@ describe("AddTimetableBlock", () => {
     it("shows the AlertDialog when a hidden day is selected with a valid form", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
@@ -508,8 +566,14 @@ describe("AddTimetableBlock", () => {
     it("does NOT show the AlertDialog when switching from a hidden day back to a visible day", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
@@ -520,7 +584,10 @@ describe("AddTimetableBlock", () => {
     it("calls unhideDow and submits the form when 'Yes, unhide it' is clicked", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
@@ -535,7 +602,7 @@ describe("AddTimetableBlock", () => {
     it("skips calling unhideDow when the selected day has no matching label", async () => {
       const user = userEvent.setup();
       renderComponent();
-      const select = screen.getByRole("combobox");
+      const select = screen.getByRole("combobox", { name: "day_of_week" });
       const option = document.createElement("option");
       option.value = "99";
       option.textContent = "Unknown";
@@ -553,7 +620,10 @@ describe("AddTimetableBlock", () => {
     it("submits without unhideDow when 'No, leave it hidden' is clicked", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
@@ -568,7 +638,10 @@ describe("AddTimetableBlock", () => {
     it("closes the AlertDialog and does NOT submit when Cancel is clicked", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
@@ -582,7 +655,10 @@ describe("AddTimetableBlock", () => {
     it("uses defaultDaySettings when settings prop is null", async () => {
       const user = userEvent.setup();
       renderComponent(null);
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
@@ -594,7 +670,10 @@ describe("AddTimetableBlock", () => {
       const settingsWithoutSaturday = { ...defaultSettings };
       delete settingsWithoutSaturday.saturday;
       renderComponent(settingsWithoutSaturday);
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
       await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
       await user.click(screen.getByRole("button", { name: /save changes/i }));
@@ -615,6 +694,21 @@ describe("AddTimetableBlock", () => {
       expect(formData.get("location")).toBe("Room 202");
       expect(formData.get("start_time")).toBe("09:30");
       expect(formData.get("end_time")).toBe("10:30");
+      expect(formData.get("colour")).toBe("blue");
+    });
+
+    it("submits the newly selected colour when changed from the default", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+      await fillValidForm(user);
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "colour" }),
+        "red",
+      );
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      await waitFor(() => expect(mockFormAction).toHaveBeenCalledTimes(1));
+      const formData: FormData = mockFormAction.mock.calls[0][0];
+      expect(formData.get("colour")).toBe("red");
     });
   });
 });

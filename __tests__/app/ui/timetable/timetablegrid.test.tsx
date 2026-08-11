@@ -29,6 +29,7 @@ jest.mock("@/lib/defaults", () => ({
     sat: true,
     sun: true,
   },
+  defaultBlockColour: "blue",
 }));
 
 jest.mock("@/lib/constants", () => ({
@@ -41,6 +42,16 @@ jest.mock("@/lib/constants", () => ({
     { key: "sat", dow: 6, label: "Saturday", mid: "Sat", short: "S" },
     { key: "sun", dow: 7, label: "Sunday", mid: "Sun", short: "S" },
   ],
+  eventColourStyles: {
+    blue: {
+      current: "bg-blue-600 border-blue-100 dark:border-blue-900",
+      other: "bg-blue-800 border-blue-100 dark:border-blue-900",
+    },
+    red: {
+      current: "bg-red-600 border-red-100 dark:border-red-900",
+      other: "bg-red-800 border-red-100 dark:border-red-900",
+    },
+  },
 }));
 
 jest.mock(
@@ -294,6 +305,20 @@ describe("TimetableGrid", () => {
         .getByText("Other Event")
         .closest("div[style]") as HTMLElement;
       expect(eventEl.className).toMatch(/bg-blue-800/);
+    });
+
+    it("uses the event's own colour instead of falling back to defaultBlockColour", () => {
+      const redEvent = makeEvent({
+        colour: "red",
+        day_of_week: 3,
+        subject: "Red Event",
+      });
+      renderGrid({ events: [redEvent] });
+      const eventEl = screen
+        .getByText("Red Event")
+        .closest("div[style]") as HTMLElement;
+      expect(eventEl.className).toMatch(/bg-red-600/);
+      expect(eventEl.className).not.toMatch(/bg-blue-600/);
     });
 
     it("renders multiple events without error", () => {
