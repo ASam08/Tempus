@@ -6,8 +6,12 @@ import { LucideEdit2, LucideX, PlusCircle } from "lucide-react";
 import { deleteBlock } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { defaultTimeSettings, defaultDaySettings } from "@/lib/defaults";
-import { dowShortened } from "@/lib/constants";
+import {
+  defaultTimeSettings,
+  defaultDaySettings,
+  defaultBlockColour,
+} from "@/lib/defaults";
+import { dowShortened, eventColourStyles } from "@/lib/constants";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -181,10 +185,16 @@ export function TimetableGrid({
             const duration = end - start;
             const dayIndex = dayColumnMap[e.day_of_week];
             if (end <= 0 || start >= virtualRows || !dayIndex) return null;
+
+            const colour =
+              eventColourStyles[e.colour] ??
+              eventColourStyles[defaultBlockColour];
+            const shade =
+              e.day_of_week == dayOfWeek ? colour.current : colour.other;
             return (
               <div
                 key={e.id}
-                className={`m-px flex h-full flex-col overflow-hidden rounded-lg border border-blue-100 px-1 py-0.5 text-xs text-white dark:border-blue-900 ${e.day_of_week == dayOfWeek ? "bg-blue-600" : "bg-blue-800"} `}
+                className={`m-px flex h-full flex-col overflow-hidden rounded-lg border px-1 py-0.5 text-xs text-white ${shade} `}
                 style={{
                   gridColumn: dayIndex,
                   gridRow: `${start + 2} / ${end + 2}`,

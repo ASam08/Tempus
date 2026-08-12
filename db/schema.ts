@@ -10,6 +10,8 @@ import {
   integer,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { defaultBlockColour } from "@/lib/defaults";
+import { TimetableColour } from "@/lib/definitions";
 
 export const users = pgTable(
   "users",
@@ -92,6 +94,10 @@ export const timetableBlocks = pgTable("timetable_blocks", {
   dayOfWeek: integer("day_of_week").notNull(),
   subject: varchar({ length: 255 }).notNull(),
   location: varchar({ length: 255 }).notNull(),
+  colour: varchar({ length: 20 })
+    .$type<TimetableColour>()
+    .notNull()
+    .default(defaultBlockColour),
   createdAt: timestamp("created_at", { mode: "string" }).default(
     sql`CURRENT_TIMESTAMP`,
   ),

@@ -49,6 +49,7 @@ export async function getTimetableBlocks(timetable_set_id: string) {
         day_of_week: schema.timetableBlocks.dayOfWeek,
         subject: schema.timetableBlocks.subject,
         location: schema.timetableBlocks.location,
+        colour: schema.timetableBlocks.colour,
       })
       .from(schema.timetableBlocks)
       .where(eq(schema.timetableBlocks.timetableSetId, timetable_set_id));
@@ -73,6 +74,7 @@ export async function getCurrentBlock(
       day_of_week: schema.timetableBlocks.dayOfWeek,
       subject: schema.timetableBlocks.subject,
       location: schema.timetableBlocks.location,
+      colour: schema.timetableBlocks.colour,
     })
     .from(schema.timetableBlocks)
     .where(
@@ -100,6 +102,7 @@ export async function getNextBlock(
       day_of_week: schema.timetableBlocks.dayOfWeek,
       subject: schema.timetableBlocks.subject,
       location: schema.timetableBlocks.location,
+      colour: schema.timetableBlocks.colour,
     })
     .from(schema.timetableBlocks)
     .where(
@@ -129,6 +132,7 @@ export async function getNextBreak(
       day_of_week: t1.dayOfWeek,
       subject: t1.subject,
       location: t1.location,
+      colour: t1.colour,
     })
     .from(t1)
     .leftJoin(
@@ -214,6 +218,7 @@ export async function getBlockByID(block_id: string, user_id: string) {
         day_of_week: schema.timetableBlocks.dayOfWeek,
         subject: schema.timetableBlocks.subject,
         location: schema.timetableBlocks.location,
+        colour: schema.timetableBlocks.colour,
       })
       .from(schema.timetableBlocks)
       .innerJoin(

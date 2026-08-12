@@ -1,0 +1,1 @@
+ALTER TABLE "timetable_blocks" ADD COLUMN "colour" varchar(20) DEFAULT 'blue' NOT NULL;

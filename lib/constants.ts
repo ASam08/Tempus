@@ -1,3 +1,5 @@
+import type { TimetableColour } from "./definitions";
+
 export const dow: string[] = [
   "monday",
   "tuesday",
@@ -33,3 +35,55 @@ export const dowShortened: {
   { key: "saturday", label: "Saturday", mid: "Sat", short: "S", dow: 6 },
   { key: "sunday", label: "Sunday", mid: "Sun", short: "Su", dow: 7 },
 ];
+
+export const colourStyles: Record<TimetableColour, string> = {
+  red: "bg-red-600 focus:bg-red-700 dark:bg-red-600 dark:focus:bg-red-700 hover:bg-red-700 dark:hover:bg-red-700",
+  blue: "bg-blue-600 focus:bg-blue-700 dark:bg-blue-600 dark:focus:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-700",
+  green:
+    "bg-green-600 focus:bg-green-700 dark:bg-green-600 dark:focus:bg-green-700 hover:bg-green-700 dark:hover:bg-green-700",
+  yellow:
+    "bg-yellow-600 focus:bg-yellow-700 dark:bg-yellow-600 dark:focus:bg-yellow-700 hover:bg-yellow-700 dark:hover:bg-yellow-700",
+  orange:
+    "bg-orange-600 focus:bg-orange-700 dark:bg-orange-600 dark:focus:bg-orange-700 hover:bg-orange-700 dark:hover:bg-orange-700",
+  purple:
+    "bg-purple-600 focus:bg-purple-700 dark:bg-purple-600 dark:focus:bg-purple-700 hover:bg-purple-700 dark:hover:bg-purple-700",
+};
+
+export const timetableColours = [
+  "red",
+  "blue",
+  "green",
+  "yellow",
+  "orange",
+  "purple",
+] as const;
+
+export const eventColourStyles: Record<
+  TimetableColour,
+  { current: string; other: string }
+> = {
+  red: {
+    current: "bg-red-600 border-red-100 dark:border-red-900",
+    other: "bg-red-800 border-red-100 dark:border-red-900",
+  },
+  blue: {
+    current: "bg-blue-600 border-blue-100 dark:border-blue-900",
+    other: "bg-blue-800 border-blue-100 dark:border-blue-900",
+  },
+  green: {
+    current: "bg-green-600 border-green-100 dark:border-green-900",
+    other: "bg-green-800 border-green-100 dark:border-green-900",
+  },
+  yellow: {
+    current: "bg-yellow-600 border-yellow-100 dark:border-yellow-900",
+    other: "bg-yellow-800 border-yellow-100 dark:border-yellow-900",
+  },
+  orange: {
+    current: "bg-orange-600 border-orange-100 dark:border-orange-900",
+    other: "bg-orange-800 border-orange-100 dark:border-orange-900",
+  },
+  purple: {
+    current: "bg-purple-600 border-purple-100 dark:border-purple-900",
+    other: "bg-purple-800 border-purple-100 dark:border-purple-900",
+  },
+};

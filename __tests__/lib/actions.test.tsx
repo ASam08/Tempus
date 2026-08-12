@@ -49,6 +49,11 @@ jest.mock("@/lib/constants", () => ({
     "saturday",
     "sunday",
   ],
+  timetableColours: ["red", "blue", "green", "yellow", "orange", "purple"],
+}));
+
+jest.mock("@/lib/defaults", () => ({
+  defaultBlockColour: "blue",
 }));
 
 jest.mock("@/lib/utils", () => ({
@@ -528,7 +533,54 @@ describe("ActionsTests", () => {
         location: "Room 1",
         startTime: "09:00",
         endTime: "10:00",
+        colour: "blue",
       });
+    });
+
+    it("falls back to the default block colour when none is provided", async () => {
+      mockInsertChain();
+      await expect(
+        addTimetableBlock("set-uuid", initialState, validForm),
+      ).rejects.toThrow("NEXT_REDIRECT");
+      const valuesCalled = (sqlConn.insert as jest.Mock).mock.results[0].value
+        .values;
+      expect(valuesCalled).toHaveBeenCalledWith(
+        expect.objectContaining({ colour: "blue" }),
+      );
+    });
+
+    it("uses the provided colour instead of the default when one is given", async () => {
+      mockInsertChain();
+      const form = makeFormData({
+        day_of_week: "2",
+        subject: "Math",
+        location: "Room 1",
+        start_time: "09:00",
+        end_time: "10:00",
+        colour: "green",
+      });
+      await expect(
+        addTimetableBlock("set-uuid", initialState, form),
+      ).rejects.toThrow("NEXT_REDIRECT");
+      const valuesCalled = (sqlConn.insert as jest.Mock).mock.results[0].value
+        .values;
+      expect(valuesCalled).toHaveBeenCalledWith(
+        expect.objectContaining({ colour: "green" }),
+      );
+    });
+
+    it("returns validation error when colour is not one of the allowed values", async () => {
+      const form = makeFormData({
+        day_of_week: "2",
+        subject: "Math",
+        location: "Room 1",
+        start_time: "09:00",
+        end_time: "10:00",
+        colour: "not-a-real-colour",
+      });
+      const result = await addTimetableBlock("set-uuid", initialState, form);
+      expect(result?.errors).toHaveProperty("colour");
+      expect(sqlConn.insert).not.toHaveBeenCalled();
     });
 
     it("returns no-user sentinel when getUserID returns null", async () => {
@@ -630,6 +682,7 @@ describe("ActionsTests", () => {
       location: "Room 1",
       start_time: "09:00",
       end_time: "10:00",
+      colour: "red",
     });
 
     beforeEach(() => {
@@ -650,6 +703,65 @@ describe("ActionsTests", () => {
       expect(sqlConn.update).toHaveBeenCalled();
       expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard/timetable");
       expect(mockRedirect).toHaveBeenCalledWith("/dashboard/timetable");
+    });
+
+    it("updates the validated field values mapped to the correct columns", async () => {
+      mockSelectChain([{ timetableSetId: "set-uuid" }]);
+      const setMethod = jest.fn().mockReturnValue({
+        where: jest.fn().mockResolvedValue(undefined),
+      });
+      (sqlConn.update as jest.Mock).mockReturnValue({ set: setMethod });
+
+      await expect(
+        updateTimetableBlock("block-uuid", initialState, validForm),
+      ).rejects.toThrow("NEXT_REDIRECT");
+      expect(setMethod).toHaveBeenCalledWith({
+        dayOfWeek: 2,
+        subject: "Math",
+        location: "Room 1",
+        startTime: "09:00",
+        endTime: "10:00",
+        colour: "red",
+      });
+    });
+
+    it("returns validation error when colour is missing", async () => {
+      mockSelectChain([{ timetableSetId: "set-uuid" }]);
+      const form = makeFormData({
+        id: "block-uuid",
+        day_of_week: "2",
+        subject: "Math",
+        location: "Room 1",
+        start_time: "09:00",
+        end_time: "10:00",
+      });
+      const result = await updateTimetableBlock(
+        "block-uuid",
+        initialState,
+        form,
+      );
+      expect(result?.errors).toHaveProperty("colour");
+      expect(sqlConn.update).not.toHaveBeenCalled();
+    });
+
+    it("returns validation error when colour is not one of the allowed values", async () => {
+      mockSelectChain([{ timetableSetId: "set-uuid" }]);
+      const form = makeFormData({
+        id: "block-uuid",
+        day_of_week: "2",
+        subject: "Math",
+        location: "Room 1",
+        start_time: "09:00",
+        end_time: "10:00",
+        colour: "not-a-real-colour",
+      });
+      const result = await updateTimetableBlock(
+        "block-uuid",
+        initialState,
+        form,
+      );
+      expect(result?.errors).toHaveProperty("colour");
+      expect(sqlConn.update).not.toHaveBeenCalled();
     });
 
     it("returns not-authenticated when getUserID returns null", async () => {
@@ -723,6 +835,7 @@ describe("ActionsTests", () => {
         location: "Room 1",
         start_time: "10:00",
         end_time: "09:00",
+        colour: "red",
       });
       const result = await updateTimetableBlock(
         "block-uuid",

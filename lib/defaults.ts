@@ -1,3 +1,5 @@
+import { TimetableColour } from "./definitions";
+
 export const defaultTimeSettings: Record<string, string> = {
   start_time: "08:00",
   end_time: "16:00",
@@ -20,3 +22,5 @@ export const defaultBanReasons: string[] = [
   "Inappropriate Content",
   "Fraudulent Activity",
 ];
+
+export const defaultBlockColour: TimetableColour = "blue";

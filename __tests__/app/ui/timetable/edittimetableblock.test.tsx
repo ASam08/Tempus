@@ -33,6 +33,15 @@ jest.mock("@/lib/constants", () => ({
     { dow: 6, key: "saturday", label: "Saturday" },
     { dow: 7, key: "sunday", label: "Sunday" },
   ],
+  timetableColours: ["red", "blue", "green", "yellow", "orange", "purple"],
+  colourStyles: {
+    red: "bg-red-600",
+    blue: "bg-blue-600",
+    green: "bg-green-600",
+    yellow: "bg-yellow-600",
+    orange: "bg-orange-600",
+    purple: "bg-purple-600",
+  },
 }));
 
 jest.mock("@/lib/defaults", () => ({
@@ -76,7 +85,7 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").selectMock,
 );
 
-jest.mock("@/components/ui/alert-dialog", () => 
+jest.mock("@/components/ui/alert-dialog", () =>
   require("@/testing/mocks/shadcn").alertDialogMock(),
 );
 
@@ -108,6 +117,7 @@ const defaultBlock = {
   location: "Room 101",
   start_time: "09:00",
   end_time: "10:00",
+  colour: "blue",
 };
 
 const defaultSettings: Record<string, string> = {
@@ -138,7 +148,10 @@ function renderComponent(
 }
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
-  await user.selectOptions(screen.getByRole("combobox"), "1");
+  await user.selectOptions(
+    screen.getByRole("combobox", { name: "day_of_week" }),
+    "1",
+  );
   await user.clear(screen.getByLabelText(/subject/i));
   await user.type(screen.getByLabelText(/subject/i), "Mathematics");
   await user.clear(screen.getByLabelText(/location/i));
@@ -208,7 +221,7 @@ describe("EditTimetableBlock", () => {
 
     it("renders all days of the week in the select", () => {
       renderComponent();
-      const select = screen.getByRole("combobox");
+      const select = screen.getByRole("combobox", { name: "day_of_week" });
       [
         "Monday",
         "Tuesday",
@@ -224,6 +237,24 @@ describe("EditTimetableBlock", () => {
       );
     });
 
+    it("renders all timetable colours in the colour select", () => {
+      renderComponent();
+      const colourSelect = screen.getByRole("combobox", { name: "colour" });
+      ["red", "blue", "green", "yellow", "orange", "purple"].forEach((c) =>
+        expect(
+          within(colourSelect).getByRole("option", { name: c }),
+        ).toBeInTheDocument(),
+      );
+    });
+
+    it("updates the colour value when a different colour is selected", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+      const colourSelect = screen.getByRole("combobox", { name: "colour" });
+      await user.selectOptions(colourSelect, "green");
+      expect(colourSelect).toHaveValue("green");
+    });
+
     it("does not show the alert dialog initially", () => {
       renderComponent();
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
@@ -232,7 +263,7 @@ describe("EditTimetableBlock", () => {
     it("handles an unrecognised day value without crashing (covers label || '' fallback)", async () => {
       const user = userEvent.setup();
       renderComponent();
-      const select = screen.getByRole("combobox");
+      const select = screen.getByRole("combobox", { name: "day_of_week" });
       const option = document.createElement("option");
       option.value = "99";
       option.textContent = "Unknown";
@@ -338,7 +369,10 @@ describe("EditTimetableBlock", () => {
         ...defaultBlock,
         subject: "",
       });
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
         await screen.findByText(/subject is required/i),
@@ -351,7 +385,10 @@ describe("EditTimetableBlock", () => {
         ...defaultBlock,
         subject: "   ",
       });
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
         await screen.findByText(/subject is required/i),
@@ -364,7 +401,10 @@ describe("EditTimetableBlock", () => {
         ...defaultBlock,
         location: "",
       });
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
         await screen.findByText(/location is required/i),
@@ -378,7 +418,10 @@ describe("EditTimetableBlock", () => {
         start_time: "10:00",
         end_time: "09:00",
       });
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
         await screen.findByText(/end time must be after start time/i),
@@ -392,7 +435,10 @@ describe("EditTimetableBlock", () => {
         start_time: "09:00",
         end_time: "09:00",
       });
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
         await screen.findByText(/end time must be after start time/i),
@@ -443,7 +489,10 @@ describe("EditTimetableBlock", () => {
         ...defaultBlock,
         subject: "",
       });
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
         await screen.findByText(/subject is required/i),
@@ -460,7 +509,10 @@ describe("EditTimetableBlock", () => {
         ...defaultBlock,
         location: "",
       });
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
         await screen.findByText(/location is required/i),
@@ -478,7 +530,10 @@ describe("EditTimetableBlock", () => {
         start_time: "10:00",
         end_time: "09:00",
       });
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
         await screen.findByText(/end time must be after start time/i),
@@ -497,7 +552,10 @@ describe("EditTimetableBlock", () => {
         start_time: "10:00",
         end_time: "09:00",
       });
-      await user.selectOptions(screen.getByRole("combobox"), "1");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(
         await screen.findByText(/end time must be after start time/i),
@@ -514,7 +572,10 @@ describe("EditTimetableBlock", () => {
     it("shows the AlertDialog when a hidden day is selected with a valid form", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
       expect(screen.getByText(/saturday is hidden/i)).toBeInTheDocument();
@@ -531,7 +592,10 @@ describe("EditTimetableBlock", () => {
     it("calls unhideDow and submits when 'Yes, unhide it' is clicked", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       await screen.findByRole("alertdialog");
       await user.click(screen.getByRole("button", { name: /yes, unhide it/i }));
@@ -546,7 +610,10 @@ describe("EditTimetableBlock", () => {
     it("submits without calling unhideDow when 'No, leave it hidden' is clicked", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       await screen.findByRole("alertdialog");
       await user.click(
@@ -561,7 +628,10 @@ describe("EditTimetableBlock", () => {
     it("closes the AlertDialog and does not submit when Cancel is clicked", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       const dialog = await screen.findByRole("alertdialog");
       await user.click(within(dialog).getByRole("button", { name: /cancel/i }));
@@ -573,7 +643,10 @@ describe("EditTimetableBlock", () => {
     it("uses defaultDaySettings when settings prop is null", async () => {
       const user = userEvent.setup();
       renderComponent(null);
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
     });
@@ -583,7 +656,10 @@ describe("EditTimetableBlock", () => {
       const settingsWithoutSaturday = { ...defaultSettings };
       delete settingsWithoutSaturday.saturday;
       renderComponent(settingsWithoutSaturday);
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
     });
@@ -615,7 +691,10 @@ describe("EditTimetableBlock", () => {
     it("calls requestSubmit after 'Yes, unhide it' is confirmed", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       await screen.findByRole("alertdialog");
       await user.click(screen.getByRole("button", { name: /yes, unhide it/i }));
@@ -629,7 +708,10 @@ describe("EditTimetableBlock", () => {
     it("calls requestSubmit after 'No, leave it hidden' is confirmed", async () => {
       const user = userEvent.setup();
       renderComponent({ ...defaultSettings, saturday: "false" });
-      await user.selectOptions(screen.getByRole("combobox"), "6");
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "6",
+      );
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       await screen.findByRole("alertdialog");
       await user.click(

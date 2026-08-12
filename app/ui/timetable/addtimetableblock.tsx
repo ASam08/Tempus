@@ -25,9 +25,10 @@ import { unhideDow } from "@/lib/actions";
 import Link from "next/link";
 import { useState, useActionState, useRef } from "react";
 import { dowKeyValue } from "@/lib/constants";
-import { defaultDaySettings } from "@/lib/defaults";
+import { defaultBlockColour, defaultDaySettings } from "@/lib/defaults";
 import { BlockState } from "@/lib/definitions";
 import { timeToMinutes } from "@/lib/utils";
+import ColourPicker from "@/components/general/colour-picker";
 
 export default function AddTimetableBlock({
   action,
@@ -171,6 +172,10 @@ export default function AddTimetableBlock({
               <p className="text-sm text-red-500">{clientErrors.subject}</p>
             )}
           </div>
+        </div>
+        <div className="grid gap-3">
+          <Label htmlFor="colour">Colour</Label>
+          <ColourPicker defaultColour={defaultBlockColour} />
         </div>
         <div className="grid gap-3">
           <Label htmlFor="location">Location</Label>
