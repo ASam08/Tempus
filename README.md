@@ -7,9 +7,9 @@ A simple, self-hostable weekly timetable app. Whether you're a student keeping t
 ## Features
 
 - **Dashboard** - see what's happening right now across all your timetables, whether you're on a break, or what's coming up next
-- **Weekly timetable grid** - a full week-at-a-glance view with blocks laid out by time
+- **Weekly timetable grid** - a full week-at-a-glance view with blocks laid out by time and colour-coded
 - **Mutliple timetables** - add multiple timetables and switch between them with ease
-- **Add & delete blocks** - fill in a subject, location, start time, and end time for any slot
+- **Add & delete blocks** - fill in a subject, colour, location, start time, and end time for any slot
 - **Customisable view** - set your own timetable start and end time, and days of the week in Settings so the grid only shows the hours and days that matter to you
 - **Dark mode** - easy on the eyes, day or night
 - **Per-user accounts** - each user has their own private timetable

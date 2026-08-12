@@ -434,18 +434,22 @@ export const selectMock = {
     name,
     onOpenChange,
     defaultValue,
+    value,
   }: {
     children: React.ReactNode;
     onValueChange?: (v: string | null) => void;
     name?: string;
     onOpenChange?: () => void;
     defaultValue?: string;
+    value?: string;
   }) => (
     <select
       name={name}
       aria-label={name ?? "select"}
       title={name ?? "select"}
-      defaultValue={defaultValue ?? ""}
+      {...(value !== undefined
+        ? { value }
+        : { defaultValue: defaultValue ?? "" })}
       onChange={(e) => {
         onOpenChange?.();
         onValueChange?.(e.target.value === "" ? null : e.target.value);

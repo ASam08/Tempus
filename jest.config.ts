@@ -32,6 +32,7 @@ const config: Config = {
     "app/**/*.{ts,tsx}",
     "lib/**/*.{ts,tsx}",
     "components/ui/**/*.{ts,tsx}",
+    "components/general/**/*.{ts,tsx}",
     "!components/ui/*.{ts,tsx}",
     "!**/*.d.ts",
     "!**/node_modules/**",
