@@ -29,13 +29,23 @@ import { defaultBlockColour, defaultDaySettings } from "@/lib/defaults";
 import { BlockState } from "@/lib/definitions";
 import { timeToMinutes } from "@/lib/utils";
 import ColourPicker from "@/components/general/colour-picker";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxList,
+  ComboboxItem,
+  ComboboxEmpty,
+} from "@/components/ui/combobox";
 
 export default function AddTimetableBlock({
   action,
   settings,
+  subjectList,
 }: {
   action: (prevState: BlockState, formData: FormData) => Promise<BlockState>;
   settings: Record<string, string> | null;
+  subjectList: string[];
 }) {
   const initialState: BlockState = { message: "", errors: {}, conflicts: [] };
   const [state, formAction] = useActionState<BlockState, FormData>(
@@ -46,6 +56,8 @@ export default function AddTimetableBlock({
   const [day_of_week, setDayOfWeek] = useState("");
   const [showDowAlertDialog, setShowDowAlertDialog] = useState(false);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+  const [subjectInputValue, setSubjectInputValue] = useState("");
+  const [subjectValue, setSubjectValue] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const dow = dowKeyValue;
@@ -154,13 +166,41 @@ export default function AddTimetableBlock({
         </div>
         <div className="grid gap-3">
           <Label htmlFor="subject">Subject</Label>
-          <Input
+          {/* <Input
             type="text"
             id="subject"
             name="subject"
             placeholder="e.g. Maths"
             onChange={() => clearClientErrors("subject")}
-          />
+          /> */}
+          <Combobox
+            items={subjectList}
+            value={subjectValue}
+            onValueChange={(v) => {
+              setSubjectValue(v);
+              clearClientErrors("subject");
+            }}
+            inputValue={subjectInputValue}
+            onInputValueChange={(v) => {
+              setSubjectInputValue(v);
+              clearClientErrors("subject");
+            }}
+          >
+            <ComboboxInput id="subject" placeholder="e.g. Maths" />
+            <ComboboxContent>
+              <ComboboxEmpty>
+                Press enter to add &quot;{subjectInputValue}&quot;
+              </ComboboxEmpty>
+              <ComboboxList>
+                {(item) => (
+                  <ComboboxItem key={item} value={item}>
+                    {item}
+                  </ComboboxItem>
+                )}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
+          <input type="hidden" name="subject" value={subjectInputValue} />
           <div id="subject_error" aria-live="polite" aria-atomic="true">
             {state.errors?.subject &&
               state.errors.subject.map((error: string) => (

@@ -309,3 +309,27 @@ export async function checkTimetableBlockOwnership(
     return false;
   }
 }
+
+export async function getUniqueSubjects(
+  timetable_set_id: string,
+): Promise<string[]> {
+  const user_id = await getUserID();
+  if (!user_id) return [];
+  const checkOwnership = await checkTimetableSetOwnership(
+    timetable_set_id,
+    user_id,
+  );
+  if (!checkOwnership) return [];
+  try {
+    const result = await sqlConn
+      .selectDistinct({
+        subject: schema.timetableBlocks.subject,
+      })
+      .from(schema.timetableBlocks)
+      .where(eq(schema.timetableBlocks.timetableSetId, timetable_set_id));
+    return result.map((r) => r.subject);
+  } catch (error) {
+    console.error("Error fetching unique subjects:", error);
+    return [];
+  }
+}
