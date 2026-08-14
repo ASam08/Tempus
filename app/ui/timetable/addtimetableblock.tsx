@@ -37,6 +37,14 @@ import {
   ComboboxItem,
   ComboboxEmpty,
 } from "@/components/ui/combobox";
+import {
+  Autocomplete,
+  AutocompleteContent,
+  AutocompleteEmpty,
+  AutocompleteItem,
+  AutocompleteInput,
+  AutocompleteList,
+} from "@/components/general/autocomplete";
 
 export default function AddTimetableBlock({
   action,
@@ -56,8 +64,7 @@ export default function AddTimetableBlock({
   const [day_of_week, setDayOfWeek] = useState("");
   const [showDowAlertDialog, setShowDowAlertDialog] = useState(false);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
-  const [subjectInputValue, setSubjectInputValue] = useState("");
-  const [subjectValue, setSubjectValue] = useState<string | null>(null);
+  const [subject, setSubject] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
   const dow = dowKeyValue;
@@ -173,34 +180,29 @@ export default function AddTimetableBlock({
             placeholder="e.g. Maths"
             onChange={() => clearClientErrors("subject")}
           /> */}
-          <Combobox
+          <Autocomplete
             items={subjectList}
-            value={subjectValue}
-            onValueChange={(v) => {
-              setSubjectValue(v);
+            value={subject}
+            onValueChange={(value) => {
+              setSubject(value);
               clearClientErrors("subject");
             }}
-            inputValue={subjectInputValue}
-            onInputValueChange={(v) => {
-              setSubjectInputValue(v);
-              clearClientErrors("subject");
-            }}
+            name="subject"
           >
-            <ComboboxInput id="subject" placeholder="e.g. Maths" />
-            <ComboboxContent>
-              <ComboboxEmpty>
-                Press enter to add &quot;{subjectInputValue}&quot;
-              </ComboboxEmpty>
-              <ComboboxList>
-                {(item) => (
-                  <ComboboxItem key={item} value={item}>
+            <AutocompleteInput id="subject" placeholder="e.g. Maths" />
+            <AutocompleteContent>
+              <AutocompleteEmpty>
+                A new subject? Interesting...
+              </AutocompleteEmpty>
+              <AutocompleteList>
+                {(item: string) => (
+                  <AutocompleteItem key={item} value={item}>
                     {item}
-                  </ComboboxItem>
+                  </AutocompleteItem>
                 )}
-              </ComboboxList>
-            </ComboboxContent>
-          </Combobox>
-          <input type="hidden" name="subject" value={subjectInputValue} />
+              </AutocompleteList>
+            </AutocompleteContent>
+          </Autocomplete>
           <div id="subject_error" aria-live="polite" aria-atomic="true">
             {state.errors?.subject &&
               state.errors.subject.map((error: string) => (
