@@ -2,6 +2,7 @@
 
 import {
   RetreivedTimetableBlocks,
+  RetreivedTimetableBlocksWithSetId,
   UserSettings,
   ConflictBlocks,
 } from "@/lib/definitions";
@@ -210,7 +211,7 @@ export async function blockConflictCheck(
 
 export async function getBlockByID(block_id: string, user_id: string) {
   try {
-    const result: RetreivedTimetableBlocks[] = await sqlConn
+    const result: RetreivedTimetableBlocksWithSetId[] = await sqlConn
       .select({
         id: schema.timetableBlocks.id,
         start_time: schema.timetableBlocks.startTime,
@@ -219,6 +220,7 @@ export async function getBlockByID(block_id: string, user_id: string) {
         subject: schema.timetableBlocks.subject,
         location: schema.timetableBlocks.location,
         colour: schema.timetableBlocks.colour,
+        set_id: schema.timetableBlocks.timetableSetId,
       })
       .from(schema.timetableBlocks)
       .innerJoin(

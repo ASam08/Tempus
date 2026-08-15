@@ -2,24 +2,81 @@
 
 import * as React from "react";
 import { Autocomplete as AutocompletePrimitive } from "@base-ui/react/autocomplete";
+import { ChevronDownIcon, XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 const Autocomplete = AutocompletePrimitive.Root;
 
-function AutocompleteInput({
+function AutocompleteTrigger({
   className,
+  children,
   ...props
-}: AutocompletePrimitive.Input.Props) {
+}: AutocompletePrimitive.Trigger.Props) {
   return (
-    <AutocompletePrimitive.Input
-      data-slot="autocomplete-input"
+    <AutocompletePrimitive.Trigger
+      data-slot="autocomplete-trigger"
       className={cn(
-        "border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:ring-3",
+        buttonVariants({ variant: "ghost", size: "icon-xs" }),
+        "group-has-data-[slot=autocomplete-clear]/input-group:hidden",
         className,
       )}
       {...props}
-    />
+    >
+      {children ?? <ChevronDownIcon className="size-3.5" />}
+    </AutocompletePrimitive.Trigger>
+  );
+}
+
+function AutocompleteClear({
+  className,
+  children,
+  ...props
+}: AutocompletePrimitive.Clear.Props) {
+  return (
+    <AutocompletePrimitive.Clear
+      data-slot="autocomplete-clear"
+      className={cn(
+        buttonVariants({ variant: "ghost", size: "icon-xs" }),
+        className,
+      )}
+      {...props}
+    >
+      {children ?? <XIcon className="size-3.5" />}
+    </AutocompletePrimitive.Clear>
+  );
+}
+
+function AutocompleteInput({
+  className,
+  children,
+  disabled = false,
+  showTrigger = true,
+  showClear = false,
+  ...props
+}: Omit<AutocompletePrimitive.Input.Props, "className"> & {
+  className?: string;
+  showTrigger?: boolean;
+  showClear?: boolean;
+}) {
+  return (
+    <InputGroup className={className}>
+      <AutocompletePrimitive.Input
+        render={<InputGroupInput disabled={disabled} />}
+        {...props}
+      />
+      <InputGroupAddon align="inline-end">
+        {showTrigger && <AutocompleteTrigger disabled={disabled} />}
+        {showClear && <AutocompleteClear disabled={disabled} />}
+      </InputGroupAddon>
+      {children}
+    </InputGroup>
   );
 }
 
@@ -107,9 +164,11 @@ function AutocompleteItem({
 
 export {
   Autocomplete,
+  AutocompleteClear,
   AutocompleteContent,
   AutocompleteEmpty,
   AutocompleteInput,
   AutocompleteItem,
   AutocompleteList,
+  AutocompleteTrigger,
 };

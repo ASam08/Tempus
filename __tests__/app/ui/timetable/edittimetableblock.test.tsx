@@ -134,6 +134,7 @@ function renderComponent(
   settings: Record<string, string> | null = defaultSettings,
   state: ActionState = initialState,
   block: typeof defaultBlock = defaultBlock,
+  subjectList: string[] = ["Maths", "English", "Science"],
 ) {
   jest
     .spyOn(React, "useActionState")
@@ -143,6 +144,7 @@ function renderComponent(
       action={mockFormAction}
       settings={settings}
       currentBlock={block as any}
+      subjectList={subjectList}
     />,
   );
 }

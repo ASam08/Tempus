@@ -30,14 +30,6 @@ import { BlockState } from "@/lib/definitions";
 import { timeToMinutes } from "@/lib/utils";
 import ColourPicker from "@/components/general/colour-picker";
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxInput,
-  ComboboxList,
-  ComboboxItem,
-  ComboboxEmpty,
-} from "@/components/ui/combobox";
-import {
   Autocomplete,
   AutocompleteContent,
   AutocompleteEmpty,
@@ -173,13 +165,6 @@ export default function AddTimetableBlock({
         </div>
         <div className="grid gap-3">
           <Label htmlFor="subject">Subject</Label>
-          {/* <Input
-            type="text"
-            id="subject"
-            name="subject"
-            placeholder="e.g. Maths"
-            onChange={() => clearClientErrors("subject")}
-          /> */}
           <Autocomplete
             items={subjectList}
             value={subject}
@@ -189,7 +174,11 @@ export default function AddTimetableBlock({
             }}
             name="subject"
           >
-            <AutocompleteInput id="subject" placeholder="e.g. Maths" />
+            <AutocompleteInput
+              id="subject"
+              placeholder="e.g. Maths"
+              showClear
+            />
             <AutocompleteContent>
               <AutocompleteEmpty>
                 A new subject? Interesting...

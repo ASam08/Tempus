@@ -118,11 +118,18 @@ const defaultSettings: Record<string, string> = {
 function renderComponent(
   settings: Record<string, string> | null = defaultSettings,
   state: ActionState = initialState,
+  subjectList: string[] = ["Maths", "English", "Science"],
 ) {
   jest
     .spyOn(React, "useActionState")
     .mockReturnValue([state, mockFormAction, false]);
-  return render(<AddTimetableBlock action={mockAction} settings={settings} />);
+  return render(
+    <AddTimetableBlock
+      action={mockAction}
+      settings={settings}
+      subjectList={subjectList}
+    />,
+  );
 }
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {

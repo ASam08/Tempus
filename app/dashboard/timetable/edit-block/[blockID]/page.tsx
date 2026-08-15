@@ -1,7 +1,12 @@
 import EditTimetableBlockForm from "@/app/ui/timetable/edittimetableblock";
-import { getBlockByID, getUserID, getUserSettings } from "@/lib/data";
+import {
+  getBlockByID,
+  getUniqueSubjects,
+  getUserID,
+  getUserSettings,
+} from "@/lib/data";
 import { redirect } from "next/navigation";
-import { RetreivedTimetableBlocks } from "@/lib/definitions";
+import { RetreivedTimetableBlocksWithSetId } from "@/lib/definitions";
 import { updateTimetableBlock } from "@/lib/actions";
 
 export default async function EditBlockPage({
@@ -16,13 +21,13 @@ export default async function EditBlockPage({
   const settings = await getUserSettings(user_id);
 
   const { blockID } = await params;
-  const currentBlock: RetreivedTimetableBlocks | null = await getBlockByID(
-    blockID,
-    user_id,
-  );
+  const currentBlock: RetreivedTimetableBlocksWithSetId | null =
+    await getBlockByID(blockID, user_id);
   if (!currentBlock) {
     redirect("/dashboard/timetable");
   }
+
+  const subjectList = await getUniqueSubjects(currentBlock.set_id);
 
   const boundAction = updateTimetableBlock.bind(null, blockID);
 
@@ -32,6 +37,7 @@ export default async function EditBlockPage({
         action={boundAction}
         settings={settings}
         currentBlock={currentBlock}
+        subjectList={subjectList}
       />
     </div>
   );
