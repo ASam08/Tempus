@@ -89,6 +89,10 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").fieldMock,
 );
 
+jest.mock("@/components/general/autocomplete", () =>
+  require("@/testing/mocks/autocomplete"),
+);
+
 import AddTimetableBlock from "@/app/ui/timetable/addtimetableblock";
 
 type Conflict = {
