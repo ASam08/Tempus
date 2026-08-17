@@ -94,8 +94,9 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").fieldMock,
 );
 
-jest.mock("@/components/general/autocomplete", () =>
-  require("@/testing/mocks/autocomplete"),
+jest.mock(
+  "@/components/general/autocomplete",
+  () => require("@/testing/mocks/autocomplete").autocompleteMock,
 );
 
 import EditTimetableBlock from "@/app/ui/timetable/edittimetableblock";
@@ -276,6 +277,123 @@ describe("EditTimetableBlock", () => {
       select.appendChild(option);
       await user.selectOptions(select, "99");
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("subject autocomplete", () => {
+    it("shows the empty-state message initially when the pre-filled subject does not match any suggestion", () => {
+      renderComponent();
+      expect(
+        screen.getByText(/a new subject\? interesting/i),
+      ).toBeInTheDocument();
+    });
+
+    it("renders the provided subjectList items as suggestions when the subject field is empty", () => {
+      renderComponent(defaultSettings, initialState, {
+        ...defaultBlock,
+        subject: "",
+      });
+      expect(screen.getByRole("option", { name: "Maths" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "English" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Science" }),
+      ).toBeInTheDocument();
+    });
+
+    it("filters suggestions to items matching the typed value", async () => {
+      const user = userEvent.setup();
+      renderComponent(defaultSettings, initialState, {
+        ...defaultBlock,
+        subject: "",
+      });
+      await user.type(screen.getByLabelText(/subject/i), "math");
+      expect(screen.getByRole("option", { name: "Maths" })).toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "English" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "Science" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows the empty-state message when no subject matches the typed value", async () => {
+      const user = userEvent.setup();
+      renderComponent(defaultSettings, initialState, {
+        ...defaultBlock,
+        subject: "",
+      });
+      await user.type(screen.getByLabelText(/subject/i), "xyz");
+      expect(
+        screen.getByText(/a new subject\? interesting/i),
+      ).toBeInTheDocument();
+      expect(
+        within(screen.getByRole("listbox")).queryAllByRole("option"),
+      ).toHaveLength(0);
+    });
+
+    it("renders the empty-state message when subjectList is empty", () => {
+      renderComponent(defaultSettings, initialState, defaultBlock, []);
+      expect(
+        screen.getByText(/a new subject\? interesting/i),
+      ).toBeInTheDocument();
+    });
+
+    it("replaces the pre-filled subject value when a suggestion is selected", async () => {
+      const user = userEvent.setup();
+      renderComponent(defaultSettings, initialState, {
+        ...defaultBlock,
+        subject: "",
+      });
+      await user.click(screen.getByRole("option", { name: "English" }));
+      expect(screen.getByLabelText(/subject/i)).toHaveValue("English");
+    });
+
+    it("clears the subject client error when a suggestion is selected", async () => {
+      const user = userEvent.setup();
+      renderComponent(defaultSettings, initialState, {
+        ...defaultBlock,
+        subject: "",
+      });
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      expect(
+        await screen.findByText(/subject is required/i),
+      ).toBeInTheDocument();
+      await user.click(screen.getByRole("option", { name: "Maths" }));
+      expect(
+        screen.queryByText(/subject is required/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("clears the subject value when the clear button is clicked", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+      await user.click(screen.getByRole("button", { name: "Clear" }));
+      expect(screen.getByLabelText(/subject/i)).toHaveValue("");
+    });
+
+    it("calls requestSubmit after selecting a subject suggestion", async () => {
+      const user = userEvent.setup();
+      renderComponent(defaultSettings, initialState, {
+        ...defaultBlock,
+        subject: "",
+      });
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
+      await user.click(screen.getByRole("option", { name: "Science" }));
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      await waitFor(() =>
+        expect(HTMLFormElement.prototype.requestSubmit).toHaveBeenCalledTimes(
+          1,
+        ),
+      );
     });
   });
 

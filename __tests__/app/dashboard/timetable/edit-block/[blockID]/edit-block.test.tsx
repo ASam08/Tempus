@@ -1,8 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { redirect } from "next/navigation";
-import { getUserID, getUserSettings, getBlockByID } from "@/lib/data";
+import {
+  getUserID,
+  getUserSettings,
+  getBlockByID,
+  getUniqueSubjects,
+} from "@/lib/data";
 import { updateTimetableBlock } from "@/lib/actions";
-import { RetreivedTimetableBlocks } from "@/lib/definitions";
+import { RetreivedTimetableBlocksWithSetId } from "@/lib/definitions";
 import EditTimetableBlockForm from "@/app/ui/timetable/edittimetableblock";
 import EditBlockPage from "@/app/dashboard/timetable/edit-block/[blockID]/page";
 
@@ -16,6 +21,7 @@ jest.mock("@/lib/data", () => ({
   getUserID: jest.fn(),
   getUserSettings: jest.fn(),
   getBlockByID: jest.fn(),
+  getUniqueSubjects: jest.fn(),
 }));
 
 jest.mock("@/lib/actions", () => ({
@@ -28,7 +34,7 @@ jest.mock("@/app/ui/timetable/edittimetableblock", () => ({
 }));
 
 const mockSettings = { hide_dow: [] };
-const mockBlock: RetreivedTimetableBlocks = {
+const mockBlock: RetreivedTimetableBlocksWithSetId = {
   id: "block-1",
   subject: "Test Block",
   location: "Test Location",
@@ -38,6 +44,7 @@ const mockBlock: RetreivedTimetableBlocks = {
   colour: "blue",
   set_id: "set-1",
 };
+const mockSubjectList = ["Maths", "English", "Science"];
 const mockParams = Promise.resolve({ blockID: "block-1" });
 
 describe("EditBlockPage", () => {
@@ -49,6 +56,9 @@ describe("EditBlockPage", () => {
     (getUserID as unknown as jest.Mock).mockResolvedValue("user-1");
     (getUserSettings as unknown as jest.Mock).mockResolvedValue(mockSettings);
     (getBlockByID as unknown as jest.Mock).mockResolvedValue(mockBlock);
+    (getUniqueSubjects as unknown as jest.Mock).mockResolvedValue(
+      mockSubjectList,
+    );
     (updateTimetableBlock as unknown as jest.Mock).mockResolvedValue(undefined);
   });
 
@@ -68,6 +78,14 @@ describe("EditBlockPage", () => {
     expect(redirect).toHaveBeenCalledWith("/dashboard/timetable");
   });
 
+  it("does not call getUniqueSubjects when block is not found", async () => {
+    (getBlockByID as unknown as jest.Mock).mockResolvedValue(null);
+    await expect(EditBlockPage({ params: mockParams })).rejects.toThrow(
+      "redirect",
+    );
+    expect(getUniqueSubjects).not.toHaveBeenCalled();
+  });
+
   it("calls getBlockByID with the resolved blockID and user_id", async () => {
     const jsx = await EditBlockPage({ params: mockParams });
     render(jsx);
@@ -80,19 +98,26 @@ describe("EditBlockPage", () => {
     expect(getUserSettings).toHaveBeenCalledWith("user-1");
   });
 
+  it("calls getUniqueSubjects with the current block's set_id", async () => {
+    const jsx = await EditBlockPage({ params: mockParams });
+    render(jsx);
+    expect(getUniqueSubjects).toHaveBeenCalledWith("set-1");
+  });
+
   it("renders the EditTimetableBlockForm", async () => {
     const jsx = await EditBlockPage({ params: mockParams });
     render(jsx);
     expect(screen.getByTestId("edit-form")).toBeInTheDocument();
   });
 
-  it("passes settings and currentBlock to EditTimetableBlockForm", async () => {
+  it("passes settings, currentBlock and subjectList to EditTimetableBlockForm", async () => {
     const jsx = await EditBlockPage({ params: mockParams });
     render(jsx);
     expect(EditTimetableBlockForm).toHaveBeenCalledWith(
       expect.objectContaining({
         settings: mockSettings,
         currentBlock: mockBlock,
+        subjectList: mockSubjectList,
       }),
       undefined,
     );

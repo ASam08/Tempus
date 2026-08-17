@@ -19,6 +19,7 @@ jest.mock("@/lib/data", () => ({
   getUserID: jest.fn(),
   getUserSettings: jest.fn(),
   checkTimetableSetOwnership: jest.fn(),
+  getUniqueSubjects: jest.fn(),
 }));
 
 jest.mock("@/lib/actions", () => ({
@@ -51,6 +52,7 @@ const mockedCheckTimetableSetOwnership =
   checkTimetableSetOwnership as jest.Mock;
 const mockedAddTimetableBlock = addTimetableBlock as jest.Mock;
 const mockedRedirect = redirect as any as jest.Mock;
+const mockSubjectList = ["Maths", "English", "Science"];
 
 describe("AddBlockPage", () => {
   beforeEach(() => {

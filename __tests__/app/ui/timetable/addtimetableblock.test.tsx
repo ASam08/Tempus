@@ -89,8 +89,9 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").fieldMock,
 );
 
-jest.mock("@/components/general/autocomplete", () =>
-  require("@/testing/mocks/autocomplete"),
+jest.mock(
+  "@/components/general/autocomplete",
+  () => require("@/testing/mocks/autocomplete").autocompleteMock,
 );
 
 import AddTimetableBlock from "@/app/ui/timetable/addtimetableblock";
@@ -236,6 +237,99 @@ describe("AddTimetableBlock", () => {
       select.appendChild(option);
       await user.selectOptions(select, "99");
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("subject autocomplete", () => {
+    it("renders the provided subjectList items as suggestions", () => {
+      renderComponent();
+      expect(screen.getByRole("option", { name: "Maths" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "English" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Science" }),
+      ).toBeInTheDocument();
+    });
+
+    it("filters suggestions to items matching the typed value", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+      await user.type(screen.getByPlaceholderText("e.g. Maths"), "math");
+      expect(screen.getByRole("option", { name: "Maths" })).toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "English" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "Science" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows the empty-state message when no subject matches the typed value", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+      await user.type(screen.getByPlaceholderText("e.g. Maths"), "xyz");
+      expect(
+        screen.getByText(/a new subject\? interesting/i),
+      ).toBeInTheDocument();
+      expect(
+        within(screen.getByRole("listbox")).queryAllByRole("option"),
+      ).toHaveLength(0);
+    });
+
+    it("renders the empty-state message immediately when subjectList is empty", () => {
+      renderComponent(defaultSettings, initialState, []);
+      expect(
+        screen.getByText(/a new subject\? interesting/i),
+      ).toBeInTheDocument();
+    });
+
+    it("sets the subject value when a suggestion is selected", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+      await user.click(screen.getByRole("option", { name: "English" }));
+      expect(screen.getByPlaceholderText("e.g. Maths")).toHaveValue("English");
+    });
+
+    it("clears the subject client error when a suggestion is selected", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
+      await user.type(screen.getByPlaceholderText("e.g. Room 101"), "101");
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      expect(
+        await screen.findByText(/subject is required/i),
+      ).toBeInTheDocument();
+      await user.click(screen.getByRole("option", { name: "Maths" }));
+      expect(
+        screen.queryByText(/subject is required/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("clears the subject value when the clear button is clicked", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+      await user.type(screen.getByPlaceholderText("e.g. Maths"), "Maths");
+      await user.click(screen.getByRole("button", { name: "Clear" }));
+      expect(screen.getByPlaceholderText("e.g. Maths")).toHaveValue("");
+    });
+
+    it("submits the subject selected from the suggestion list", async () => {
+      const user = userEvent.setup();
+      renderComponent();
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "day_of_week" }),
+        "1",
+      );
+      await user.click(screen.getByRole("option", { name: "Science" }));
+      await user.type(screen.getByPlaceholderText("e.g. Room 101"), "Room 202");
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+      await waitFor(() => expect(mockFormAction).toHaveBeenCalledTimes(1));
+      const formData: FormData = mockFormAction.mock.calls[0][0];
+      expect(formData.get("subject")).toBe("Science");
     });
   });
 
