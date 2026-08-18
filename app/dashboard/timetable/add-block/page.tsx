@@ -3,6 +3,7 @@ import {
   getUserID,
   getUserSettings,
   checkTimetableSetOwnership,
+  getUniqueSubjects,
 } from "@/lib/data";
 import { redirect } from "next/navigation";
 import { addTimetableBlock } from "@/lib/actions";
@@ -29,12 +30,17 @@ export default async function addBlockPage({
   }
 
   const settings = await getUserSettings(user_id);
+  const subjectList = await getUniqueSubjects(setId);
 
   const boundAction = addTimetableBlock.bind(null, setId);
 
   return (
     <div className="flex h-full max-w-2xl flex-col px-3 md:px-2">
-      <AddTimetableBlock action={boundAction} settings={settings} />
+      <AddTimetableBlock
+        action={boundAction}
+        settings={settings}
+        subjectList={subjectList}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import {
   RetreivedTimetableBlocks,
+  RetreivedTimetableBlocksWithSetId,
   UserSettings,
   ConflictBlocks,
 } from "@/lib/definitions";
@@ -210,7 +211,7 @@ export async function blockConflictCheck(
 
 export async function getBlockByID(block_id: string, user_id: string) {
   try {
-    const result: RetreivedTimetableBlocks[] = await sqlConn
+    const result: RetreivedTimetableBlocksWithSetId[] = await sqlConn
       .select({
         id: schema.timetableBlocks.id,
         start_time: schema.timetableBlocks.startTime,
@@ -219,6 +220,7 @@ export async function getBlockByID(block_id: string, user_id: string) {
         subject: schema.timetableBlocks.subject,
         location: schema.timetableBlocks.location,
         colour: schema.timetableBlocks.colour,
+        set_id: schema.timetableBlocks.timetableSetId,
       })
       .from(schema.timetableBlocks)
       .innerJoin(
@@ -307,5 +309,29 @@ export async function checkTimetableBlockOwnership(
   } catch (error) {
     console.error("Error checking timetable block ownership:", error);
     return false;
+  }
+}
+
+export async function getUniqueSubjects(
+  timetable_set_id: string,
+): Promise<string[]> {
+  const user_id = await getUserID();
+  if (!user_id) return [];
+  const checkOwnership = await checkTimetableSetOwnership(
+    timetable_set_id,
+    user_id,
+  );
+  if (!checkOwnership) return [];
+  try {
+    const result = await sqlConn
+      .selectDistinct({
+        subject: schema.timetableBlocks.subject,
+      })
+      .from(schema.timetableBlocks)
+      .where(eq(schema.timetableBlocks.timetableSetId, timetable_set_id));
+    return result.map((r) => r.subject);
+  } catch (error) {
+    console.error("Error fetching unique subjects:", error);
+    return [];
   }
 }

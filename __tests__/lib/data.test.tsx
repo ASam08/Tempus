@@ -59,6 +59,7 @@ import {
   getTimetableSetByID,
   checkTimetableSetOwnership,
   checkTimetableBlockOwnership,
+  getUniqueSubjects,
 } from "@/lib/data";
 
 const {
@@ -448,6 +449,58 @@ describe("DataTests", () => {
         "user-123",
       );
       expect(result).toBe(false);
+      expect(console.error).toHaveBeenCalled();
+    });
+  });
+
+  describe("getUniqueSubjects", () => {
+    it("returns an empty array when there is no authenticated user", async () => {
+      const { auth } = require("@/lib/auth");
+      auth.api.getSession.mockResolvedValueOnce(null);
+      const result = await getUniqueSubjects("set-123");
+      expect(result).toEqual([]);
+      expect(mockLimit).not.toHaveBeenCalled();
+      expect(mockSelectDistinct).not.toHaveBeenCalled();
+    });
+
+    it("returns an empty array when the user does not own the timetable set", async () => {
+      const { auth } = require("@/lib/auth");
+      auth.api.getSession.mockResolvedValueOnce({ user: { id: "user-123" } });
+      mockLimit.mockResolvedValueOnce([]);
+      const result = await getUniqueSubjects("set-123");
+      expect(result).toEqual([]);
+      expect(mockSelectDistinct).not.toHaveBeenCalled();
+    });
+
+    it("returns the unique subjects when the user owns the timetable set", async () => {
+      const { auth } = require("@/lib/auth");
+      auth.api.getSession.mockResolvedValueOnce({ user: { id: "user-123" } });
+      mockLimit.mockResolvedValueOnce([{ id: "set-123" }]);
+      mockWhere
+        .mockImplementationOnce(() => ({
+          limit: mockLimit,
+          orderBy: mockOrderBy,
+        }))
+        .mockImplementationOnce(() =>
+          Promise.resolve([{ subject: "Maths" }, { subject: "English" }]),
+        );
+      const result = await getUniqueSubjects("set-123");
+      expect(result).toEqual(["Maths", "English"]);
+      expect(mockSelectDistinct).toHaveBeenCalled();
+    });
+
+    it("returns an empty array when the database throws while fetching subjects", async () => {
+      const { auth } = require("@/lib/auth");
+      auth.api.getSession.mockResolvedValueOnce({ user: { id: "user-123" } });
+      mockLimit.mockResolvedValueOnce([{ id: "set-123" }]);
+      mockWhere
+        .mockImplementationOnce(() => ({
+          limit: mockLimit,
+          orderBy: mockOrderBy,
+        }))
+        .mockImplementationOnce(() => Promise.reject(new Error("DB error")));
+      const result = await getUniqueSubjects("set-123");
+      expect(result).toEqual([]);
       expect(console.error).toHaveBeenCalled();
     });
   });

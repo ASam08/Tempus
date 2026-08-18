@@ -68,6 +68,17 @@ export type RetreivedTimetableBlocks = {
   colour: TimetableColour;
 };
 
+export type RetreivedTimetableBlocksWithSetId = {
+  id: string;
+  subject: string;
+  location: string;
+  start_time: string;
+  end_time: string;
+  day_of_week: number;
+  colour: TimetableColour;
+  set_id: string;
+};
+
 export type UserSettings = {
   setting_key: string;
   setting_value: string;

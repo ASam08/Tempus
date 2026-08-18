@@ -29,13 +29,23 @@ import { defaultBlockColour, defaultDaySettings } from "@/lib/defaults";
 import { BlockState } from "@/lib/definitions";
 import { timeToMinutes } from "@/lib/utils";
 import ColourPicker from "@/components/general/colour-picker";
+import {
+  Autocomplete,
+  AutocompleteContent,
+  AutocompleteEmpty,
+  AutocompleteItem,
+  AutocompleteInput,
+  AutocompleteList,
+} from "@/components/general/autocomplete";
 
 export default function AddTimetableBlock({
   action,
   settings,
+  subjectList,
 }: {
   action: (prevState: BlockState, formData: FormData) => Promise<BlockState>;
   settings: Record<string, string> | null;
+  subjectList: string[];
 }) {
   const initialState: BlockState = { message: "", errors: {}, conflicts: [] };
   const [state, formAction] = useActionState<BlockState, FormData>(
@@ -46,6 +56,7 @@ export default function AddTimetableBlock({
   const [day_of_week, setDayOfWeek] = useState("");
   const [showDowAlertDialog, setShowDowAlertDialog] = useState(false);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+  const [subject, setSubject] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
   const dow = dowKeyValue;
@@ -154,13 +165,33 @@ export default function AddTimetableBlock({
         </div>
         <div className="grid gap-3">
           <Label htmlFor="subject">Subject</Label>
-          <Input
-            type="text"
-            id="subject"
+          <Autocomplete
+            items={subjectList}
+            value={subject}
+            onValueChange={(value) => {
+              setSubject(value);
+              clearClientErrors("subject");
+            }}
             name="subject"
-            placeholder="e.g. Maths"
-            onChange={() => clearClientErrors("subject")}
-          />
+          >
+            <AutocompleteInput
+              id="subject"
+              placeholder="e.g. Maths"
+              showClear
+            />
+            <AutocompleteContent>
+              <AutocompleteEmpty>
+                A new subject? Interesting...
+              </AutocompleteEmpty>
+              <AutocompleteList>
+                {(item: string) => (
+                  <AutocompleteItem key={item} value={item}>
+                    {item}
+                  </AutocompleteItem>
+                )}
+              </AutocompleteList>
+            </AutocompleteContent>
+          </Autocomplete>
           <div id="subject_error" aria-live="polite" aria-atomic="true">
             {state.errors?.subject &&
               state.errors.subject.map((error: string) => (
