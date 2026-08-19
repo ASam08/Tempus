@@ -7,7 +7,7 @@ RUN corepack enable && corepack prepare pnpm@10 --activate
 
 # ---- Dependencies ----
 FROM base AS deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 
 # ---- Builder ----
