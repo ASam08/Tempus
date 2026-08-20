@@ -31,9 +31,6 @@ export const users = pgTable(
     banned: boolean("banned").default(false),
     banReason: text("ban_reason"),
     banExpires: timestamp("ban_expires", { mode: "date" }),
-    userMigrationSetupComplete: boolean("user_migration_setup_complete")
-      .default(true)
-      .notNull(),
   },
   (table) => [unique("users_email_key").on(table.email)],
 );
