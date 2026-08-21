@@ -75,7 +75,6 @@ import {
   unhideDow,
   setLastTimetableSet,
   updateSettings,
-  markSetupComplete,
 } from "@/lib/actions";
 
 function mockSelectChain(resolvedValue: unknown = []) {
@@ -1278,33 +1277,6 @@ describe("ActionsTests", () => {
 
       const result = await updateSettings("user-uuid", days);
       expect(result).toEqual({ message: "success", errors: {} });
-    });
-  });
-
-  describe("markSetupComplete", () => {
-    it("returns an empty object on success", async () => {
-      const setMethod = jest.fn().mockReturnValue({
-        where: jest.fn().mockResolvedValue(undefined),
-      });
-      (sqlConn.update as jest.Mock).mockReturnValue({ set: setMethod });
-
-      const result = await markSetupComplete("user-uuid");
-
-      expect(result).toEqual({});
-      expect(sqlConn.update).toHaveBeenCalled();
-    });
-
-    it("returns an error object when the DB update throws", async () => {
-      const setMethod = jest.fn().mockReturnValue({
-        where: jest.fn().mockRejectedValue(new Error("db error")),
-      });
-      (sqlConn.update as jest.Mock).mockReturnValue({ set: setMethod });
-
-      const result = await markSetupComplete("user-uuid");
-
-      expect(result).toEqual({
-        error: "Something went wrong. Please try again.",
-      });
     });
   });
 });

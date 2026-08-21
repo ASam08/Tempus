@@ -1,0 +1,1 @@
+ALTER TABLE "users" DROP COLUMN "user_migration_setup_complete";

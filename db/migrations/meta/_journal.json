@@ -71,6 +71,13 @@
       "when": 1786321597060,
       "tag": "0009_eminent_kat_farrell",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787221064335,
+      "tag": "0010_whole_moon_knight",
+      "breakpoints": true
     }
   ]
 }
