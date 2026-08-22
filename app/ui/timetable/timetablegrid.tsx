@@ -94,15 +94,26 @@ export function TimetableGrid({
     router.refresh();
   };
 
-  const now = new Date();
+  const [now, setNow] = useState(() => new Date());
   const jsDay = now.getDay();
   const dayOfWeek = jsDay === 0 ? 7 : jsDay;
+
+  const nowMinutesSinceStart =
+    (now.getHours() - startHour) * 60 + now.getMinutes();
+  const nowRow = nowMinutesSinceStart / minSlotMinutes;
+  const showTimebar = nowRow >= 0 && nowRow < virtualRows;
+  const timebarRow = Math.round(nowRow) + 2;
 
   useEffect(() => {
     const onResize = () => setWidth(window.innerWidth);
     onResize();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
   }, []);
 
   const labels = width > 900 ? dow : width > 600 ? middow : shortdow;
@@ -247,6 +258,13 @@ export function TimetableGrid({
               </div>
             );
           })}
+
+          {showTimebar && (
+            <div
+              className="pointer-events-none z-20 h-0.5 self-center rounded-full bg-white opacity-50"
+              style={{ gridColumn: "2 / -1", gridRow: timebarRow }}
+            />
+          )}
         </div>
       </div>
       <AlertDialog
