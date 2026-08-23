@@ -102,7 +102,7 @@ export function TimetableGrid({
     (now.getHours() - startHour) * 60 + now.getMinutes();
   const nowRow = nowMinutesSinceStart / minSlotMinutes;
   const showTimebar = nowRow >= 0 && nowRow < virtualRows;
-  const timebarRow = Math.round(nowRow) + 2;
+  const timebarRow = Math.floor(nowRow) + 2;
 
   useEffect(() => {
     const onResize = () => setWidth(window.innerWidth);
@@ -112,8 +112,22 @@ export function TimetableGrid({
   }, []);
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(id);
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const tick = () => {
+      const current = new Date();
+      setNow(current);
+      const minutesIntoSlot = current.getMinutes() % minSlotMinutes;
+      const msIntoSlot =
+        (minutesIntoSlot * 60 + current.getSeconds()) * 1000 +
+        current.getMilliseconds();
+      const msUntilNextSlot = minSlotMinutes * 60 * 1000 - msIntoSlot;
+
+      timeoutId = setTimeout(tick, msUntilNextSlot);
+    };
+
+    tick();
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const labels = width > 900 ? dow : width > 600 ? middow : shortdow;
@@ -261,7 +275,7 @@ export function TimetableGrid({
 
           {showTimebar && (
             <div
-              className="pointer-events-none z-20 h-0.5 self-center rounded-full bg-white opacity-50"
+              className="pointer-events-none z-20 h-0.5 rounded-full bg-white opacity-50"
               style={{ gridColumn: "2 / -1", gridRow: timebarRow }}
             />
           )}
