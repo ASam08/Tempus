@@ -88,7 +88,7 @@ const defaultSettings = {
   sun: "true",
 };
 
-const FIXED_DATE = new Date("2026-08-24T10:00:00").getTime();
+const FIXED_DATE = new Date("2024-01-17T10:00:00").getTime();
 
 const renderGrid = (props: Record<string, unknown> = {}) =>
   render(
@@ -276,7 +276,7 @@ describe("TimetableGrid", () => {
 
   describe("timebar", () => {
     it("renders the timebar within the visible time range at the row matching the current time", () => {
-      jest.setSystemTime(new Date("2026-08-24T10:00:00.000").getTime());
+      jest.setSystemTime(new Date("2024-01-17T10:00:00.000").getTime());
       const { container } = renderGrid();
       const timebar = container.querySelector(
         ".bg-white.opacity-50",
@@ -286,7 +286,7 @@ describe("TimetableGrid", () => {
     });
 
     it("hides the timebar when the current time is before the start hour", () => {
-      jest.setSystemTime(new Date("2026-08-24T07:00:00.000").getTime());
+      jest.setSystemTime(new Date("2024-01-17T07:00:00.000").getTime());
       const { container } = renderGrid();
       expect(
         container.querySelector(".bg-white.opacity-50"),
@@ -294,7 +294,7 @@ describe("TimetableGrid", () => {
     });
 
     it("hides the timebar when the current time is at or after the end hour", () => {
-      jest.setSystemTime(new Date("2026-08-24T18:00:00.000").getTime());
+      jest.setSystemTime(new Date("2024-01-17T18:00:00.000").getTime());
       const { container } = renderGrid();
       expect(
         container.querySelector(".bg-white.opacity-50"),
@@ -302,7 +302,7 @@ describe("TimetableGrid", () => {
     });
 
     it("shows the timebar on the last visible row just before the end hour", () => {
-      jest.setSystemTime(new Date("2026-08-24T17:55:00.000").getTime());
+      jest.setSystemTime(new Date("2024-01-17T17:55:00.000").getTime());
       const { container } = renderGrid();
       const timebar = container.querySelector(
         ".bg-white.opacity-50",
@@ -312,13 +312,13 @@ describe("TimetableGrid", () => {
     });
 
     it("snaps the timebar to the same row for timestamps within the same 5-minute slot", () => {
-      jest.setSystemTime(new Date("2026-08-24T10:07:00.000").getTime());
+      jest.setSystemTime(new Date("2024-01-17T10:07:00.000").getTime());
       const { container: containerA } = renderGrid();
       const rowA = (
         containerA.querySelector(".bg-white.opacity-50") as HTMLElement
       ).style.gridRow;
 
-      jest.setSystemTime(new Date("2026-08-24T10:09:00.000").getTime());
+      jest.setSystemTime(new Date("2024-01-17T10:09:00.000").getTime());
       const { container: containerB } = renderGrid();
       const rowB = (
         containerB.querySelector(".bg-white.opacity-50") as HTMLElement
@@ -329,7 +329,7 @@ describe("TimetableGrid", () => {
     });
 
     it("advances the timebar row only once the next 5-minute boundary is reached", () => {
-      jest.setSystemTime(new Date("2026-08-24T10:02:30.250").getTime());
+      jest.setSystemTime(new Date("2024-01-17T10:02:30.250").getTime());
       const { container } = renderGrid();
       const getRow = () =>
         (container.querySelector(".bg-white.opacity-50") as HTMLElement).style
@@ -348,7 +348,7 @@ describe("TimetableGrid", () => {
     });
 
     it("schedules the next tick with a delay aligned to the upcoming 5-minute wall-clock boundary", () => {
-      jest.setSystemTime(new Date("2026-08-24T10:02:30.250").getTime());
+      jest.setSystemTime(new Date("2024-01-17T10:02:30.250").getTime());
       const setTimeoutSpy = jest.spyOn(global, "setTimeout");
       renderGrid();
       expect(setTimeoutSpy.mock.calls.some((call) => call[1] === 149750)).toBe(
@@ -357,7 +357,7 @@ describe("TimetableGrid", () => {
     });
 
     it("clears the pending tick timeout on unmount", () => {
-      jest.setSystemTime(new Date("2026-08-24T10:00:00.000").getTime());
+      jest.setSystemTime(new Date("2024-01-17T10:00:00.000").getTime());
       const clearTimeoutSpy = jest.spyOn(global, "clearTimeout");
       const { unmount } = renderGrid();
       unmount();
@@ -365,13 +365,13 @@ describe("TimetableGrid", () => {
     });
 
     it("does not trigger a redundant re-render on mount before the first scheduled tick fires", () => {
-      jest.setSystemTime(new Date("2026-08-24T10:02:30.250").getTime());
+      jest.setSystemTime(new Date("2024-01-17T10:02:30.250").getTime());
       const { getCommitCount } = renderGridWithCommitCounter();
       expect(getCommitCount()).toBe(1);
     });
 
     it("re-renders exactly once more when the scheduled tick fires at the next boundary", () => {
-      jest.setSystemTime(new Date("2026-08-24T10:02:30.250").getTime());
+      jest.setSystemTime(new Date("2024-01-17T10:02:30.250").getTime());
       const { getCommitCount } = renderGridWithCommitCounter();
       expect(getCommitCount()).toBe(1);
       act(() => {
