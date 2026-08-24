@@ -1,4 +1,4 @@
-import React from "react";
+import { Profiler } from "react";
 import {
   render,
   screen,
@@ -88,7 +88,7 @@ const defaultSettings = {
   sun: "true",
 };
 
-const FIXED_DATE = new Date("2024-01-17T10:00:00").getTime();
+const FIXED_DATE = new Date("2026-08-24T10:00:00").getTime();
 
 const renderGrid = (props: Record<string, unknown> = {}) =>
   render(
@@ -99,6 +99,26 @@ const renderGrid = (props: Record<string, unknown> = {}) =>
       {...props}
     />,
   );
+
+const renderGridWithCommitCounter = (props: Record<string, unknown> = {}) => {
+  let commits = 0;
+  const result = render(
+    <Profiler
+      id="timetable-grid"
+      onRender={() => {
+        commits += 1;
+      }}
+    >
+      <TimetableGrid
+        events={[]}
+        settings={defaultSettings}
+        setId="set-1"
+        {...props}
+      />
+    </Profiler>,
+  );
+  return { ...result, getCommitCount: () => commits };
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -251,6 +271,113 @@ describe("TimetableGrid", () => {
     it("does NOT apply today highlight to a non-today column", () => {
       renderGrid();
       expect(screen.getByText("Monday").className).not.toMatch(/bg-blue-800/);
+    });
+  });
+
+  describe("timebar", () => {
+    it("renders the timebar within the visible time range at the row matching the current time", () => {
+      jest.setSystemTime(new Date("2026-08-24T10:00:00.000").getTime());
+      const { container } = renderGrid();
+      const timebar = container.querySelector(
+        ".bg-white.opacity-50",
+      ) as HTMLElement;
+      expect(timebar).not.toBeNull();
+      expect(timebar.style.gridRow).toBe("26");
+    });
+
+    it("hides the timebar when the current time is before the start hour", () => {
+      jest.setSystemTime(new Date("2026-08-24T07:00:00.000").getTime());
+      const { container } = renderGrid();
+      expect(
+        container.querySelector(".bg-white.opacity-50"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("hides the timebar when the current time is at or after the end hour", () => {
+      jest.setSystemTime(new Date("2026-08-24T18:00:00.000").getTime());
+      const { container } = renderGrid();
+      expect(
+        container.querySelector(".bg-white.opacity-50"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows the timebar on the last visible row just before the end hour", () => {
+      jest.setSystemTime(new Date("2026-08-24T17:55:00.000").getTime());
+      const { container } = renderGrid();
+      const timebar = container.querySelector(
+        ".bg-white.opacity-50",
+      ) as HTMLElement;
+      expect(timebar).not.toBeNull();
+      expect(timebar.style.gridRow).toBe("121");
+    });
+
+    it("snaps the timebar to the same row for timestamps within the same 5-minute slot", () => {
+      jest.setSystemTime(new Date("2026-08-24T10:07:00.000").getTime());
+      const { container: containerA } = renderGrid();
+      const rowA = (
+        containerA.querySelector(".bg-white.opacity-50") as HTMLElement
+      ).style.gridRow;
+
+      jest.setSystemTime(new Date("2026-08-24T10:09:00.000").getTime());
+      const { container: containerB } = renderGrid();
+      const rowB = (
+        containerB.querySelector(".bg-white.opacity-50") as HTMLElement
+      ).style.gridRow;
+
+      expect(rowA).toBe("27");
+      expect(rowB).toBe("27");
+    });
+
+    it("advances the timebar row only once the next 5-minute boundary is reached", () => {
+      jest.setSystemTime(new Date("2026-08-24T10:02:30.250").getTime());
+      const { container } = renderGrid();
+      const getRow = () =>
+        (container.querySelector(".bg-white.opacity-50") as HTMLElement).style
+          .gridRow;
+      expect(getRow()).toBe("26");
+
+      act(() => {
+        jest.advanceTimersByTime(149749);
+      });
+      expect(getRow()).toBe("26");
+
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+      expect(getRow()).toBe("27");
+    });
+
+    it("schedules the next tick with a delay aligned to the upcoming 5-minute wall-clock boundary", () => {
+      jest.setSystemTime(new Date("2026-08-24T10:02:30.250").getTime());
+      const setTimeoutSpy = jest.spyOn(global, "setTimeout");
+      renderGrid();
+      expect(setTimeoutSpy.mock.calls.some((call) => call[1] === 149750)).toBe(
+        true,
+      );
+    });
+
+    it("clears the pending tick timeout on unmount", () => {
+      jest.setSystemTime(new Date("2026-08-24T10:00:00.000").getTime());
+      const clearTimeoutSpy = jest.spyOn(global, "clearTimeout");
+      const { unmount } = renderGrid();
+      unmount();
+      expect(clearTimeoutSpy).toHaveBeenCalled();
+    });
+
+    it("does not trigger a redundant re-render on mount before the first scheduled tick fires", () => {
+      jest.setSystemTime(new Date("2026-08-24T10:02:30.250").getTime());
+      const { getCommitCount } = renderGridWithCommitCounter();
+      expect(getCommitCount()).toBe(1);
+    });
+
+    it("re-renders exactly once more when the scheduled tick fires at the next boundary", () => {
+      jest.setSystemTime(new Date("2026-08-24T10:02:30.250").getTime());
+      const { getCommitCount } = renderGridWithCommitCounter();
+      expect(getCommitCount()).toBe(1);
+      act(() => {
+        jest.advanceTimersByTime(149750);
+      });
+      expect(getCommitCount()).toBe(2);
     });
   });
 

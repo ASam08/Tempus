@@ -114,19 +114,22 @@ export function TimetableGrid({
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
 
-    const tick = () => {
-      const current = new Date();
-      setNow(current);
+    const scheduleNext = (current: Date) => {
       const minutesIntoSlot = current.getMinutes() % minSlotMinutes;
       const msIntoSlot =
         (minutesIntoSlot * 60 + current.getSeconds()) * 1000 +
         current.getMilliseconds();
       const msUntilNextSlot = minSlotMinutes * 60 * 1000 - msIntoSlot;
-
       timeoutId = setTimeout(tick, msUntilNextSlot);
     };
 
-    tick();
+    const tick = () => {
+      const current = new Date();
+      setNow(current);
+      scheduleNext(current);
+    };
+
+    scheduleNext(new Date());
     return () => clearTimeout(timeoutId);
   }, []);
 
