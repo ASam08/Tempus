@@ -22,6 +22,18 @@ export async function getUserID() {
   return user_id;
 }
 
+export async function verifyUserPassword(password: string) {
+  try {
+    await auth.api.verifyPassword({
+      body: { password },
+      headers: await headers(),
+    });
+    return { success: true as const };
+  } catch {
+    return { success: false as const, error: "Incorrect password." };
+  }
+}
+
 export async function getAllTimetableSets(user_id: string) {
   try {
     const result = await sqlConn

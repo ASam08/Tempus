@@ -2,10 +2,19 @@
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { User } from "better-auth";
 import { authClient } from "@/lib/auth-client";
 import { useState, useTransition } from "react";
@@ -14,6 +23,7 @@ import { PasswordRequirementsHover } from "@/components/general/password-require
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { passwordSchema } from "@/lib/schema";
+import { verifyUserPassword } from "@/lib/data";
 
 type FormType = { type: "personal" | "email" | "password" };
 type FormErrors = Partial<Record<FormType["type"], string>>;
@@ -66,6 +76,8 @@ export default function AccountForm({ user }: { user: User }) {
   const router = useRouter();
   const [errors, setErrors] = useState<FormErrors>({});
   const [isPending, startTransition] = useTransition();
+  const [showVerifyPasswordDialog, setShowVerifyPasswordDialog] =
+    useState(false);
 
   async function handleFormSubmit(
     e: React.SubmitEvent<HTMLFormElement>,
@@ -172,20 +184,41 @@ export default function AccountForm({ user }: { user: User }) {
           return;
         }
 
-        startTransition(() =>
-          handleOutcome(
-            form,
-            () =>
-              authClient.changeEmail({
-                newEmail: email.email!,
-                callbackURL: "/dashboard",
-              }),
-            "Email updated.",
-            "Failed to update email.",
-            () => router.refresh(),
-          ),
-        );
-        return;
+        setShowVerifyPasswordDialog(true);
+
+        async function handleVerifyPassword(
+          e: React.FormEvent<HTMLFormElement>,
+        ) {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          const password = formData.get("verify-password") as string;
+
+          startTransition(async () => {
+            const result = await verifyUserPassword(password);
+
+            if (!result.success) {
+              toast.error("Password Verification Failed", {
+                position: "top-center",
+                style: { backgroundColor: "red" },
+              });
+              return;
+            }
+
+            setShowVerifyPasswordDialog(false);
+
+            await handleOutcome(
+              form,
+              () =>
+                authClient.changeEmail({
+                  newEmail: email.email!,
+                  callbackURL: "/dashboard",
+                }),
+              "Email updated.",
+              "Failed to update email.",
+              () => router.refresh(),
+            );
+          });
+        }
       }
 
       default:
@@ -265,6 +298,48 @@ export default function AccountForm({ user }: { user: User }) {
             </div>
           </form>
         </div>
+        <Dialog
+          open={showVerifyPasswordDialog}
+          onOpenChange={setShowVerifyPasswordDialog}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Verify Password</DialogTitle>
+              <DialogDescription>
+                Please enter your current password to confirm it's you.
+              </DialogDescription>
+            </DialogHeader>
+            <form
+              className="grid gap-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const formData = new FormData(form);
+                const currentPassword = formData.get(
+                  "verify-password",
+                ) as string;
+                setShowVerifyPasswordDialog(false);
+              }}
+            >
+              <Input
+                id="verify-password"
+                name="verify-password"
+                type="password"
+                placeholder="Current Password"
+              />
+              <DialogFooter>
+                <DialogClose
+                  render={
+                    <Button variant="outline" type="button">
+                      Cancel
+                    </Button>
+                  }
+                ></DialogClose>
+                <Button type="submit">Verify</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </TabsContent>
       <TabsContent value="password">
         <div className="max-w-96">
