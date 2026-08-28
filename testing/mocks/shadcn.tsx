@@ -210,6 +210,54 @@ export const checkboxMock = {
   ),
 };
 
+export const dialogMock = () => {
+  const DialogContext = React.createContext(
+    undefined as ((open: boolean) => void) | undefined,
+  );
+
+  return {
+    Dialog: ({
+      open,
+      onOpenChange,
+      children,
+    }: {
+      open: boolean;
+      onOpenChange?: (open: boolean) => void;
+      children: React.ReactNode;
+    }) =>
+      open ? (
+        <DialogContext.Provider value={onOpenChange}>
+          <div role="dialog">{children}</div>
+        </DialogContext.Provider>
+      ) : null,
+    DialogContent: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    DialogHeader: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    DialogTitle: ({ children }: { children: React.ReactNode }) => (
+      <h2>{children}</h2>
+    ),
+    DialogDescription: ({ children }: { children: React.ReactNode }) => (
+      <p>{children}</p>
+    ),
+    DialogFooter: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    DialogClose: ({ render }: { render?: React.ReactElement }) => {
+      const onOpenChange = React.useContext(DialogContext);
+      if (render && React.isValidElement(render)) {
+        return React.cloneElement(
+          render as React.ReactElement<Record<string, unknown>>,
+          { onClick: () => onOpenChange?.(false) },
+        );
+      }
+      return null;
+    },
+  };
+};
+
 export const dropdownMenuMock = (() => {
   const DropdownContext = React.createContext<{
     open: boolean;

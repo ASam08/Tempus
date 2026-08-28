@@ -28,9 +28,9 @@ export async function verifyUserPassword(password: string) {
       body: { password },
       headers: await headers(),
     });
-    return { success: true as const };
+    return true;
   } catch {
-    return { success: false as const, error: "Incorrect password." };
+    return false;
   }
 }
 
