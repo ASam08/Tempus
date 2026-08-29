@@ -78,6 +78,13 @@
       "when": 1787221064335,
       "tag": "0010_whole_moon_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1787997349036,
+      "tag": "0011_wakeful_thor_girl",
+      "breakpoints": true
     }
   ]
 }
