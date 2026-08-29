@@ -94,6 +94,10 @@ export const auth = betterAuth({
       updatedAt: "updatedAt",
       emailVerified: "emailVerified",
     },
+    changeEmail: {
+      enabled: true,
+      updateEmailWithoutVerification: true,
+    },
   },
 
   advanced: {

@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor, act, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -15,7 +15,12 @@ jest.mock("@/lib/auth-client", () => ({
   authClient: {
     updateUser: jest.fn(),
     changePassword: jest.fn(),
+    changeEmail: jest.fn(),
   },
+}));
+
+jest.mock("@/lib/data", () => ({
+  verifyUserPassword: jest.fn(),
 }));
 
 jest.mock("sonner", () => ({
@@ -34,6 +39,10 @@ jest.mock(
 jest.mock(
   "@/components/ui/checkbox",
   () => require("@/testing/mocks/shadcn").checkboxMock,
+);
+
+jest.mock("@/components/ui/dialog", () =>
+  require("@/testing/mocks/shadcn").dialogMock(),
 );
 
 jest.mock(
@@ -58,9 +67,12 @@ jest.mock(
 
 import AccountForm from "@/app/ui/account/accountform";
 import { authClient } from "@/lib/auth-client";
+import { verifyUserPassword } from "@/lib/data";
 
 const mockUpdateUser = authClient.updateUser as unknown as jest.Mock;
 const mockChangePassword = authClient.changePassword as unknown as jest.Mock;
+const mockChangeEmail = authClient.changeEmail as unknown as jest.Mock;
+const mockVerifyUserPassword = verifyUserPassword as unknown as jest.Mock;
 
 const baseUser = {
   id: "user-1",
@@ -84,8 +96,8 @@ function emailInput() {
   return document.getElementById("email") as HTMLInputElement;
 }
 
-async function switchToPasswordTab(user = userEvent.setup()) {
-  await user.click(screen.getByRole("tab", { name: "Password" }));
+function verifyPasswordInput() {
+  return document.getElementById("verify-password") as HTMLInputElement;
 }
 
 function currentPasswordInput() {
@@ -108,6 +120,27 @@ function destructiveErrorText() {
   return document.querySelector("p.text-destructive")?.textContent ?? "";
 }
 
+function dialog() {
+  return screen.queryByRole("dialog");
+}
+
+async function switchToTab(
+  user: ReturnType<typeof userEvent.setup>,
+  name: "Personal" | "Email" | "Password",
+) {
+  await user.click(screen.getByRole("tab", { name }));
+}
+
+async function openVerifyPasswordDialog(
+  user: ReturnType<typeof userEvent.setup>,
+  newEmail = "new@example.com",
+) {
+  await switchToTab(user, "Email");
+  await user.clear(emailInput());
+  await user.type(emailInput(), newEmail);
+  await user.click(saveButton());
+}
+
 describe("AccountForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -116,23 +149,30 @@ describe("AccountForm", () => {
     });
     mockUpdateUser.mockResolvedValue({ error: null });
     mockChangePassword.mockResolvedValue({ error: null });
+    mockChangeEmail.mockResolvedValue({ error: null });
+    mockVerifyUserPassword.mockResolvedValue(true);
   });
 
   describe("rendering", () => {
-    it("renders the details tab by default with the user's values", () => {
+    it("renders the personal tab by default with the user's name", () => {
       renderForm();
       expect(nameInput().value).toBe("Jane Doe");
-      expect(emailInput().value).toBe("jane@example.com");
     });
 
-    it("renders the email field as disabled", () => {
+    it("switches to the email tab and renders the user's email as editable", async () => {
+      const user = userEvent.setup();
       renderForm();
-      expect(emailInput()).toBeDisabled();
+      await switchToTab(user, "Email");
+
+      expect(emailInput().value).toBe("jane@example.com");
+      expect(emailInput()).not.toBeDisabled();
     });
 
     it("switches to the password tab and renders empty password fields", async () => {
+      const user = userEvent.setup();
       renderForm();
-      await switchToPasswordTab();
+      await switchToTab(user, "Password");
+
       expect(currentPasswordInput()).toBeInTheDocument();
       expect(newPasswordInput()).toBeInTheDocument();
       expect(confirmPasswordInput()).toBeInTheDocument();
@@ -142,7 +182,7 @@ describe("AccountForm", () => {
     });
   });
 
-  describe("details form", () => {
+  describe("personal form", () => {
     it("shows a validation error when the name is cleared", async () => {
       const user = userEvent.setup();
       renderForm();
@@ -178,10 +218,10 @@ describe("AccountForm", () => {
       await waitFor(() =>
         expect(mockUpdateUser).toHaveBeenCalledWith({ name: "New Name" }),
       );
-      expect(toast.success).toHaveBeenCalledWith("Details updated.", {
-        position: "top-center",
-        style: { backgroundColor: "forestgreen" },
-      });
+      expect(toast.success).toHaveBeenCalledWith(
+        "Personal information updated.",
+        { position: "top-center", style: { backgroundColor: "forestgreen" } },
+      );
       await waitFor(() => expect(resetSpy).toHaveBeenCalled());
       expect(mockRefresh).toHaveBeenCalled();
 
@@ -218,10 +258,10 @@ describe("AccountForm", () => {
       await user.click(saveButton());
 
       await waitFor(() =>
-        expect(toast.error).toHaveBeenCalledWith("Failed to update details.", {
-          position: "top-center",
-          style: { backgroundColor: "red" },
-        }),
+        expect(toast.error).toHaveBeenCalledWith(
+          "Failed to update personal information.",
+          { position: "top-center", style: { backgroundColor: "red" } },
+        ),
       );
     });
 
@@ -250,11 +290,185 @@ describe("AccountForm", () => {
     });
   });
 
+  describe("email form", () => {
+    it("shows a validation error for a blank email and does not open the dialog", async () => {
+      const user = userEvent.setup();
+      renderForm();
+      await switchToTab(user, "Email");
+
+      await user.clear(emailInput());
+      await user.click(saveButton());
+
+      expect(
+        await screen.findByText("Invalid email address"),
+      ).toBeInTheDocument();
+      expect(dialog()).not.toBeInTheDocument();
+    });
+
+    it("does not open the dialog when the email is unchanged", async () => {
+      const user = userEvent.setup();
+      renderForm();
+      await switchToTab(user, "Email");
+
+      await user.click(saveButton());
+
+      expect(dialog()).not.toBeInTheDocument();
+      expect(mockChangeEmail).not.toHaveBeenCalled();
+    });
+
+    it("opens the verify password dialog when the email changes", async () => {
+      const user = userEvent.setup();
+      renderForm();
+
+      await openVerifyPasswordDialog(user);
+
+      expect(dialog()).toBeInTheDocument();
+      expect(
+        within(dialog()!).getByText("Verify Password"),
+      ).toBeInTheDocument();
+    });
+
+    it("shows an error and keeps the dialog open when the password is incorrect", async () => {
+      mockVerifyUserPassword.mockResolvedValue(false);
+      const user = userEvent.setup();
+      renderForm();
+      await openVerifyPasswordDialog(user);
+
+      await user.type(verifyPasswordInput(), "WrongPass1!");
+      await user.click(
+        within(dialog()!).getByRole("button", { name: "Verify" }),
+      );
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "Password Verification Failed",
+          { position: "top-center", style: { backgroundColor: "red" } },
+        ),
+      );
+      expect(mockChangeEmail).not.toHaveBeenCalled();
+      expect(dialog()).toBeInTheDocument();
+    });
+
+    it("verifies the password, updates the email, closes the dialog, and refreshes the route", async () => {
+      const resetSpy = jest.spyOn(HTMLFormElement.prototype, "reset");
+      const user = userEvent.setup();
+      renderForm();
+      await openVerifyPasswordDialog(user, "new@example.com");
+
+      await user.type(verifyPasswordInput(), "CorrectPass1!");
+      await user.click(
+        within(dialog()!).getByRole("button", { name: "Verify" }),
+      );
+
+      await waitFor(() =>
+        expect(mockVerifyUserPassword).toHaveBeenCalledWith("CorrectPass1!"),
+      );
+      await waitFor(() =>
+        expect(mockChangeEmail).toHaveBeenCalledWith({
+          newEmail: "new@example.com",
+          callbackURL: "/dashboard",
+        }),
+      );
+      expect(toast.success).toHaveBeenCalledWith("Email updated.", {
+        position: "top-center",
+        style: { backgroundColor: "forestgreen" },
+      });
+      await waitFor(() => expect(dialog()).not.toBeInTheDocument());
+      expect(resetSpy).toHaveBeenCalled();
+      expect(mockRefresh).toHaveBeenCalled();
+
+      resetSpy.mockRestore();
+    });
+
+    it("shows the server error message when changeEmail fails after verification", async () => {
+      mockChangeEmail.mockResolvedValue({
+        error: { message: "Email already in use." },
+      });
+      const user = userEvent.setup();
+      renderForm();
+      await openVerifyPasswordDialog(user);
+
+      await user.type(verifyPasswordInput(), "CorrectPass1!");
+      await user.click(
+        within(dialog()!).getByRole("button", { name: "Verify" }),
+      );
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith("Email already in use.", {
+          position: "top-center",
+          style: { backgroundColor: "red" },
+        }),
+      );
+      expect(mockRefresh).not.toHaveBeenCalled();
+    });
+
+    it("falls back to a default error message when changeEmail fails without one", async () => {
+      mockChangeEmail.mockResolvedValue({ error: {} });
+      const user = userEvent.setup();
+      renderForm();
+      await openVerifyPasswordDialog(user);
+
+      await user.type(verifyPasswordInput(), "CorrectPass1!");
+      await user.click(
+        within(dialog()!).getByRole("button", { name: "Verify" }),
+      );
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith("Failed to update email.", {
+          position: "top-center",
+          style: { backgroundColor: "red" },
+        }),
+      );
+    });
+
+    it("cancels the dialog and clears the pending email", async () => {
+      const user = userEvent.setup();
+      renderForm();
+      await openVerifyPasswordDialog(user);
+
+      await user.click(
+        within(dialog()!).getByRole("button", { name: "Cancel" }),
+      );
+
+      expect(dialog()).not.toBeInTheDocument();
+    });
+
+    it("disables the verify button while verification is pending", async () => {
+      let resolveVerify: (value: boolean) => void;
+      mockVerifyUserPassword.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveVerify = resolve;
+          }),
+      );
+      const user = userEvent.setup();
+      renderForm();
+      await openVerifyPasswordDialog(user);
+
+      await user.type(verifyPasswordInput(), "CorrectPass1!");
+      await user.click(
+        within(dialog()!).getByRole("button", { name: "Verify" }),
+      );
+
+      await waitFor(() =>
+        expect(
+          within(dialog()!).getByRole("button", { name: "Verify" }),
+        ).toBeDisabled(),
+      );
+
+      await act(async () => {
+        resolveVerify(true);
+      });
+
+      await waitFor(() => expect(dialog()).not.toBeInTheDocument());
+    });
+  });
+
   describe("password form", () => {
     it("shows a validation error when the passwords do not match", async () => {
       const user = userEvent.setup();
       renderForm();
-      await switchToPasswordTab(user);
+      await switchToTab(user, "Password");
 
       await user.type(currentPasswordInput(), "OldPass1!");
       await user.type(newPasswordInput(), "NewPass1!");
@@ -268,7 +482,7 @@ describe("AccountForm", () => {
     it("shows validation errors for a weak password", async () => {
       const user = userEvent.setup();
       renderForm();
-      await switchToPasswordTab(user);
+      await switchToTab(user, "Password");
 
       await user.type(currentPasswordInput(), "OldPass1!");
       await user.type(newPasswordInput(), "abc");
@@ -287,7 +501,7 @@ describe("AccountForm", () => {
       const resetSpy = jest.spyOn(HTMLFormElement.prototype, "reset");
       const user = userEvent.setup();
       renderForm();
-      await switchToPasswordTab(user);
+      await switchToTab(user, "Password");
 
       await user.type(currentPasswordInput(), "OldPass1!");
       await user.type(newPasswordInput(), "NewPass1!");
@@ -317,7 +531,7 @@ describe("AccountForm", () => {
       });
       const user = userEvent.setup();
       renderForm();
-      await switchToPasswordTab(user);
+      await switchToTab(user, "Password");
 
       await user.type(currentPasswordInput(), "WrongPass1!");
       await user.type(newPasswordInput(), "NewPass1!");
@@ -336,7 +550,7 @@ describe("AccountForm", () => {
       mockChangePassword.mockResolvedValue({ error: {} });
       const user = userEvent.setup();
       renderForm();
-      await switchToPasswordTab(user);
+      await switchToTab(user, "Password");
 
       await user.type(currentPasswordInput(), "OldPass1!");
       await user.type(newPasswordInput(), "NewPass1!");
@@ -354,7 +568,7 @@ describe("AccountForm", () => {
     it("sends revokeSessions as false when the checkbox is unchecked", async () => {
       const user = userEvent.setup();
       renderForm();
-      await switchToPasswordTab(user);
+      await switchToTab(user, "Password");
 
       await user.click(screen.getByLabelText("Sign out of all other devices?"));
       await user.type(currentPasswordInput(), "OldPass1!");

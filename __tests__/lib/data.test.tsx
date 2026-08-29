@@ -38,6 +38,7 @@ jest.mock("@/lib/auth", () => ({
   auth: {
     api: {
       getSession: jest.fn(),
+      verifyPassword: jest.fn(),
     },
   },
 }));
@@ -48,6 +49,7 @@ jest.mock("next/headers", () => ({
 
 import {
   getUserID,
+  verifyUserPassword,
   getAllTimetableSets,
   getTimetableBlocks,
   getCurrentBlock,
@@ -93,6 +95,7 @@ beforeEach(() => {
 
   const { auth } = require("@/lib/auth");
   auth.api.getSession = jest.fn();
+  auth.api.verifyPassword = jest.fn();
 });
 
 describe("DataTests", () => {
@@ -116,6 +119,27 @@ describe("DataTests", () => {
       auth.api.getSession.mockResolvedValueOnce({ user: {} });
       const result = await getUserID();
       expect(result).toBeNull();
+    });
+  });
+
+  describe("verifyUserPassword", () => {
+    it("returns true when the password is verified", async () => {
+      const { auth } = require("@/lib/auth");
+      auth.api.verifyPassword.mockResolvedValueOnce(undefined);
+      const result = await verifyUserPassword("CorrectPass1!");
+      expect(result).toBe(true);
+      expect(auth.api.verifyPassword).toHaveBeenCalledWith(
+        expect.objectContaining({ body: { password: "CorrectPass1!" } }),
+      );
+    });
+
+    it("returns false when the password is incorrect", async () => {
+      const { auth } = require("@/lib/auth");
+      auth.api.verifyPassword.mockRejectedValueOnce(
+        new Error("Invalid password"),
+      );
+      const result = await verifyUserPassword("WrongPass1!");
+      expect(result).toBe(false);
     });
   });
 
