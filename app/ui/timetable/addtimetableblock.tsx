@@ -37,15 +37,18 @@ import {
   AutocompleteInput,
   AutocompleteList,
 } from "@/components/general/autocomplete";
+import { getLastColourBySubject } from "@/lib/data";
 
 export default function AddTimetableBlock({
   action,
   settings,
   subjectList,
+  setId,
 }: {
   action: (prevState: BlockState, formData: FormData) => Promise<BlockState>;
   settings: Record<string, string> | null;
   subjectList: string[];
+  setId: string;
 }) {
   const initialState: BlockState = { message: "", errors: {}, conflicts: [] };
   const [state, formAction] = useActionState<BlockState, FormData>(
@@ -57,6 +60,7 @@ export default function AddTimetableBlock({
   const [showDowAlertDialog, setShowDowAlertDialog] = useState(false);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [subject, setSubject] = useState("");
+  const [colour, setColour] = useState(defaultBlockColour);
   const formRef = useRef<HTMLFormElement>(null);
 
   const dow = dowKeyValue;
@@ -168,9 +172,11 @@ export default function AddTimetableBlock({
           <Autocomplete
             items={subjectList}
             value={subject}
-            onValueChange={(value) => {
+            onValueChange={async (value) => {
               setSubject(value);
               clearClientErrors("subject");
+              const subjectColour = await getLastColourBySubject(setId, value);
+              setColour(subjectColour ?? defaultBlockColour);
             }}
             name="subject"
           >
@@ -206,7 +212,7 @@ export default function AddTimetableBlock({
         </div>
         <div className="grid gap-3">
           <Label htmlFor="colour">Colour</Label>
-          <ColourPicker defaultColour={defaultBlockColour} />
+          <ColourPicker value={colour} onValueChange={setColour} />
         </div>
         <div className="grid gap-3">
           <Label htmlFor="location">Location</Label>
