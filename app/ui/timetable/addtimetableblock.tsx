@@ -23,7 +23,7 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { unhideDow } from "@/lib/actions";
 import Link from "next/link";
-import { useState, useActionState, useRef } from "react";
+import { useState, useActionState, useRef, useEffect } from "react";
 import { dowKeyValue } from "@/lib/constants";
 import { defaultBlockColour, defaultDaySettings } from "@/lib/defaults";
 import { BlockState } from "@/lib/definitions";
@@ -61,6 +61,8 @@ export default function AddTimetableBlock({
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [subject, setSubject] = useState("");
   const [colour, setColour] = useState(defaultBlockColour);
+  const [debouncedSubject, setDebouncedSubject] = useState("");
+  const colourManuallyEditedRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const dow = dowKeyValue;
@@ -120,6 +122,40 @@ export default function AddTimetableBlock({
     });
   };
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSubject(subject);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [subject]);
+
+  useEffect(() => {
+    if (!debouncedSubject) {
+      if (!colourManuallyEditedRef.current) {
+        setColour(defaultBlockColour);
+      }
+      return;
+    }
+
+    let ignore = false;
+    colourManuallyEditedRef.current = false;
+
+    async function lookupColour() {
+      const subjectColour = await getLastColourBySubject(
+        setId,
+        debouncedSubject,
+      );
+      if (!ignore && !colourManuallyEditedRef.current) {
+        setColour(subjectColour ?? defaultBlockColour);
+      }
+    }
+
+    lookupColour();
+    return () => {
+      ignore = true;
+    };
+  }, [debouncedSubject, setId]);
+
   return (
     <form action={formAction} ref={formRef}>
       <div className="pb-4">
@@ -172,11 +208,9 @@ export default function AddTimetableBlock({
           <Autocomplete
             items={subjectList}
             value={subject}
-            onValueChange={async (value) => {
+            onValueChange={(value) => {
               setSubject(value);
               clearClientErrors("subject");
-              const subjectColour = await getLastColourBySubject(setId, value);
-              setColour(subjectColour ?? defaultBlockColour);
             }}
             name="subject"
           >
@@ -212,7 +246,13 @@ export default function AddTimetableBlock({
         </div>
         <div className="grid gap-3">
           <Label htmlFor="colour">Colour</Label>
-          <ColourPicker value={colour} onValueChange={setColour} />
+          <ColourPicker
+            value={colour}
+            onValueChange={(newColour) => {
+              colourManuallyEditedRef.current = true;
+              setColour(newColour);
+            }}
+          />
         </div>
         <div className="grid gap-3">
           <Label htmlFor="location">Location</Label>
