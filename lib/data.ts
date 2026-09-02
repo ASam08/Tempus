@@ -5,10 +5,23 @@ import {
   RetreivedTimetableBlocksWithSetId,
   UserSettings,
   ConflictBlocks,
+  TimetableColour,
 } from "@/lib/definitions";
 import { sqlConn } from "@/lib/db";
 import * as schema from "@/db/schema";
-import { sql, and, eq, gt, gte, lt, lte, isNull, not, asc } from "drizzle-orm";
+import {
+  sql,
+  and,
+  eq,
+  gt,
+  gte,
+  lt,
+  lte,
+  isNull,
+  not,
+  asc,
+  desc,
+} from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -345,5 +358,37 @@ export async function getUniqueSubjects(
   } catch (error) {
     console.error("Error fetching unique subjects:", error);
     return [];
+  }
+}
+
+export async function getLastColourBySubject(
+  timetable_set_id: string,
+  subject: string,
+): Promise<TimetableColour | null> {
+  const user_id = await getUserID();
+  if (!user_id) return null;
+  const checkOwnership = await checkTimetableSetOwnership(
+    timetable_set_id,
+    user_id,
+  );
+  if (!checkOwnership) return null;
+  try {
+    const result = await sqlConn
+      .select({
+        colour: schema.timetableBlocks.colour,
+      })
+      .from(schema.timetableBlocks)
+      .where(
+        and(
+          eq(schema.timetableBlocks.timetableSetId, timetable_set_id),
+          eq(schema.timetableBlocks.subject, subject),
+        ),
+      )
+      .orderBy(desc(schema.timetableBlocks.createdAt))
+      .limit(1);
+    return result[0]?.colour ?? null;
+  } catch (error) {
+    console.error("Error fetching last colour by subject:", error);
+    return null;
   }
 }

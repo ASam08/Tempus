@@ -62,6 +62,7 @@ export default function EditTimetableBlock({
   const [showDowAlertDialog, setShowDowAlertDialog] = useState(false);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [subject, setSubject] = useState(currentBlock.subject);
+  const [colour, setColour] = useState(currentBlock.colour);
   const formRef = useRef<HTMLFormElement>(null);
 
   const dow = dowKeyValue;
@@ -216,7 +217,7 @@ export default function EditTimetableBlock({
         </div>
         <div className="grid gap-3">
           <Label htmlFor="colour">Colour</Label>
-          <ColourPicker defaultColour={currentBlock.colour} />
+          <ColourPicker value={colour} onValueChange={setColour} />
         </div>
         <div className="grid gap-3">
           <Label htmlFor="location">Location</Label>

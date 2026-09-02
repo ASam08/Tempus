@@ -40,6 +40,7 @@ export default async function addBlockPage({
         action={boundAction}
         settings={settings}
         subjectList={subjectList}
+        setId={setId}
       />
     </div>
   );

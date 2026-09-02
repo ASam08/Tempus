@@ -10,24 +10,21 @@ import { colourStyles, timetableColours } from "@/lib/constants";
 import { TimetableColour } from "@/lib/definitions";
 
 export default function ColourPicker({
-  defaultColour,
+  value,
+  onValueChange,
 }: {
-  defaultColour: TimetableColour;
+  value: TimetableColour;
+  onValueChange: (value: TimetableColour) => void;
 }) {
-  const [currentlySelectedColour, setCurrentlySelectedColour] =
-    useState(defaultColour);
-
   return (
     <Select
-      value={currentlySelectedColour}
-      onValueChange={(value) => {
-        if (value) setCurrentlySelectedColour(value);
+      value={value}
+      onValueChange={(newValue) => {
+        if (newValue) onValueChange(newValue);
       }}
       name="colour"
     >
-      <SelectTrigger
-        className={` ${colourStyles[currentlySelectedColour]} w-36`}
-      >
+      <SelectTrigger className={`${colourStyles[value]} w-36`}>
         <SelectValue className="capitalize" />
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false} align="start">

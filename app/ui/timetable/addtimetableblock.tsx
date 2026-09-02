@@ -23,7 +23,7 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { unhideDow } from "@/lib/actions";
 import Link from "next/link";
-import { useState, useActionState, useRef } from "react";
+import { useState, useActionState, useRef, useEffect } from "react";
 import { dowKeyValue } from "@/lib/constants";
 import { defaultBlockColour, defaultDaySettings } from "@/lib/defaults";
 import { BlockState } from "@/lib/definitions";
@@ -37,15 +37,18 @@ import {
   AutocompleteInput,
   AutocompleteList,
 } from "@/components/general/autocomplete";
+import { getLastColourBySubject } from "@/lib/data";
 
 export default function AddTimetableBlock({
   action,
   settings,
   subjectList,
+  setId,
 }: {
   action: (prevState: BlockState, formData: FormData) => Promise<BlockState>;
   settings: Record<string, string> | null;
   subjectList: string[];
+  setId: string;
 }) {
   const initialState: BlockState = { message: "", errors: {}, conflicts: [] };
   const [state, formAction] = useActionState<BlockState, FormData>(
@@ -57,6 +60,9 @@ export default function AddTimetableBlock({
   const [showDowAlertDialog, setShowDowAlertDialog] = useState(false);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [subject, setSubject] = useState("");
+  const [colour, setColour] = useState(defaultBlockColour);
+  const [debouncedSubject, setDebouncedSubject] = useState("");
+  const colourManuallyEditedRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const dow = dowKeyValue;
@@ -115,6 +121,40 @@ export default function AddTimetableBlock({
       return newErrors;
     });
   };
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSubject(subject);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [subject]);
+
+  useEffect(() => {
+    if (!debouncedSubject) {
+      if (!colourManuallyEditedRef.current) {
+        setColour(defaultBlockColour);
+      }
+      return;
+    }
+
+    let ignore = false;
+    colourManuallyEditedRef.current = false;
+
+    async function lookupColour() {
+      const subjectColour = await getLastColourBySubject(
+        setId,
+        debouncedSubject,
+      );
+      if (!ignore && !colourManuallyEditedRef.current) {
+        setColour(subjectColour ?? defaultBlockColour);
+      }
+    }
+
+    lookupColour();
+    return () => {
+      ignore = true;
+    };
+  }, [debouncedSubject, setId]);
 
   return (
     <form action={formAction} ref={formRef}>
@@ -206,7 +246,13 @@ export default function AddTimetableBlock({
         </div>
         <div className="grid gap-3">
           <Label htmlFor="colour">Colour</Label>
-          <ColourPicker defaultColour={defaultBlockColour} />
+          <ColourPicker
+            value={colour}
+            onValueChange={(newColour) => {
+              colourManuallyEditedRef.current = true;
+              setColour(newColour);
+            }}
+          />
         </div>
         <div className="grid gap-3">
           <Label htmlFor="location">Location</Label>
