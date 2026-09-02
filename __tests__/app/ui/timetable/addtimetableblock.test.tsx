@@ -1,11 +1,12 @@
 import React from "react";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
 const mockFormAction = jest.fn();
 const mockAction = jest.fn();
 const mockUnhideDow = jest.fn().mockResolvedValue(undefined);
+const mockGetLastColourBySubject = jest.fn();
 
 jest.mock("next/link", () => {
   const Link = ({
@@ -22,6 +23,11 @@ jest.mock("next/link", () => {
 jest.mock("@/lib/actions", () => ({
   addTimetableBlock: jest.fn(),
   unhideDow: (...args: unknown[]) => mockUnhideDow(...args),
+}));
+
+jest.mock("@/lib/data", () => ({
+  getLastColourBySubject: (...args: unknown[]) =>
+    mockGetLastColourBySubject(...args),
 }));
 
 jest.mock("@/lib/constants", () => ({
@@ -124,6 +130,7 @@ function renderComponent(
   settings: Record<string, string> | null = defaultSettings,
   state: ActionState = initialState,
   subjectList: string[] = ["Maths", "English", "Science"],
+  setId: string = "set-1",
 ) {
   jest
     .spyOn(React, "useActionState")
@@ -133,6 +140,7 @@ function renderComponent(
       action={mockAction}
       settings={settings}
       subjectList={subjectList}
+      setId={setId}
     />,
   );
 }
@@ -149,6 +157,7 @@ async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
 describe("AddTimetableBlock", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetLastColourBySubject.mockResolvedValue(null);
   });
 
   describe("rendering", () => {
@@ -814,6 +823,224 @@ describe("AddTimetableBlock", () => {
       await waitFor(() => expect(mockFormAction).toHaveBeenCalledTimes(1));
       const formData: FormData = mockFormAction.mock.calls[0][0];
       expect(formData.get("colour")).toBe("red");
+    });
+  });
+
+  describe("subject colour memory lookup", () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    function setupFakeTimerUser() {
+      return userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    }
+
+    it("looks up the last used colour for the typed subject after the debounce settles", async () => {
+      const user = setupFakeTimerUser();
+      mockGetLastColourBySubject.mockResolvedValueOnce("purple");
+      renderComponent();
+      const subjectInput = screen.getByPlaceholderText("e.g. Maths");
+
+      await user.type(subjectInput, "Chemistry");
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(mockGetLastColourBySubject).toHaveBeenCalledWith(
+        "set-1",
+        "Chemistry",
+      );
+      expect(screen.getByRole("combobox", { name: "colour" })).toHaveValue(
+        "purple",
+      );
+    });
+
+    it("falls back to the default colour when the subject has no prior colour", async () => {
+      const user = setupFakeTimerUser();
+      mockGetLastColourBySubject
+        .mockResolvedValueOnce("orange")
+        .mockResolvedValueOnce(null);
+      renderComponent();
+      const subjectInput = screen.getByPlaceholderText("e.g. Maths");
+
+      await user.type(subjectInput, "Physics");
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(screen.getByRole("combobox", { name: "colour" })).toHaveValue(
+        "orange",
+      );
+
+      await user.clear(subjectInput);
+      await user.type(subjectInput, "Geography");
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(mockGetLastColourBySubject).toHaveBeenLastCalledWith(
+        "set-1",
+        "Geography",
+      );
+      expect(screen.getByRole("combobox", { name: "colour" })).toHaveValue(
+        "blue",
+      );
+    });
+
+    it("resets the colour to default when the subject is cleared", async () => {
+      const user = setupFakeTimerUser();
+      mockGetLastColourBySubject.mockResolvedValueOnce("green");
+      renderComponent();
+      const subjectInput = screen.getByPlaceholderText("e.g. Maths");
+
+      await user.type(subjectInput, "Art");
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(screen.getByRole("combobox", { name: "colour" })).toHaveValue(
+        "green",
+      );
+
+      await user.clear(subjectInput);
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+        await Promise.resolve();
+      });
+
+      expect(screen.getByRole("combobox", { name: "colour" })).toHaveValue(
+        "blue",
+      );
+    });
+
+    it("does not let a pending subject lookup overwrite a manually selected colour", async () => {
+      const user = setupFakeTimerUser();
+      let resolveLookup: (value: string | null) => void = () => {};
+      mockGetLastColourBySubject.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveLookup = resolve;
+          }),
+      );
+      renderComponent();
+      const subjectInput = screen.getByPlaceholderText("e.g. Maths");
+
+      await user.type(subjectInput, "History");
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(mockGetLastColourBySubject).toHaveBeenCalledWith(
+        "set-1",
+        "History",
+      );
+
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "colour" }),
+        "purple",
+      );
+
+      await act(async () => {
+        resolveLookup("orange");
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(screen.getByRole("combobox", { name: "colour" })).toHaveValue(
+        "purple",
+      );
+    });
+
+    it("keeps a manually selected colour when the subject is cleared afterward", async () => {
+      const user = setupFakeTimerUser();
+      mockGetLastColourBySubject.mockResolvedValueOnce("yellow");
+      renderComponent();
+      const subjectInput = screen.getByPlaceholderText("e.g. Maths");
+
+      await user.type(subjectInput, "Drama");
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(screen.getByRole("combobox", { name: "colour" })).toHaveValue(
+        "yellow",
+      );
+
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "colour" }),
+        "green",
+      );
+
+      await user.clear(subjectInput);
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+        await Promise.resolve();
+      });
+
+      expect(screen.getByRole("combobox", { name: "colour" })).toHaveValue(
+        "green",
+      );
+    });
+
+    it("ignores a stale lookup result from a subject that has since changed", async () => {
+      const user = setupFakeTimerUser();
+      let resolveFirst: (value: string | null) => void = () => {};
+      mockGetLastColourBySubject
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              resolveFirst = resolve;
+            }),
+        )
+        .mockResolvedValueOnce("orange");
+      renderComponent();
+      const subjectInput = screen.getByPlaceholderText("e.g. Maths");
+
+      await user.type(subjectInput, "Ma");
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+        await Promise.resolve();
+      });
+      expect(mockGetLastColourBySubject).toHaveBeenNthCalledWith(
+        1,
+        "set-1",
+        "Ma",
+      );
+
+      await user.type(subjectInput, "th");
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(mockGetLastColourBySubject).toHaveBeenNthCalledWith(
+        2,
+        "set-1",
+        "Math",
+      );
+      expect(screen.getByRole("combobox", { name: "colour" })).toHaveValue(
+        "orange",
+      );
+
+      await act(async () => {
+        resolveFirst("purple");
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(screen.getByRole("combobox", { name: "colour" })).toHaveValue(
+        "orange",
+      );
     });
   });
 });

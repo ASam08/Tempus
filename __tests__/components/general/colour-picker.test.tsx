@@ -38,16 +38,18 @@ describe("ColourPicker", () => {
     jest.clearAllMocks();
   });
 
-  it("renders a select named colour with the default colour as its value", () => {
-    render(<ColourPicker defaultColour="blue" />);
+  it("renders a select named colour with the given value", () => {
+    const handleValueChange = jest.fn();
+    render(<ColourPicker value="blue" onValueChange={handleValueChange} />);
     expect(Select).toHaveBeenCalledWith(
       expect.objectContaining({ value: "blue", name: "colour" }),
       undefined,
     );
   });
 
-  it("styles the trigger with the default colour's background and a fixed width", () => {
-    render(<ColourPicker defaultColour="blue" />);
+  it("styles the trigger with the given value's background and a fixed width", () => {
+    const handleValueChange = jest.fn();
+    render(<ColourPicker value="blue" onValueChange={handleValueChange} />);
     expect(SelectTrigger).toHaveBeenCalledWith(
       expect.objectContaining({
         className: expect.stringContaining("bg-blue-600"),
@@ -63,7 +65,8 @@ describe("ColourPicker", () => {
   });
 
   it("renders the select value with a capitalize class", () => {
-    render(<ColourPicker defaultColour="red" />);
+    const handleValueChange = jest.fn();
+    render(<ColourPicker value="red" onValueChange={handleValueChange} />);
     expect(SelectValue).toHaveBeenCalledWith(
       expect.objectContaining({ className: "capitalize" }),
       undefined,
@@ -71,7 +74,8 @@ describe("ColourPicker", () => {
   });
 
   it("renders the select content aligned to the start without item alignment", () => {
-    render(<ColourPicker defaultColour="red" />);
+    const handleValueChange = jest.fn();
+    render(<ColourPicker value="red" onValueChange={handleValueChange} />);
     expect(SelectContent).toHaveBeenCalledWith(
       expect.objectContaining({
         alignItemWithTrigger: false,
@@ -82,7 +86,8 @@ describe("ColourPicker", () => {
   });
 
   it("renders every timetable colour as a selectable option", () => {
-    render(<ColourPicker defaultColour="red" />);
+    const handleValueChange = jest.fn();
+    render(<ColourPicker value="red" onValueChange={handleValueChange} />);
     const colourSelect = screen.getByRole("combobox", { name: "colour" });
     ["red", "blue", "green", "yellow", "orange", "purple"].forEach((colour) => {
       expect(
@@ -92,7 +97,8 @@ describe("ColourPicker", () => {
   });
 
   it("styles each colour option with its own background and a capitalize class", () => {
-    render(<ColourPicker defaultColour="red" />);
+    const handleValueChange = jest.fn();
+    render(<ColourPicker value="red" onValueChange={handleValueChange} />);
     ["red", "blue", "green", "yellow", "orange", "purple"].forEach((colour) => {
       expect(SelectItem).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -111,14 +117,36 @@ describe("ColourPicker", () => {
     });
   });
 
-  it("updates the select value and trigger styling when a different colour is chosen", async () => {
+  it("calls onValueChange with the newly selected colour", async () => {
     const user = userEvent.setup();
-    render(<ColourPicker defaultColour="red" />);
+    const handleValueChange = jest.fn();
+    render(<ColourPicker value="red" onValueChange={handleValueChange} />);
     const colourSelect = screen.getByRole("combobox", { name: "colour" });
 
     await user.selectOptions(colourSelect, "green");
 
-    expect(colourSelect).toHaveValue("green");
+    expect(handleValueChange).toHaveBeenCalledWith("green");
+  });
+
+  it("does not call onValueChange when the underlying select emits an empty value", async () => {
+    const user = userEvent.setup();
+    const handleValueChange = jest.fn();
+    render(<ColourPicker value="red" onValueChange={handleValueChange} />);
+    const colourSelect = screen.getByRole("combobox", { name: "colour" });
+
+    await user.selectOptions(colourSelect, "");
+
+    expect(handleValueChange).not.toHaveBeenCalled();
+  });
+
+  it("reflects a new value and trigger styling when the value prop changes", () => {
+    const handleValueChange = jest.fn();
+    const { rerender } = render(
+      <ColourPicker value="red" onValueChange={handleValueChange} />,
+    );
+
+    rerender(<ColourPicker value="green" onValueChange={handleValueChange} />);
+
     expect(Select).toHaveBeenLastCalledWith(
       expect.objectContaining({ value: "green" }),
       undefined,
@@ -126,25 +154,6 @@ describe("ColourPicker", () => {
     expect(SelectTrigger).toHaveBeenLastCalledWith(
       expect.objectContaining({
         className: expect.stringContaining("bg-green-600"),
-      }),
-      undefined,
-    );
-  });
-
-  it("keeps the previously selected colour when the underlying select emits an empty value", async () => {
-    const user = userEvent.setup();
-    render(<ColourPicker defaultColour="red" />);
-    const colourSelect = screen.getByRole("combobox", { name: "colour" });
-
-    await user.selectOptions(colourSelect, "");
-
-    expect(Select).toHaveBeenLastCalledWith(
-      expect.objectContaining({ value: "red" }),
-      undefined,
-    );
-    expect(SelectTrigger).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        className: expect.stringContaining("bg-red-600"),
       }),
       undefined,
     );

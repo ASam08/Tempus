@@ -62,6 +62,7 @@ import {
   checkTimetableSetOwnership,
   checkTimetableBlockOwnership,
   getUniqueSubjects,
+  getLastColourBySubject,
 } from "@/lib/data";
 
 const {
@@ -525,6 +526,54 @@ describe("DataTests", () => {
         .mockImplementationOnce(() => Promise.reject(new Error("DB error")));
       const result = await getUniqueSubjects("set-123");
       expect(result).toEqual([]);
+      expect(console.error).toHaveBeenCalled();
+    });
+  });
+  describe("getLastColourBySubject", () => {
+    it("returns null when there is no authenticated user", async () => {
+      const { auth } = require("@/lib/auth");
+      auth.api.getSession.mockResolvedValueOnce(null);
+      const result = await getLastColourBySubject("set-123", "Maths");
+      expect(result).toBeNull();
+      expect(mockLimit).not.toHaveBeenCalled();
+    });
+
+    it("returns null when the user does not own the timetable set", async () => {
+      const { auth } = require("@/lib/auth");
+      auth.api.getSession.mockResolvedValueOnce({ user: { id: "user-123" } });
+      mockLimit.mockResolvedValueOnce([]);
+      const result = await getLastColourBySubject("set-123", "Maths");
+      expect(result).toBeNull();
+    });
+
+    it("returns the last colour used for a subject when the user owns the timetable set", async () => {
+      const { auth } = require("@/lib/auth");
+      auth.api.getSession.mockResolvedValueOnce({ user: { id: "user-123" } });
+      mockLimit
+        .mockResolvedValueOnce([{ id: "set-123" }])
+        .mockResolvedValueOnce([{ colour: "blue" }]);
+      const result = await getLastColourBySubject("set-123", "Maths");
+      expect(result).toEqual("blue");
+    });
+
+    it("returns null when no block is found for the subject", async () => {
+      const { auth } = require("@/lib/auth");
+      auth.api.getSession.mockResolvedValueOnce({ user: { id: "user-123" } });
+      mockLimit
+        .mockResolvedValueOnce([{ id: "set-123" }])
+        .mockResolvedValueOnce([]);
+      const result = await getLastColourBySubject("set-123", "Maths");
+      expect(result).toBeNull();
+    });
+
+    it("returns null when the database throws", async () => {
+      const { auth } = require("@/lib/auth");
+      auth.api.getSession.mockResolvedValueOnce({ user: { id: "user-123" } });
+      mockLimit
+        .mockResolvedValueOnce([{ id: "set-123" }])
+        .mockRejectedValueOnce(new Error("DB error"));
+      const result = await getLastColourBySubject("set-123", "Maths");
+      expect(result).toBeNull();
       expect(console.error).toHaveBeenCalled();
     });
   });
