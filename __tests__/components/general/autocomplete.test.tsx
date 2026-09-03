@@ -1,4 +1,5 @@
 import React from "react";
+import { act } from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -15,6 +16,17 @@ import {
 } from "@/components/general/autocomplete";
 
 const items = ["Maths", "Science", "English"];
+
+async function flushPendingAnimationFrame() {
+  await act(async () => {
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  });
+}
+
+async function closePopup(user: ReturnType<typeof userEvent.setup>) {
+  await user.keyboard("{Escape}");
+  await flushPendingAnimationFrame();
+}
 
 function AutocompleteHarness({
   onValueChange,
@@ -122,6 +134,7 @@ describe("Autocomplete", () => {
       expect(onValueChange).toHaveBeenCalled();
       expect(onValueChange.mock.calls.at(-1)?.[0]).toBe("Ma");
       expect(screen.getByPlaceholderText("e.g. Maths")).toHaveValue("Ma");
+      await closePopup(user);
     });
 
     it("disables the input when disabled is passed", () => {
@@ -139,6 +152,7 @@ describe("Autocomplete", () => {
       expect(
         screen.queryByRole("option", { name: "Science" }),
       ).not.toBeInTheDocument();
+      await closePopup(user);
     });
 
     it("shows the empty state when no items match", async () => {
@@ -146,6 +160,7 @@ describe("Autocomplete", () => {
       renderAutocomplete();
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "zzz");
       expect(screen.getByRole("status")).toHaveTextContent("No matches");
+      await closePopup(user);
     });
 
     it("sets the input value when an option is clicked", async () => {
@@ -156,6 +171,7 @@ describe("Autocomplete", () => {
       await user.click(screen.getByRole("option", { name: "Science" }));
       expect(screen.getByPlaceholderText("e.g. Maths")).toHaveValue("Science");
       expect(onValueChange.mock.calls.at(-1)?.[0]).toBe("Science");
+      await flushPendingAnimationFrame();
     });
   });
 
@@ -204,7 +220,7 @@ describe("Autocomplete", () => {
       ).toBeDisabled();
     });
 
-    it("opens the list of options when clicked", () => {
+    it("opens the list of options when clicked", async () => {
       const { container } = renderAutocomplete();
       const trigger = container.querySelector(
         '[data-slot="autocomplete-trigger"]',
@@ -217,6 +233,8 @@ describe("Autocomplete", () => {
       expect(
         screen.getByRole("option", { name: "English" }),
       ).toBeInTheDocument();
+      fireEvent.click(trigger);
+      await flushPendingAnimationFrame();
     });
   });
 
@@ -228,6 +246,7 @@ describe("Autocomplete", () => {
       expect(
         container.querySelector('[data-slot="autocomplete-clear"]'),
       ).not.toBeInTheDocument();
+      await closePopup(user);
     });
 
     it("does not render when showClear is true but the field is empty", () => {
@@ -244,6 +263,7 @@ describe("Autocomplete", () => {
       expect(
         container.querySelector('[data-slot="autocomplete-clear"]'),
       ).toBeInTheDocument();
+      await closePopup(user);
     });
 
     it("renders the default X icon", async () => {
@@ -252,6 +272,7 @@ describe("Autocomplete", () => {
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Ma");
       const clear = container.querySelector('[data-slot="autocomplete-clear"]');
       expect(clear?.querySelector("svg")).toHaveClass("lucide-x");
+      await closePopup(user);
     });
 
     it("clears the value when clicked", async () => {
@@ -268,6 +289,7 @@ describe("Autocomplete", () => {
       await user.click(clear);
       expect(screen.getByPlaceholderText("e.g. Maths")).toHaveValue("");
       expect(onValueChange.mock.calls.at(-1)?.[0]).toBe("");
+      await closePopup(user);
     });
 
     it("is disabled when the input is disabled, once visible", async () => {
@@ -298,18 +320,21 @@ describe("Autocomplete", () => {
         '[data-slot="input-group-addon"]',
       ) as HTMLElement;
       fireEvent.click(addon);
-      await waitFor(() =>
-        expect(screen.getByPlaceholderText("e.g. Maths")).toHaveFocus(),
-      );
+      const input = screen.getByPlaceholderText("e.g. Maths");
+      await waitFor(() => expect(input).toHaveFocus());
+      fireEvent.keyDown(input, { key: "Escape" });
+      await flushPendingAnimationFrame();
     });
 
-    it("does not intercept clicks on its own buttons", () => {
+    it("does not intercept clicks on its own buttons", async () => {
       const { container } = renderAutocomplete();
       const trigger = container.querySelector(
         '[data-slot="autocomplete-trigger"]',
       ) as HTMLElement;
       fireEvent.click(trigger);
       expect(screen.getByRole("option", { name: "Maths" })).toBeInTheDocument();
+      fireEvent.click(trigger);
+      await flushPendingAnimationFrame();
     });
   });
 
@@ -326,6 +351,7 @@ describe("Autocomplete", () => {
       expect(
         screen.getByRole("button", { name: "Submit" }),
       ).toBeInTheDocument();
+      await flushPendingAnimationFrame();
     });
   });
 
@@ -335,7 +361,7 @@ describe("Autocomplete", () => {
       const onSubmit = jest.fn();
       renderInForm(onSubmit);
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Chemistry");
-      await user.keyboard("{Escape}");
+      await closePopup(user);
       await user.click(screen.getByRole("button", { name: "Submit" }));
       expect(onSubmit).toHaveBeenCalledTimes(1);
       const formData: FormData = onSubmit.mock.calls[0][0];
@@ -347,7 +373,7 @@ describe("Autocomplete", () => {
       const onSubmit = jest.fn();
       renderInForm(onSubmit);
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Woodworking");
-      await user.keyboard("{Escape}");
+      await closePopup(user);
       await user.click(screen.getByRole("button", { name: "Submit" }));
       const formData: FormData = onSubmit.mock.calls[0][0];
       expect(formData.get("subject")).toBe("Woodworking");
