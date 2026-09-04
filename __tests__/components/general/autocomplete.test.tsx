@@ -1,4 +1,5 @@
 import React from "react";
+import { act } from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -15,6 +16,25 @@ import {
 } from "@/components/general/autocomplete";
 
 const items = ["Maths", "Science", "English"];
+
+function setupUser() {
+  return userEvent.setup({
+    advanceTimers: jest.advanceTimersByTime,
+    delay: null,
+    pointerEventsCheck: 0,
+  });
+}
+
+function flushPendingAnimationFrame() {
+  act(() => {
+    jest.advanceTimersByTime(100);
+  });
+}
+
+async function closePopup(user: ReturnType<typeof setupUser>) {
+  await user.keyboard("{Escape}");
+  flushPendingAnimationFrame();
+}
 
 function AutocompleteHarness({
   onValueChange,
@@ -45,7 +65,7 @@ function AutocompleteHarness({
         showClear={showClear}
         disabled={disabled}
       />
-      <AutocompleteContent>
+      <AutocompleteContent disableAnchorTracking>
         <AutocompleteEmpty>No matches</AutocompleteEmpty>
         <AutocompleteList>
           {(item: string) => (
@@ -103,6 +123,11 @@ function renderInForm(onSubmit: (formData: FormData) => void) {
 describe("Autocomplete", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   describe("input", () => {
@@ -115,13 +140,14 @@ describe("Autocomplete", () => {
     });
 
     it("calls onValueChange as the user types", async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onValueChange = jest.fn();
       renderAutocomplete({ onValueChange });
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Ma");
       expect(onValueChange).toHaveBeenCalled();
       expect(onValueChange.mock.calls.at(-1)?.[0]).toBe("Ma");
       expect(screen.getByPlaceholderText("e.g. Maths")).toHaveValue("Ma");
+      await closePopup(user);
     });
 
     it("disables the input when disabled is passed", () => {
@@ -132,30 +158,33 @@ describe("Autocomplete", () => {
 
   describe("suggestion list", () => {
     it("shows matching items as options while typing", async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       renderAutocomplete();
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Ma");
       expect(screen.getByRole("option", { name: "Maths" })).toBeInTheDocument();
       expect(
         screen.queryByRole("option", { name: "Science" }),
       ).not.toBeInTheDocument();
+      await closePopup(user);
     });
 
     it("shows the empty state when no items match", async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       renderAutocomplete();
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "zzz");
       expect(screen.getByRole("status")).toHaveTextContent("No matches");
+      await closePopup(user);
     });
 
     it("sets the input value when an option is clicked", async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onValueChange = jest.fn();
       renderAutocomplete({ onValueChange });
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Sci");
       await user.click(screen.getByRole("option", { name: "Science" }));
       expect(screen.getByPlaceholderText("e.g. Maths")).toHaveValue("Science");
       expect(onValueChange.mock.calls.at(-1)?.[0]).toBe("Science");
+      flushPendingAnimationFrame();
     });
   });
 
@@ -217,17 +246,20 @@ describe("Autocomplete", () => {
       expect(
         screen.getByRole("option", { name: "English" }),
       ).toBeInTheDocument();
+      fireEvent.click(trigger);
+      flushPendingAnimationFrame();
     });
   });
 
   describe("clear", () => {
     it("does not render when showClear is false, even with a value", async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const { container } = renderAutocomplete({ showClear: false });
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Ma");
       expect(
         container.querySelector('[data-slot="autocomplete-clear"]'),
       ).not.toBeInTheDocument();
+      await closePopup(user);
     });
 
     it("does not render when showClear is true but the field is empty", () => {
@@ -238,24 +270,26 @@ describe("Autocomplete", () => {
     });
 
     it("renders once there is a value, when showClear is true", async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const { container } = renderAutocomplete({ showClear: true });
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Ma");
       expect(
         container.querySelector('[data-slot="autocomplete-clear"]'),
       ).toBeInTheDocument();
+      await closePopup(user);
     });
 
     it("renders the default X icon", async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const { container } = renderAutocomplete({ showClear: true });
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Ma");
       const clear = container.querySelector('[data-slot="autocomplete-clear"]');
       expect(clear?.querySelector("svg")).toHaveClass("lucide-x");
+      await closePopup(user);
     });
 
     it("clears the value when clicked", async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onValueChange = jest.fn();
       const { container } = renderAutocomplete({
         showClear: true,
@@ -268,6 +302,7 @@ describe("Autocomplete", () => {
       await user.click(clear);
       expect(screen.getByPlaceholderText("e.g. Maths")).toHaveValue("");
       expect(onValueChange.mock.calls.at(-1)?.[0]).toBe("");
+      await closePopup(user);
     });
 
     it("is disabled when the input is disabled, once visible", async () => {
@@ -298,9 +333,10 @@ describe("Autocomplete", () => {
         '[data-slot="input-group-addon"]',
       ) as HTMLElement;
       fireEvent.click(addon);
-      await waitFor(() =>
-        expect(screen.getByPlaceholderText("e.g. Maths")).toHaveFocus(),
-      );
+      const input = screen.getByPlaceholderText("e.g. Maths");
+      await waitFor(() => expect(input).toHaveFocus());
+      fireEvent.keyDown(input, { key: "Escape" });
+      flushPendingAnimationFrame();
     });
 
     it("does not intercept clicks on its own buttons", () => {
@@ -310,12 +346,14 @@ describe("Autocomplete", () => {
       ) as HTMLElement;
       fireEvent.click(trigger);
       expect(screen.getByRole("option", { name: "Maths" })).toBeInTheDocument();
+      fireEvent.click(trigger);
+      flushPendingAnimationFrame();
     });
   });
 
   describe("open popup and surrounding page", () => {
     it("makes elements outside the popup inert while it is open", async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onSubmit = jest.fn();
       renderInForm(onSubmit);
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Ma");
@@ -326,16 +364,17 @@ describe("Autocomplete", () => {
       expect(
         screen.getByRole("button", { name: "Submit" }),
       ).toBeInTheDocument();
+      flushPendingAnimationFrame();
     });
   });
 
   describe("form submission", () => {
     it("includes the typed subject in FormData", async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onSubmit = jest.fn();
       renderInForm(onSubmit);
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Chemistry");
-      await user.keyboard("{Escape}");
+      await closePopup(user);
       await user.click(screen.getByRole("button", { name: "Submit" }));
       expect(onSubmit).toHaveBeenCalledTimes(1);
       const formData: FormData = onSubmit.mock.calls[0][0];
@@ -343,11 +382,11 @@ describe("Autocomplete", () => {
     });
 
     it("includes a value not present in the suggestion list", async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       const onSubmit = jest.fn();
       renderInForm(onSubmit);
       await user.type(screen.getByPlaceholderText("e.g. Maths"), "Woodworking");
-      await user.keyboard("{Escape}");
+      await closePopup(user);
       await user.click(screen.getByRole("button", { name: "Submit" }));
       const formData: FormData = onSubmit.mock.calls[0][0];
       expect(formData.get("subject")).toBe("Woodworking");
