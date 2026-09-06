@@ -87,12 +87,11 @@ function AutocompleteContent({
   sideOffset = 4,
   align = "start",
   alignOffset = 0,
-  disableAnchorTracking,
   ...props
 }: AutocompletePrimitive.Popup.Props &
   Pick<
     AutocompletePrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset" | "disableAnchorTracking"
+    "align" | "alignOffset" | "side" | "sideOffset"
   >) {
   return (
     <AutocompletePrimitive.Portal>
@@ -101,7 +100,6 @@ function AutocompleteContent({
         sideOffset={sideOffset}
         align={align}
         alignOffset={alignOffset}
-        disableAnchorTracking={disableAnchorTracking}
         className="isolate z-50"
       >
         <AutocompletePrimitive.Popup
