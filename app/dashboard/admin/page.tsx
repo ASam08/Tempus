@@ -57,7 +57,8 @@ export default async function AdminDashboard({
     filterValue,
     filterOperator,
   } = await searchParams;
-  const currentPage = Number(page) || 1;
+  const parsed = Number.parseInt(page ?? "", 10);
+  const currentPage = Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 1;
   const pageSize = 10;
 
   const validSortFields = ["name", "email", "createdAt", "role"] as const;
@@ -70,13 +71,7 @@ export default async function AdminDashboard({
     : "name";
   const resolvedSortDirection = sortDirection === "desc" ? "desc" : "asc";
 
-  const currentFilterArray: string[] = [
-    filterField ?? "none",
-    filterValue ?? "none",
-    filterOperator ?? "none",
-  ];
-  const currentFilter = currentFilterArray.join("--");
-
+  const validFilterFields = ["role", "banned", "createdAt"] as const;
   const validFilterOperators = [
     "in",
     "contains",
@@ -93,10 +88,28 @@ export default async function AdminDashboard({
 
   type FilterOperator = (typeof validFilterOperators)[number];
 
+  const resolvedFilterField = validFilterFields.find((f) => f === filterField);
   const resolvedFilterOperator: FilterOperator | undefined =
     validFilterOperators.includes(filterOperator as FilterOperator)
       ? (filterOperator as FilterOperator)
       : undefined;
+
+  const activeFilter =
+    resolvedFilterField && resolvedFilterOperator && filterValue
+      ? {
+          filterField: resolvedFilterField,
+          filterValue,
+          filterOperator: resolvedFilterOperator,
+        }
+      : undefined;
+
+  const currentFilter = activeFilter
+    ? [
+        activeFilter.filterField,
+        activeFilter.filterValue,
+        activeFilter.filterOperator,
+      ].join("--")
+    : "none";
 
   const users = await auth.api.listUsers({
     query: {
@@ -104,23 +117,44 @@ export default async function AdminDashboard({
       offset: (currentPage - 1) * pageSize,
       sortBy: resolvedSortBy,
       sortDirection: resolvedSortDirection,
-      filterField: filterField,
-      filterValue: filterValue,
-      filterOperator: resolvedFilterOperator,
+      ...activeFilter,
     },
     headers: await headers(),
   });
 
+  const pageHref = (p: number) => {
+    const params = new URLSearchParams({
+      sortBy: resolvedSortBy,
+      sortDirection: resolvedSortDirection,
+    });
+    if (activeFilter) {
+      params.set("filterField", activeFilter.filterField);
+      params.set("filterValue", activeFilter.filterValue);
+      params.set("filterOperator", activeFilter.filterOperator);
+    }
+    params.set("page", String(p));
+    return "?" + params.toString();
+  };
+
   const totalUsers = users.total;
-  const totalPages = Math.ceil(totalUsers / pageSize);
+  const totalPages = Math.max(1, Math.ceil(totalUsers / pageSize));
+
+  if (currentPage > totalPages) {
+    redirect("/dashboard/admin" + pageHref(totalPages));
+  }
 
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const sevenDaysAgoString = sevenDaysAgo.toLocaleDateString("en-NZ", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  const sevenDaysAgoString = sevenDaysAgo.toISOString().slice(0, 10);
+
+  const ariaSort = (
+    field: SortField,
+  ): "ascending" | "descending" | undefined =>
+    resolvedSortBy !== field
+      ? undefined
+      : resolvedSortDirection === "asc"
+        ? "ascending"
+        : "descending";
 
   return (
     <div className="flex h-full max-w-screen flex-col px-3 md:px-2">
@@ -162,7 +196,10 @@ export default async function AdminDashboard({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="sticky left-0 z-10 bg-stone-50 px-4 py-3 dark:bg-gray-950">
+                <TableHead
+                  className="sticky left-0 z-10 bg-stone-50 px-4 py-3 dark:bg-gray-950"
+                  aria-sort={ariaSort("name")}
+                >
                   <SortableHeader
                     field="name"
                     label="Name"
@@ -170,7 +207,7 @@ export default async function AdminDashboard({
                     currentSortDirection={resolvedSortDirection}
                   />
                 </TableHead>
-                <TableHead className="px-4 py-3">
+                <TableHead className="px-4 py-3" aria-sort={ariaSort("email")}>
                   <SortableHeader
                     field="email"
                     label="Email"
@@ -178,7 +215,7 @@ export default async function AdminDashboard({
                     currentSortDirection={resolvedSortDirection}
                   />
                 </TableHead>
-                <TableHead className="px-4 py-3">
+                <TableHead className="px-4 py-3" aria-sort={ariaSort("role")}>
                   <SortableHeader
                     field="role"
                     label="Role"
@@ -188,7 +225,10 @@ export default async function AdminDashboard({
                 </TableHead>
                 <TableHead className="px-4 py-3">Status</TableHead>
                 <TableHead className="px-4 py-3">Status Reason</TableHead>
-                <TableHead className="px-4 py-3">
+                <TableHead
+                  className="px-4 py-3"
+                  aria-sort={ariaSort("createdAt")}
+                >
                   <SortableHeader
                     field="createdAt"
                     label="Created"
@@ -200,6 +240,16 @@ export default async function AdminDashboard({
               </TableRow>
             </TableHeader>
             <TableBody>
+              {users.users.length === 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="text-muted-foreground px-4 py-8 text-center"
+                  >
+                    No users match these filters.
+                  </TableCell>
+                </TableRow>
+              )}
               {users.users.map((user: User) => (
                 <TableRow
                   key={user.id}
@@ -235,7 +285,7 @@ export default async function AdminDashboard({
                     {user.banReason || "-"}
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    {new Date(user.createdAt).toLocaleDateString()}
+                    {new Date(user.createdAt).toLocaleDateString("en-NZ")}{" "}
                   </TableCell>
                   <TableCell className="px-4 py-3">
                     <AdminActions {...user} currentUserId={currentUserId} />
@@ -257,7 +307,7 @@ export default async function AdminDashboard({
               <PaginationContent>
                 {currentPage > 1 && (
                   <PaginationItem>
-                    <PaginationPrevious href={"?page=" + (currentPage - 1)} />
+                    <PaginationPrevious href={pageHref(currentPage - 1)} />
                   </PaginationItem>
                 )}
 
@@ -269,7 +319,7 @@ export default async function AdminDashboard({
                   ) : (
                     <PaginationItem key={item}>
                       <PaginationLink
-                        href={"?page=" + item}
+                        href={pageHref(item)}
                         isActive={item === currentPage}
                       >
                         {item}
@@ -280,7 +330,7 @@ export default async function AdminDashboard({
 
                 {currentPage < totalPages && (
                   <PaginationItem>
-                    <PaginationNext href={"?page=" + (currentPage + 1)} />
+                    <PaginationNext href={pageHref(currentPage + 1)} />
                   </PaginationItem>
                 )}
               </PaginationContent>

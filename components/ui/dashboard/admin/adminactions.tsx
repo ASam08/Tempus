@@ -7,7 +7,6 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -30,56 +29,58 @@ import { User } from "@/lib/auth";
 import { defaultBanReasons } from "@/lib/defaults";
 import { UserRole } from "@/lib/definitions";
 import { useState } from "react";
+import { EditUserDialog } from "@/components/ui/dashboard/admin/edit-user-dialog";
+import { toastNotifications } from "@/components/general/toast-notifications";
 
 type AdminActionsProps = User & {
   currentUserId: string;
   trigger?: React.ReactElement;
-  hideEdit?: boolean;
 };
 
-export default function AdminActions({
-  trigger,
-  hideEdit = false,
-  ...user
-}: AdminActionsProps) {
+export default function AdminActions({ trigger, ...user }: AdminActionsProps) {
   const router = useRouter();
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [removeUserDialogOpen, setRemoveUserDialogOpen] = useState(false);
+  const [editUserDialogOpen, setEditUserDialogOpen] = useState(false);
 
   const isSelf = user.id === user.currentUserId;
 
-  async function enableUser(userId: string) {
-    await authClient.admin.unbanUser({
-      userId: userId,
-    });
-    router.refresh();
+  async function enableUser() {
+    const ok = await toastNotifications(
+      () => authClient.admin.unbanUser({ userId: user.id }),
+      "User enabled",
+      "Couldn't enable user",
+    );
+    if (ok) router.refresh();
   }
 
-  async function banUser(userId: string, banReason: string) {
-    await authClient.admin.banUser({
-      userId: userId,
-      banReason: banReason,
-    });
-    router.refresh();
+  async function banUser(banReason: string) {
+    const ok = await toastNotifications(
+      () => authClient.admin.banUser({ userId: user.id, banReason }),
+      "User banned",
+      "Couldn't ban user",
+    );
+    if (ok) router.refresh();
   }
 
-  async function changeUserRole(userId: string, newRole: UserRole) {
-    await authClient.admin.setRole({
-      userId: userId,
-      role: newRole,
-    });
-    router.refresh();
+  async function changeUserRole(newRole: UserRole) {
+    setRoleDialogOpen(false);
+    const ok = await toastNotifications(
+      () => authClient.admin.setRole({ userId: user.id, role: newRole }),
+      "Role updated",
+      "Couldn't change role",
+    );
+    if (ok) router.refresh();
   }
 
-  async function removeUser(userId: string) {
-    await authClient.admin.removeUser({
-      userId: userId,
-    });
-    router.refresh();
-  }
-
-  async function editUser(userId: string) {
-    router.push(`/dashboard/admin/edit/${userId}`);
+  async function removeUser() {
+    setRemoveUserDialogOpen(false);
+    const ok = await toastNotifications(
+      () => authClient.admin.removeUser({ userId: user.id }),
+      "User removed",
+      "Couldn't remove user",
+    );
+    if (ok) router.refresh();
   }
 
   return (
@@ -89,7 +90,7 @@ export default function AdminActions({
           <AlertDialogHeader>
             <AlertDialogTitle>Are You Sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to change this user's role to{" "}
+              Are you sure you want to change this user&apos;s role to{" "}
               {user.role === "admin" ? "User" : "Admin"}?
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -97,10 +98,7 @@ export default function AdminActions({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
-                changeUserRole(
-                  user.id,
-                  user.role === "admin" ? "user" : "admin",
-                )
+                changeUserRole(user.role === "admin" ? "user" : "admin")
               }
             >
               Change Role
@@ -125,13 +123,19 @@ export default function AdminActions({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={() => removeUser(user.id)}
+              onClick={() => removeUser()}
             >
               Delete User
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EditUserDialog
+        chosenUser={user}
+        open={editUserDialogOpen}
+        onOpenChange={setEditUserDialogOpen}
+      />
 
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -145,18 +149,16 @@ export default function AdminActions({
           }
         />
         <DropdownMenuContent className="w-36" align="end">
-          {hideEdit !== true && (
-            <DropdownMenuItem onClick={() => editUser(user.id)}>
-              Edit
-            </DropdownMenuItem>
-          )}
-          {hideEdit !== true && !isSelf && <DropdownMenuSeparator />}
+          <DropdownMenuItem onClick={() => setEditUserDialogOpen(true)}>
+            Edit
+          </DropdownMenuItem>
+          {!isSelf && <DropdownMenuSeparator />}
           {!isSelf && (
             <>
               <DropdownMenuGroup>
                 <DropdownMenuLabel>Account Status</DropdownMenuLabel>
                 {user.banned ? (
-                  <DropdownMenuItem onClick={() => enableUser(user.id)}>
+                  <DropdownMenuItem onClick={() => enableUser()}>
                     Enable
                   </DropdownMenuItem>
                 ) : (
@@ -166,7 +168,7 @@ export default function AdminActions({
                       {defaultBanReasons.map((reason) => (
                         <DropdownMenuItem
                           key={reason}
-                          onClick={() => banUser(user.id, reason)}
+                          onClick={() => banUser(reason)}
                         >
                           {reason}
                         </DropdownMenuItem>
@@ -181,12 +183,12 @@ export default function AdminActions({
                 <DropdownMenuLabel className="text-red-600">
                   Danger Zone
                 </DropdownMenuLabel>
-                <DropdownMenuItem onSelect={() => setRoleDialogOpen(true)}>
+                <DropdownMenuItem onClick={() => setRoleDialogOpen(true)}>
                   {user.role === "admin" ? "Set as User" : "Set as Admin"}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
-                  onSelect={() => setRemoveUserDialogOpen(true)}
+                  onClick={() => setRemoveUserDialogOpen(true)}
                 >
                   Delete
                 </DropdownMenuItem>
