@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deleteTimetableSet } from "@/lib/actions";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 export default function SetManageActions(timetable: {
   id: string;
@@ -33,23 +33,20 @@ export default function SetManageActions(timetable: {
       const { message } = await deleteTimetableSet(timetable.id);
       setIsDeleteDialogOpen(false);
       if (message) {
-        toast.error(message, {
-          position: "top-center",
-          style: { backgroundColor: "red" },
-        });
+        toast.add({ title: message, type: "error" });
       } else {
-        toast.success(`Timetable "${timetable.title}" deleted successfully.`, {
-          position: "top-center",
-          style: { backgroundColor: "forestgreen" },
+        toast.add({
+          title: `Timetable "${timetable.title}" deleted successfully.`,
+          type: "success",
         });
         router.push("/dashboard/timetable");
       }
     } catch (error) {
       console.error("Unexpected error deleting timetable set:", error);
       setIsDeleteDialogOpen(false);
-      toast.error("Something went wrong. Please try again.", {
-        position: "top-center",
-        style: { backgroundColor: "red" },
+      toast.add({
+        title: "Something went wrong. Please try again.",
+        type: "error",
       });
     }
   }

@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom";
 import { render, screen, waitFor, act, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
 import type { User } from "better-auth";
 
@@ -23,9 +23,10 @@ jest.mock("@/lib/data", () => ({
   verifyUserPassword: jest.fn(),
 }));
 
-jest.mock("sonner", () => ({
-  toast: { success: jest.fn(), error: jest.fn() },
-}));
+jest.mock(
+  "@/components/ui/toast",
+  () => require("@/testing/mocks/shadcn").toastMock,
+);
 
 jest.mock("@/components/general/password-requirements-hover", () => ({
   PasswordRequirementsHover: () => null,
@@ -203,7 +204,7 @@ describe("AccountForm", () => {
       await user.click(saveButton());
 
       expect(mockUpdateUser).not.toHaveBeenCalled();
-      expect(toast.success).not.toHaveBeenCalled();
+      expect(toast.add).not.toHaveBeenCalled();
     });
 
     it("updates the name, shows a success toast, resets the form, and refreshes the route", async () => {
@@ -218,9 +219,11 @@ describe("AccountForm", () => {
       await waitFor(() =>
         expect(mockUpdateUser).toHaveBeenCalledWith({ name: "New Name" }),
       );
-      expect(toast.success).toHaveBeenCalledWith(
-        "Personal information updated.",
-        { position: "top-center", style: { backgroundColor: "forestgreen" } },
+      expect(toast.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Personal information updated.",
+          type: "success",
+        }),
       );
       await waitFor(() => expect(resetSpy).toHaveBeenCalled());
       expect(mockRefresh).toHaveBeenCalled();
@@ -240,10 +243,12 @@ describe("AccountForm", () => {
       await user.click(saveButton());
 
       await waitFor(() =>
-        expect(toast.error).toHaveBeenCalledWith("Name already taken.", {
-          position: "top-center",
-          style: { backgroundColor: "red" },
-        }),
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: "Name already taken.",
+            type: "error",
+          }),
+        ),
       );
       expect(mockRefresh).not.toHaveBeenCalled();
     });
@@ -258,9 +263,11 @@ describe("AccountForm", () => {
       await user.click(saveButton());
 
       await waitFor(() =>
-        expect(toast.error).toHaveBeenCalledWith(
-          "Failed to update personal information.",
-          { position: "top-center", style: { backgroundColor: "red" } },
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: "Failed to update personal information.",
+            type: "error",
+          }),
         ),
       );
     });
@@ -340,9 +347,11 @@ describe("AccountForm", () => {
       );
 
       await waitFor(() =>
-        expect(toast.error).toHaveBeenCalledWith(
-          "Password Verification Failed",
-          { position: "top-center", style: { backgroundColor: "red" } },
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: "Password Verification Failed",
+            type: "error",
+          }),
         ),
       );
       expect(mockChangeEmail).not.toHaveBeenCalled();
@@ -369,10 +378,9 @@ describe("AccountForm", () => {
           callbackURL: "/dashboard",
         }),
       );
-      expect(toast.success).toHaveBeenCalledWith("Email updated.", {
-        position: "top-center",
-        style: { backgroundColor: "forestgreen" },
-      });
+      expect(toast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Email updated.", type: "success" }),
+      );
       await waitFor(() => expect(dialog()).not.toBeInTheDocument());
       expect(resetSpy).toHaveBeenCalled();
       expect(mockRefresh).toHaveBeenCalled();
@@ -394,10 +402,12 @@ describe("AccountForm", () => {
       );
 
       await waitFor(() =>
-        expect(toast.error).toHaveBeenCalledWith("Email already in use.", {
-          position: "top-center",
-          style: { backgroundColor: "red" },
-        }),
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: "Email already in use.",
+            type: "error",
+          }),
+        ),
       );
       expect(mockRefresh).not.toHaveBeenCalled();
     });
@@ -414,10 +424,12 @@ describe("AccountForm", () => {
       );
 
       await waitFor(() =>
-        expect(toast.error).toHaveBeenCalledWith("Failed to update email.", {
-          position: "top-center",
-          style: { backgroundColor: "red" },
-        }),
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: "Failed to update email.",
+            type: "error",
+          }),
+        ),
       );
     });
 
@@ -515,10 +527,12 @@ describe("AccountForm", () => {
           revokeOtherSessions: true,
         }),
       );
-      expect(toast.success).toHaveBeenCalledWith("Password updated.", {
-        position: "top-center",
-        style: { backgroundColor: "forestgreen" },
-      });
+      expect(toast.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Password updated.",
+          type: "success",
+        }),
+      );
       await waitFor(() => expect(resetSpy).toHaveBeenCalled());
       expect(mockRefresh).not.toHaveBeenCalled();
 
@@ -539,9 +553,11 @@ describe("AccountForm", () => {
       await user.click(saveButton());
 
       await waitFor(() =>
-        expect(toast.error).toHaveBeenCalledWith(
-          "Current password is incorrect.",
-          { position: "top-center", style: { backgroundColor: "red" } },
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: "Current password is incorrect.",
+            type: "error",
+          }),
         ),
       );
     });
@@ -558,10 +574,12 @@ describe("AccountForm", () => {
       await user.click(saveButton());
 
       await waitFor(() =>
-        expect(toast.error).toHaveBeenCalledWith("Failed to update password.", {
-          position: "top-center",
-          style: { backgroundColor: "red" },
-        }),
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: "Failed to update password.",
+            type: "error",
+          }),
+        ),
       );
     });
 

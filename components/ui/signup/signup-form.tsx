@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { authClient } from "@/lib/auth-client";
 import { z } from "zod";
 import { passwordSchema } from "@/lib/schema";
@@ -95,8 +95,9 @@ export function SignupForm({
       return;
     }
 
-    toast.success("Account created successfully!", {
-      position: "top-center",
+    toast.add({
+      title: "Account created successfully!",
+      type: "success",
     });
     router.push("/login");
   }

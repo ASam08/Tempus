@@ -17,12 +17,10 @@ jest.mock("@/lib/auth-client", () => ({
   },
 }));
 
-jest.mock("sonner", () => ({
-  toast: Object.assign(jest.fn(), {
-    error: jest.fn(),
-    success: jest.fn(),
-  }),
-}));
+jest.mock(
+  "@/components/ui/toast",
+  () => require("@/testing/mocks/shadcn").toastMock,
+);
 
 jest.mock("@/lib/schema", () => ({
   passwordSchema: {
@@ -56,7 +54,7 @@ jest.mock(
 );
 
 import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { passwordSchema } from "@/lib/schema";
 
 function submitForm(newPassword: string, confirmPassword: string) {
@@ -103,7 +101,7 @@ describe("ResetPasswordForm", () => {
   });
 
   describe("schema validation failure", () => {
-    it("shows toast error with schema issues when password fails validation", () => {
+    it("shows toast error listing each schema issue when password fails validation", () => {
       (passwordSchema.safeParse as jest.Mock).mockReturnValue({
         success: false,
         error: {
@@ -117,10 +115,17 @@ describe("ResetPasswordForm", () => {
       render(<ResetPasswordForm />);
       submitForm("bad", "bad");
 
-      expect(toast.error).toHaveBeenCalledWith(
-        "Password must:",
-        expect.objectContaining({ position: "top-center" }),
+      expect(toast.add).toHaveBeenCalledTimes(1);
+      expect(toast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Password must:", type: "error" }),
       );
+
+      const { description } = (toast.add as jest.Mock).mock.calls[0][0];
+      render(description);
+
+      expect(
+        screen.getAllByRole("listitem").map((item) => item.textContent),
+      ).toEqual(["at least 8 characters", "at least one uppercase letter"]);
       expect(authClient.resetPassword).not.toHaveBeenCalled();
     });
   });
@@ -130,8 +135,9 @@ describe("ResetPasswordForm", () => {
       render(<ResetPasswordForm />);
       submitForm("ValidPass1!", "DifferentPass1!");
 
-      expect(toast.error).toHaveBeenCalledWith("Passwords do not match.", {
-        position: "top-center",
+      expect(toast.add).toHaveBeenCalledWith({
+        title: "Passwords do not match.",
+        type: "error",
       });
       expect(authClient.resetPassword).not.toHaveBeenCalled();
     });
@@ -145,15 +151,28 @@ describe("ResetPasswordForm", () => {
       submitForm("ValidPass1!", "ValidPass1!");
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          "Invalid password reset link!",
-          expect.objectContaining({
-            description: "The password reset link is missing a token.",
-            position: "top-center",
-          }),
-        );
+        expect(toast.add).toHaveBeenCalledWith({
+          title: "Invalid password reset link!",
+          description: "The password reset link is missing a token.",
+          timeout: 5000,
+          type: "error",
+        });
       });
       expect(authClient.resetPassword).not.toHaveBeenCalled();
+    });
+
+    it("re-enables the submit button after the missing token error", async () => {
+      mockGet.mockReturnValue(null);
+
+      render(<ResetPasswordForm />);
+      submitForm("ValidPass1!", "ValidPass1!");
+
+      await waitFor(() => {
+        expect(toast.add).toHaveBeenCalled();
+      });
+      expect(
+        screen.getByRole("button", { name: /set new password/i }),
+      ).not.toBeDisabled();
     });
   });
 
@@ -175,13 +194,12 @@ describe("ResetPasswordForm", () => {
       });
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          "Password reset successful!",
-          expect.objectContaining({
-            position: "top-center",
-            description: "Your password has been reset. You can now log in.",
-          }),
-        );
+        expect(toast.add).toHaveBeenCalledWith({
+          title: "Password reset successful!",
+          type: "success",
+          timeout: 5000,
+          description: "Your password has been reset. You can now log in.",
+        });
       });
 
       expect(mockPush).toHaveBeenCalledWith("/login");
@@ -199,14 +217,13 @@ describe("ResetPasswordForm", () => {
       submitForm("ValidPass1!", "ValidPass1!");
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          "Failed to reset password",
-          expect.objectContaining({
-            description:
-              "The reset link may have expired. Please request a new one.",
-            position: "top-center",
-          }),
-        );
+        expect(toast.add).toHaveBeenCalledWith({
+          title: "Failed to reset password",
+          type: "error",
+          timeout: 5000,
+          description:
+            "The reset link may have expired. Please request a new one.",
+        });
       });
 
       expect(mockPush).not.toHaveBeenCalled();

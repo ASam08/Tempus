@@ -20,7 +20,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { CircleAlert } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { authClient } from "@/lib/auth-client";
 
 export function LoginForm({
@@ -36,9 +36,10 @@ export function LoginForm({
 
   useEffect(() => {
     if (errorMessage) {
-      toast.error(errorMessage, {
-        position: "top-center",
+      toast.add({
+        title: errorMessage,
         description: "Please contact an administrator for support.",
+        type: "error",
       });
     }
   }, [errorMessage]);

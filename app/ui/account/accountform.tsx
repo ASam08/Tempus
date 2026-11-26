@@ -18,7 +18,7 @@ import {
 import { User } from "better-auth";
 import { authClient } from "@/lib/auth-client";
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { PasswordRequirementsHover } from "@/components/general/password-requirements-hover";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
@@ -58,14 +58,16 @@ async function handleOutcome(
   const { error } = await action();
 
   if (error) {
-    toast.error(error.message ?? fallbackErrorMessage, {
-      position: "top-center",
-      style: { backgroundColor: "red" },
+    toast.add({
+      title: error.message ?? fallbackErrorMessage,
+      description: "Please contact an administrator for support.",
+      type: "error",
     });
   } else {
-    toast.success(successMessage, {
-      position: "top-center",
-      style: { backgroundColor: "forestgreen" },
+    toast.add({
+      title: successMessage,
+      description: "Your changes have been saved.",
+      type: "success",
     });
     form.reset();
     onSuccess?.();
@@ -199,9 +201,11 @@ export default function AccountForm({ user }: { user: User }) {
       const verified = await verifyUserPassword(password);
 
       if (!verified) {
-        toast.error("Password Verification Failed", {
-          position: "top-center",
-          style: { backgroundColor: "red" },
+        toast.add({
+          title: "Password Verification Failed",
+          description:
+            "Please try again or contact an administrator for support.",
+          type: "error",
         });
         return;
       }

@@ -611,3 +611,7 @@ export const textareaMock = {
     <textarea {...props} />
   ),
 };
+
+export const toastMock = {
+  toast: { add: jest.fn() },
+};

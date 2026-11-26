@@ -15,20 +15,21 @@ jest.mock("@/lib/auth-client", () => ({
   },
 }));
 
-jest.mock("sonner", () => ({
-  toast: { error: jest.fn() },
-}));
+jest.mock(
+  "@/components/ui/toast",
+  () => require("@/testing/mocks/shadcn").toastMock,
+);
 
 import { LoginForm } from "@/components/ui/login/login-form";
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 const mockUseSearchParams = useSearchParams as jest.Mock;
 const mockUseRouter = useRouter as jest.Mock;
 const mockSignInEmail = authClient.signIn.email as jest.Mock;
-const mockToastError = toast.error as jest.Mock;
+const mockToastAdd = toast.add as jest.Mock;
 
 async function fillAndSubmit(email = "user@example.com", password = "secret") {
   await userEvent.type(screen.getByLabelText(/email/i), email);
@@ -149,7 +150,7 @@ describe("LoginForm", () => {
           screen.queryByRole("img", { hidden: true }),
         ).not.toBeInTheDocument();
       });
-      expect(mockToastError).not.toHaveBeenCalled();
+      expect(mockToastAdd).not.toHaveBeenCalled();
     });
   });
 
@@ -196,7 +197,7 @@ describe("LoginForm", () => {
       });
     });
 
-    it("fires toast.error for the banned-user message", async () => {
+    it("adds an error toast for the banned-user message", async () => {
       mockSignInEmail.mockResolvedValue({
         error: { code: "BANNED_USER" },
       });
@@ -205,9 +206,13 @@ describe("LoginForm", () => {
       await fillAndSubmit();
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith(
-          expect.stringMatching(/your account has not been approved yet/i),
-          expect.objectContaining({ position: "top-center" }),
+        expect(mockToastAdd).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: expect.stringMatching(
+              /your account has not been approved yet/i,
+            ),
+            type: "error",
+          }),
         );
       });
     });
@@ -225,7 +230,7 @@ describe("LoginForm", () => {
       });
     });
 
-    it("fires toast.error for the invalid-credentials message", async () => {
+    it("adds an error toast for the invalid-credentials message", async () => {
       mockSignInEmail.mockResolvedValue({
         error: { code: "INVALID_EMAIL_OR_PASSWORD" },
       });
@@ -234,9 +239,11 @@ describe("LoginForm", () => {
       await fillAndSubmit();
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith(
-          expect.stringMatching(/invalid credentials/i),
-          expect.objectContaining({ position: "top-center" }),
+        expect(mockToastAdd).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: expect.stringMatching(/invalid credentials/i),
+            type: "error",
+          }),
         );
       });
     });
@@ -272,7 +279,7 @@ describe("LoginForm", () => {
       consoleSpy.mockRestore();
     });
 
-    it("fires toast.error for the generic error message", async () => {
+    it("adds an error toast for the generic error message", async () => {
       mockSignInEmail.mockResolvedValue({
         error: { code: "SOME_UNKNOWN_CODE" },
       });
@@ -281,9 +288,11 @@ describe("LoginForm", () => {
       await fillAndSubmit();
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith(
-          expect.stringMatching(/something went wrong/i),
-          expect.objectContaining({ position: "top-center" }),
+        expect(mockToastAdd).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: expect.stringMatching(/something went wrong/i),
+            type: "error",
+          }),
         );
       });
     });
@@ -317,7 +326,7 @@ describe("LoginForm", () => {
       expect(getMockPush()).not.toHaveBeenCalled();
     });
 
-    it("includes the support description in every toast.error call", async () => {
+    it("includes the support description in every error toast", async () => {
       mockSignInEmail.mockResolvedValue({
         error: { code: "BANNED_USER" },
       });
@@ -326,9 +335,9 @@ describe("LoginForm", () => {
       await fillAndSubmit();
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith(
-          expect.any(String),
+        expect(mockToastAdd).toHaveBeenCalledWith(
           expect.objectContaining({
+            type: "error",
             description: expect.stringMatching(/contact an administrator/i),
           }),
         );

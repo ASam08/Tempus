@@ -8,12 +8,10 @@ jest.mock("@/lib/auth-client", () => ({
   },
 }));
 
-jest.mock("sonner", () => ({
-  toast: Object.assign(jest.fn(), {
-    error: jest.fn(),
-    success: jest.fn(),
-  }),
-}));
+jest.mock(
+  "@/components/ui/toast",
+  () => require("@/testing/mocks/shadcn").toastMock,
+);
 
 jest.mock("next/link", () => ({
   __esModule: true,
@@ -67,7 +65,7 @@ jest.mock(
 );
 
 import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 function submitForm(email: string) {
   fireEvent.change(screen.getByLabelText(/email/i), {
@@ -151,9 +149,11 @@ describe("PasswordResetForm", () => {
       });
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          "Password reset requested!",
-          expect.objectContaining({ position: "top-center" }),
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: "Password reset requested!",
+            type: "success",
+          }),
         );
       });
 
@@ -212,9 +212,11 @@ describe("PasswordResetForm", () => {
       submitForm("user@example.com");
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          "Password reset error!",
-          expect.objectContaining({ position: "top-center" }),
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: "Password reset error!",
+            type: "error",
+          }),
         );
       });
 

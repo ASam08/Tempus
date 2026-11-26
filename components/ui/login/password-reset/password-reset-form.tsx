@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import {
   HoverCard,
   HoverCardContent,
@@ -33,21 +33,21 @@ export default function PasswordResetForm() {
     });
     if (error) {
       console.error("Password reset error:", error);
-      toast.error("Password reset error!", {
-        position: "top-center",
+      toast.add({
+        title: "Password reset error!",
         description:
           "An error occurred while sending the password reset email. Please try again.",
-        duration: 5000,
-        closeButton: true,
+        type: "error",
+        timeout: 5000,
       });
     } else {
       setSubmitted(true);
-      toast.success("Password reset requested!", {
-        position: "top-center",
+      toast.add({
+        title: "Password reset requested!",
         description:
           "If an account with that email exists, we've sent you a link to reset your password.",
-        duration: 5000,
-        closeButton: true,
+        type: "success",
+        timeout: 5000,
       });
     }
     setIsPending(false);

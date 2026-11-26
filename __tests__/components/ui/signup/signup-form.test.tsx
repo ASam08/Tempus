@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 const mockPush = jest.fn();
 
@@ -16,9 +16,10 @@ jest.mock("@/lib/auth-client", () => ({
   },
 }));
 
-jest.mock("sonner", () => ({
-  toast: { success: jest.fn(), error: jest.fn() },
-}));
+jest.mock(
+  "@/components/ui/toast",
+  () => require("@/testing/mocks/shadcn").toastMock,
+);
 
 jest.mock("@/components/general/password-requirements-hover", () => ({
   PasswordRequirementsHover: () => null,
@@ -227,9 +228,11 @@ describe("SignupForm", () => {
       fillAndSubmit();
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          "Account created successfully!",
-          expect.objectContaining({ position: "top-center" }),
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: "Account created successfully!",
+            type: "success",
+          }),
         );
         expect(mockPush).toHaveBeenCalledWith("/login");
       });
@@ -250,7 +253,9 @@ describe("SignupForm", () => {
           screen.getByText("An account with this email already exists."),
         ).toBeInTheDocument();
       });
-      expect(toast.success).not.toHaveBeenCalled();
+      expect(toast.add).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: "success" }),
+      );
       expect(mockPush).not.toHaveBeenCalled();
     });
 
@@ -267,7 +272,9 @@ describe("SignupForm", () => {
           screen.getByText("Failed to create account."),
         ).toBeInTheDocument();
       });
-      expect(toast.success).not.toHaveBeenCalled();
+      expect(toast.add).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: "success" }),
+      );
       expect(mockPush).not.toHaveBeenCalled();
     });
   });

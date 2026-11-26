@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { useSearchParams, useRouter } from "next/navigation";
 import { passwordSchema } from "@/lib/schema";
 import { PasswordRequirementsHover } from "@/components/general/password-requirements-hover";
@@ -20,11 +20,11 @@ export default function ResetPasswordForm() {
   const handleSubmit = async (newPassword: string) => {
     setIsPending(true);
     if (!token) {
-      toast.error("Invalid password reset link!", {
-        position: "top-center",
+      toast.add({
+        title: "Invalid password reset link!",
         description: "The password reset link is missing a token.",
-        duration: 5000,
-        closeButton: true,
+        timeout: 5000,
+        type: "error",
       });
       setIsPending(false);
       return;
@@ -34,20 +34,22 @@ export default function ResetPasswordForm() {
         token,
       });
       if (error) {
-        toast.error("Failed to reset password", {
+        toast.add({
+          title: "Failed to reset password",
+          type: "error",
+          timeout: 5000,
           description:
             "The reset link may have expired. Please request a new one.",
-          position: "top-center",
         });
         setIsPending(false);
         return;
       }
       setIsPending(false);
-      toast.success("Password reset successful!", {
-        position: "top-center",
+      toast.add({
+        title: "Password reset successful!",
+        type: "success",
+        timeout: 5000,
         description: "Your password has been reset. You can now log in.",
-        duration: 5000,
-        closeButton: true,
       });
       router.push("/login");
     }
@@ -68,8 +70,9 @@ export default function ResetPasswordForm() {
 
             const result = passwordSchema.safeParse(newPassword);
             if (!result.success) {
-              toast.error("Password must:", {
-                position: "top-center",
+              toast.add({
+                title: "Password must:",
+                type: "error",
                 description: (
                   <ul className="list-disc pl-4">
                     {result.error.issues.map((i) => (
@@ -81,8 +84,9 @@ export default function ResetPasswordForm() {
               return;
             }
             if (newPassword !== confirmPassword) {
-              toast.error("Passwords do not match.", {
-                position: "top-center",
+              toast.add({
+                title: "Passwords do not match.",
+                type: "error",
               });
               return;
             }

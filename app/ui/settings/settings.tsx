@@ -14,7 +14,7 @@ import { settingsSave } from "@/lib/actions";
 import Link from "next/link";
 import { LucideCircleQuestionMark } from "lucide-react";
 import { useActionState, useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { defaultTimeSettings } from "@/lib/defaults";
 import { dowKeyValue } from "@/lib/constants";
 import { useRouter } from "next/navigation";
@@ -51,14 +51,14 @@ export default function SettingsFormClient({
 
   useEffect(() => {
     if (state.message === "success") {
-      toast.success("Settings saved successfully!", {
-        position: "top-center",
-        style: { backgroundColor: "forestgreen" },
+      toast.add({
+        title: "Settings saved successfully!",
+        type: "success",
       });
     } else if (state.message && state.message !== "success") {
-      toast.error("Failed to save settings.", {
-        position: "top-center",
-        style: { backgroundColor: "red" },
+      toast.add({
+        title: "Failed to save settings.",
+        type: "error",
       });
     }
     router.refresh();
