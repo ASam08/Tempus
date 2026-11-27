@@ -17,12 +17,10 @@ jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock("sonner", () => ({
-  toast: {
-    success: jest.fn(),
-    error: jest.fn(),
-  },
-}));
+jest.mock(
+  "@/components/ui/toast",
+  () => require("@/testing/mocks/shadcn").toastMock,
+);
 
 jest.mock(
   "@/components/ui/input",
@@ -262,7 +260,7 @@ describe("SettingsFormClient", () => {
   describe("server action state", () => {
     it("shows success toast when state message is 'success'", async () => {
       const { useActionState } = require("react");
-      const { toast } = require("sonner");
+      const { toast } = require("@/components/ui/toast");
       useActionState.mockReturnValue([
         { message: "success", timestamp: 12345 },
         jest.fn(),
@@ -270,15 +268,16 @@ describe("SettingsFormClient", () => {
       await act(async () => {
         render(<SettingsFormClient settings={null} />);
       });
-      expect(toast.success).toHaveBeenCalledWith(
-        "Settings saved successfully!",
-        expect.anything(),
-      );
+      expect(toast.add).toHaveBeenCalledTimes(1);
+      expect(toast.add).toHaveBeenCalledWith({
+        title: "Settings saved successfully!",
+        type: "success",
+      });
     });
 
     it("shows error toast when state message is a non-success error", async () => {
       const { useActionState } = require("react");
-      const { toast } = require("sonner");
+      const { toast } = require("@/components/ui/toast");
       useActionState.mockReturnValue([
         { message: "error", timestamp: 12345 },
         jest.fn(),
@@ -286,10 +285,11 @@ describe("SettingsFormClient", () => {
       await act(async () => {
         render(<SettingsFormClient settings={null} />);
       });
-      expect(toast.error).toHaveBeenCalledWith(
-        "Failed to save settings.",
-        expect.anything(),
-      );
+      expect(toast.add).toHaveBeenCalledTimes(1);
+      expect(toast.add).toHaveBeenCalledWith({
+        title: "Failed to save settings.",
+        type: "error",
+      });
     });
 
     it("calls router.refresh when state changes", async () => {
@@ -305,12 +305,11 @@ describe("SettingsFormClient", () => {
     });
 
     it("does not show any toast when state message is null", async () => {
-      const { toast } = require("sonner");
+      const { toast } = require("@/components/ui/toast");
       await act(async () => {
         render(<SettingsFormClient settings={null} />);
       });
-      expect(toast.success).not.toHaveBeenCalled();
-      expect(toast.error).not.toHaveBeenCalled();
+      expect(toast.add).not.toHaveBeenCalled();
     });
 
     it("renders server-side start_time field errors", () => {

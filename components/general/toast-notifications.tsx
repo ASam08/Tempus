@@ -6,20 +6,31 @@ export async function toastNotifications(
   action: () => Promise<AuthResult>,
   successMessage: string,
   fallbackErrorMessage = "Something went wrong.",
+  successDescription?: string,
+  failureDescription?: string,
 ): Promise<boolean> {
   try {
     const { error } = await action();
     if (error) {
       toast.add({
         title: error.message || fallbackErrorMessage,
+        description: failureDescription,
         type: "error",
       });
       return false;
     }
   } catch {
-    toast.add({ title: fallbackErrorMessage, type: "error" });
+    toast.add({
+      title: fallbackErrorMessage,
+      description: failureDescription,
+      type: "error",
+    });
     return false;
   }
-  toast.add({ title: successMessage, type: "success" });
+  toast.add({
+    title: successMessage,
+    description: successDescription,
+    type: "success",
+  });
   return true;
 }

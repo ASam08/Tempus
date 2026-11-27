@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AdminActions from "@/components/ui/dashboard/admin/adminactions";
 import { authClient } from "@/lib/auth-client";
+import { toastNotifications } from "@/components/general/toast-notifications";
 
 const mockRefresh = jest.fn();
 jest.mock("next/navigation", () => ({
@@ -17,6 +18,28 @@ jest.mock("@/lib/auth-client", () => ({
       removeUser: jest.fn(),
     },
   },
+}));
+
+jest.mock("@/components/general/toast-notifications", () => ({
+  toastNotifications: jest.fn(),
+}));
+
+jest.mock("@/components/ui/dashboard/admin/edit-user-dialog", () => ({
+  EditUserDialog: ({
+    chosenUser,
+    open,
+    onOpenChange,
+  }: {
+    chosenUser: { name: string };
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Edit user">
+        <p>{chosenUser.name}</p>
+        <button onClick={() => onOpenChange(false)}>Dismiss</button>
+      </div>
+    ) : null,
 }));
 
 jest.mock(
@@ -47,11 +70,6 @@ jest.mock(
   () => require("@/testing/mocks/shadcn").dropdownMenuMock,
 );
 
-const mockPush = jest.fn();
-jest.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: mockRefresh, push: mockPush }),
-}));
-
 const mockAuthClient = authClient as unknown as {
   admin: {
     unbanUser: jest.Mock;
@@ -60,6 +78,8 @@ const mockAuthClient = authClient as unknown as {
     removeUser: jest.Mock;
   };
 };
+
+const mockToastNotifications = toastNotifications as unknown as jest.Mock;
 
 const baseUser = {
   id: "user-1",
@@ -85,9 +105,17 @@ async function openBanSubMenu() {
   await userEvent.click(screen.getByRole("button", { name: /ban/i }));
 }
 
+function toastResolvesWith(ok: boolean) {
+  mockToastNotifications.mockImplementation(async (action: () => unknown) => {
+    await action();
+    return ok;
+  });
+}
+
 describe("AdminActions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    toastResolvesWith(true);
   });
 
   it("renders the trigger button", () => {
@@ -132,6 +160,24 @@ describe("AdminActions", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("still shows Edit item for self", async () => {
+    render(<AdminActions {...baseUser} currentUserId="user-1" />);
+    await openDropdown();
+    expect(screen.getByRole("menuitem", { name: /edit/i })).toBeInTheDocument();
+  });
+
+  it("renders no separators for self", async () => {
+    render(<AdminActions {...baseUser} currentUserId="user-1" />);
+    await openDropdown();
+    expect(document.querySelectorAll("hr")).toHaveLength(0);
+  });
+
+  it("renders separators after Edit and before the danger zone for other users", async () => {
+    render(<AdminActions {...baseUser} />);
+    await openDropdown();
+    expect(document.querySelectorAll("hr")).toHaveLength(2);
+  });
+
   it("shows Ban sub-trigger when user is not banned", async () => {
     render(<AdminActions {...baseUser} />);
     await openDropdown();
@@ -169,6 +215,42 @@ describe("AdminActions", () => {
     ).toBeInTheDocument();
   });
 
+  it("does not show the edit dialog until Edit is clicked", () => {
+    render(<AdminActions {...baseUser} />);
+    expect(
+      screen.queryByRole("dialog", { name: /edit user/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the edit dialog for the chosen user when Edit is clicked", async () => {
+    render(<AdminActions {...baseUser} />);
+    await openDropdown();
+    await userEvent.click(screen.getByRole("menuitem", { name: /edit/i }));
+    expect(
+      screen.getByRole("dialog", { name: /edit user/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Test User")).toBeInTheDocument();
+  });
+
+  it("opens the edit dialog for self", async () => {
+    render(<AdminActions {...baseUser} currentUserId="user-1" />);
+    await openDropdown();
+    await userEvent.click(screen.getByRole("menuitem", { name: /edit/i }));
+    expect(
+      screen.getByRole("dialog", { name: /edit user/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("closes the edit dialog when it requests to close", async () => {
+    render(<AdminActions {...baseUser} />);
+    await openDropdown();
+    await userEvent.click(screen.getByRole("menuitem", { name: /edit/i }));
+    await userEvent.click(screen.getByRole("button", { name: /dismiss/i }));
+    expect(
+      screen.queryByRole("dialog", { name: /edit user/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("calls banUser with correct args and refreshes", async () => {
     mockAuthClient.admin.banUser.mockResolvedValue({});
     render(<AdminActions {...baseUser} />);
@@ -179,8 +261,25 @@ describe("AdminActions", () => {
         userId: "user-1",
         banReason: "Spamming",
       });
+      expect(mockToastNotifications).toHaveBeenCalledWith(
+        expect.any(Function),
+        "User banned",
+        "Couldn't ban user",
+      );
       expect(mockRefresh).toHaveBeenCalled();
     });
+  });
+
+  it("does not refresh when banning fails", async () => {
+    toastResolvesWith(false);
+    mockAuthClient.admin.banUser.mockResolvedValue({});
+    render(<AdminActions {...baseUser} />);
+    await openBanSubMenu();
+    await userEvent.click(screen.getByRole("menuitem", { name: /spamming/i }));
+    await waitFor(() => {
+      expect(mockAuthClient.admin.banUser).toHaveBeenCalled();
+    });
+    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
   it("calls unbanUser with correct args and refreshes", async () => {
@@ -192,8 +291,25 @@ describe("AdminActions", () => {
       expect(mockAuthClient.admin.unbanUser).toHaveBeenCalledWith({
         userId: "user-1",
       });
+      expect(mockToastNotifications).toHaveBeenCalledWith(
+        expect.any(Function),
+        "User enabled",
+        "Couldn't enable user",
+      );
       expect(mockRefresh).toHaveBeenCalled();
     });
+  });
+
+  it("does not refresh when enabling fails", async () => {
+    toastResolvesWith(false);
+    mockAuthClient.admin.unbanUser.mockResolvedValue({});
+    render(<AdminActions {...baseUser} banned={true} />);
+    await openDropdown();
+    await userEvent.click(screen.getByRole("menuitem", { name: /enable/i }));
+    await waitFor(() => {
+      expect(mockAuthClient.admin.unbanUser).toHaveBeenCalled();
+    });
+    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
   it("shows role dialog and changes role from user to admin", async () => {
@@ -213,8 +329,14 @@ describe("AdminActions", () => {
         userId: "user-1",
         role: "admin",
       });
+      expect(mockToastNotifications).toHaveBeenCalledWith(
+        expect.any(Function),
+        "Role updated",
+        "Couldn't change role",
+      );
       expect(mockRefresh).toHaveBeenCalled();
     });
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 
   it("shows role dialog and changes role from admin to user", async () => {
@@ -236,6 +358,22 @@ describe("AdminActions", () => {
       });
       expect(mockRefresh).toHaveBeenCalled();
     });
+  });
+
+  it("closes the role dialog but does not refresh when changing role fails", async () => {
+    toastResolvesWith(false);
+    mockAuthClient.admin.setRole.mockResolvedValue({});
+    render(<AdminActions {...baseUser} />);
+    await openDropdown();
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: /set as admin/i }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: /change role/i }));
+    await waitFor(() => {
+      expect(mockAuthClient.admin.setRole).toHaveBeenCalled();
+    });
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
   it("cancels role dialog without calling setRole", async () => {
@@ -264,8 +402,28 @@ describe("AdminActions", () => {
       expect(mockAuthClient.admin.removeUser).toHaveBeenCalledWith({
         userId: "user-1",
       });
+      expect(mockToastNotifications).toHaveBeenCalledWith(
+        expect.any(Function),
+        "User removed",
+        "Couldn't remove user",
+      );
       expect(mockRefresh).toHaveBeenCalled();
     });
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
+
+  it("closes the delete dialog but does not refresh when removing fails", async () => {
+    toastResolvesWith(false);
+    mockAuthClient.admin.removeUser.mockResolvedValue({});
+    render(<AdminActions {...baseUser} />);
+    await openDropdown();
+    await userEvent.click(screen.getByRole("menuitem", { name: /delete/i }));
+    await userEvent.click(screen.getByRole("button", { name: /delete user/i }));
+    await waitFor(() => {
+      expect(mockAuthClient.admin.removeUser).toHaveBeenCalled();
+    });
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
   it("cancels delete dialog without calling removeUser", async () => {
@@ -284,33 +442,6 @@ describe("AdminActions", () => {
     await userEvent.click(screen.getByRole("menuitem", { name: /delete/i }));
     const deleteBtn = screen.getByRole("button", { name: /delete user/i });
     expect(deleteBtn.className).toContain("bg-destructive/10");
-  });
-
-  it("navigates to edit page when Edit is clicked", async () => {
-    render(<AdminActions {...baseUser} />);
-    await openDropdown();
-    await userEvent.click(screen.getByRole("menuitem", { name: /edit/i }));
-    expect(mockPush).toHaveBeenCalledWith("/dashboard/admin/edit/user-1");
-  });
-
-  it("hides Edit item when hideEdit is true", async () => {
-    render(<AdminActions {...baseUser} hideEdit={true} />);
-    await openDropdown();
-    expect(
-      screen.queryByRole("menuitem", { name: /edit/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("hides separator when hideEdit is true", async () => {
-    render(<AdminActions {...baseUser} hideEdit={true} />);
-    await openDropdown();
-    expect(document.querySelectorAll("hr")).toHaveLength(1);
-  });
-
-  it("shows separator between Edit and account status when hideEdit is false", async () => {
-    render(<AdminActions {...baseUser} />);
-    await openDropdown();
-    expect(document.querySelectorAll("hr")).toHaveLength(2);
   });
 
   it("renders a custom trigger when provided", () => {

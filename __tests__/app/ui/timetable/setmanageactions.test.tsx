@@ -5,8 +5,6 @@ import "@testing-library/jest-dom";
 
 const mockPush = jest.fn();
 const mockDeleteTimetableSet = jest.fn();
-const mockToastSuccess = jest.fn();
-const mockToastError = jest.fn();
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(() => ({ push: mockPush })),
@@ -16,18 +14,19 @@ jest.mock("@/lib/actions", () => ({
   deleteTimetableSet: (...args: unknown[]) => mockDeleteTimetableSet(...args),
 }));
 
-jest.mock("sonner", () => ({
-  toast: {
-    success: (...args: unknown[]) => mockToastSuccess(...args),
-    error: (...args: unknown[]) => mockToastError(...args),
-  },
-}));
+jest.mock(
+  "@/components/ui/toast",
+  () => require("@/testing/mocks/shadcn").toastMock,
+);
 
 jest.mock("@/components/ui/alert-dialog", () =>
   require("@/testing/mocks/shadcn").alertDialogMock(),
 );
 
 import SetManageActions from "@/app/ui/timetable/setmanageactions";
+import { toast } from "@/components/ui/toast";
+
+const mockToastAdd = toast.add as jest.Mock;
 
 const defaultTimetable = {
   id: "timetable-1",
@@ -161,10 +160,10 @@ describe("SetManageActions", () => {
       fireEvent.click(deleteIcon);
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
       await waitFor(() =>
-        expect(mockToastSuccess).toHaveBeenCalledWith(
-          'Timetable "Semester Two" deleted successfully.',
-          expect.objectContaining({ position: "top-center" }),
-        ),
+        expect(mockToastAdd).toHaveBeenCalledWith({
+          title: 'Timetable "Semester Two" deleted successfully.',
+          type: "success",
+        }),
       );
     });
 
@@ -183,8 +182,10 @@ describe("SetManageActions", () => {
       const { deleteIcon } = renderComponent();
       fireEvent.click(deleteIcon);
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
-      await waitFor(() => expect(mockToastSuccess).toHaveBeenCalled());
-      expect(mockToastError).not.toHaveBeenCalled();
+      await waitFor(() => expect(mockToastAdd).toHaveBeenCalledTimes(1));
+      expect(mockToastAdd).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: "error" }),
+      );
     });
   });
 
@@ -201,10 +202,10 @@ describe("SetManageActions", () => {
       fireEvent.click(deleteIcon);
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
       await waitFor(() =>
-        expect(mockToastError).toHaveBeenCalledWith(
-          "Timetable is in use and cannot be deleted.",
-          expect.objectContaining({ position: "top-center" }),
-        ),
+        expect(mockToastAdd).toHaveBeenCalledWith({
+          title: "Timetable is in use and cannot be deleted.",
+          type: "error",
+        }),
       );
     });
 
@@ -223,7 +224,7 @@ describe("SetManageActions", () => {
       const { deleteIcon } = renderComponent();
       fireEvent.click(deleteIcon);
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
-      await waitFor(() => expect(mockToastError).toHaveBeenCalled());
+      await waitFor(() => expect(mockToastAdd).toHaveBeenCalled());
       expect(mockPush).not.toHaveBeenCalled();
     });
 
@@ -232,8 +233,10 @@ describe("SetManageActions", () => {
       const { deleteIcon } = renderComponent();
       fireEvent.click(deleteIcon);
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
-      await waitFor(() => expect(mockToastError).toHaveBeenCalled());
-      expect(mockToastSuccess).not.toHaveBeenCalled();
+      await waitFor(() => expect(mockToastAdd).toHaveBeenCalledTimes(1));
+      expect(mockToastAdd).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: "success" }),
+      );
     });
   });
 
@@ -271,10 +274,10 @@ describe("SetManageActions", () => {
       fireEvent.click(deleteIcon);
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
       await waitFor(() =>
-        expect(mockToastError).toHaveBeenCalledWith(
-          "Something went wrong. Please try again.",
-          expect.objectContaining({ position: "top-center" }),
-        ),
+        expect(mockToastAdd).toHaveBeenCalledWith({
+          title: "Something went wrong. Please try again.",
+          type: "error",
+        }),
       );
     });
 
@@ -283,7 +286,7 @@ describe("SetManageActions", () => {
       const { deleteIcon } = renderComponent();
       fireEvent.click(deleteIcon);
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
-      await waitFor(() => expect(mockToastError).toHaveBeenCalled());
+      await waitFor(() => expect(mockToastAdd).toHaveBeenCalled());
       expect(mockPush).not.toHaveBeenCalled();
     });
   });

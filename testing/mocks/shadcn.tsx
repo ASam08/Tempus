@@ -530,23 +530,23 @@ export const separatorMock = {
 
 export const tableMock = {
   __esModule: true,
-  Table: ({ children }: { children: React.ReactNode }) => (
-    <table>{children}</table>
+  Table: ({ children, ...props }: React.ComponentProps<"table">) => (
+    <table {...props}>{children}</table>
   ),
-  TableHeader: ({ children }: { children: React.ReactNode }) => (
-    <thead>{children}</thead>
+  TableHeader: ({ children, ...props }: React.ComponentProps<"thead">) => (
+    <thead {...props}>{children}</thead>
   ),
-  TableBody: ({ children }: { children: React.ReactNode }) => (
-    <tbody>{children}</tbody>
+  TableBody: ({ children, ...props }: React.ComponentProps<"tbody">) => (
+    <tbody {...props}>{children}</tbody>
   ),
-  TableRow: ({ children }: { children: React.ReactNode }) => (
-    <tr>{children}</tr>
+  TableRow: ({ children, ...props }: React.ComponentProps<"tr">) => (
+    <tr {...props}>{children}</tr>
   ),
-  TableHead: ({ children }: { children: React.ReactNode }) => (
-    <th>{children}</th>
+  TableHead: ({ children, ...props }: React.ComponentProps<"th">) => (
+    <th {...props}>{children}</th>
   ),
-  TableCell: ({ children }: { children: React.ReactNode }) => (
-    <td>{children}</td>
+  TableCell: ({ children, ...props }: React.ComponentProps<"td">) => (
+    <td {...props}>{children}</td>
   ),
 };
 

@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { passwordSchema } from "@/lib/schema";
 import { verifyUserPassword } from "@/lib/data";
+import { toastNotifications } from "@/components/general/toast-notifications";
 
 type FormType = { type: "personal" | "email" | "password" };
 type FormErrors = Partial<Record<FormType["type"], string>>;
@@ -52,23 +53,18 @@ async function handleOutcome(
   form: HTMLFormElement,
   action: () => Promise<{ error?: { message?: string } | null }>,
   successMessage: string,
-  fallbackErrorMessage = "Something went wrong.",
+  failureMessage: string,
   onSuccess?: () => void,
 ) {
-  const { error } = await action();
+  const ok = await toastNotifications(
+    () => action(),
+    successMessage,
+    failureMessage,
+    "Your changes have been saved.",
+    "Please contact an administrator for support.",
+  );
 
-  if (error) {
-    toast.add({
-      title: error.message ?? fallbackErrorMessage,
-      description: "Please contact an administrator for support.",
-      type: "error",
-    });
-  } else {
-    toast.add({
-      title: successMessage,
-      description: "Your changes have been saved.",
-      type: "success",
-    });
+  if (ok) {
     form.reset();
     onSuccess?.();
   }

@@ -219,12 +219,11 @@ describe("AccountForm", () => {
       await waitFor(() =>
         expect(mockUpdateUser).toHaveBeenCalledWith({ name: "New Name" }),
       );
-      expect(toast.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: "Personal information updated.",
-          type: "success",
-        }),
-      );
+      expect(toast.add).toHaveBeenCalledWith({
+        title: "Personal information updated.",
+        description: "Your changes have been saved.",
+        type: "success",
+      });
       await waitFor(() => expect(resetSpy).toHaveBeenCalled());
       expect(mockRefresh).toHaveBeenCalled();
 
@@ -243,12 +242,11 @@ describe("AccountForm", () => {
       await user.click(saveButton());
 
       await waitFor(() =>
-        expect(toast.add).toHaveBeenCalledWith(
-          expect.objectContaining({
-            title: "Name already taken.",
-            type: "error",
-          }),
-        ),
+        expect(toast.add).toHaveBeenCalledWith({
+          title: "Name already taken.",
+          description: "Please contact an administrator for support.",
+          type: "error",
+        }),
       );
       expect(mockRefresh).not.toHaveBeenCalled();
     });
@@ -270,6 +268,26 @@ describe("AccountForm", () => {
           }),
         ),
       );
+    });
+
+    it("falls back to a default error message when updateUser throws", async () => {
+      mockUpdateUser.mockRejectedValue(new Error("network"));
+      const user = userEvent.setup();
+      renderForm();
+
+      await user.clear(nameInput());
+      await user.type(nameInput(), "New Name");
+      await user.click(saveButton());
+
+      await waitFor(() =>
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: "Failed to update personal information.",
+            type: "error",
+          }),
+        ),
+      );
+      expect(mockRefresh).not.toHaveBeenCalled();
     });
 
     it("disables the save button while the update is pending", async () => {
@@ -347,12 +365,12 @@ describe("AccountForm", () => {
       );
 
       await waitFor(() =>
-        expect(toast.add).toHaveBeenCalledWith(
-          expect.objectContaining({
-            title: "Password Verification Failed",
-            type: "error",
-          }),
-        ),
+        expect(toast.add).toHaveBeenCalledWith({
+          title: "Password Verification Failed",
+          description:
+            "Please try again or contact an administrator for support.",
+          type: "error",
+        }),
       );
       expect(mockChangeEmail).not.toHaveBeenCalled();
       expect(dialog()).toBeInTheDocument();
@@ -378,9 +396,11 @@ describe("AccountForm", () => {
           callbackURL: "/dashboard",
         }),
       );
-      expect(toast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: "Email updated.", type: "success" }),
-      );
+      expect(toast.add).toHaveBeenCalledWith({
+        title: "Email updated.",
+        description: "Your changes have been saved.",
+        type: "success",
+      });
       await waitFor(() => expect(dialog()).not.toBeInTheDocument());
       expect(resetSpy).toHaveBeenCalled();
       expect(mockRefresh).toHaveBeenCalled();
@@ -527,12 +547,11 @@ describe("AccountForm", () => {
           revokeOtherSessions: true,
         }),
       );
-      expect(toast.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: "Password updated.",
-          type: "success",
-        }),
-      );
+      expect(toast.add).toHaveBeenCalledWith({
+        title: "Password updated.",
+        description: "Your changes have been saved.",
+        type: "success",
+      });
       await waitFor(() => expect(resetSpy).toHaveBeenCalled());
       expect(mockRefresh).not.toHaveBeenCalled();
 
@@ -553,12 +572,11 @@ describe("AccountForm", () => {
       await user.click(saveButton());
 
       await waitFor(() =>
-        expect(toast.add).toHaveBeenCalledWith(
-          expect.objectContaining({
-            title: "Current password is incorrect.",
-            type: "error",
-          }),
-        ),
+        expect(toast.add).toHaveBeenCalledWith({
+          title: "Current password is incorrect.",
+          description: "Please contact an administrator for support.",
+          type: "error",
+        }),
       );
     });
 
