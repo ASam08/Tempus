@@ -2,7 +2,7 @@ import { toast } from "@/components/ui/toast";
 
 type AuthResult = { error?: { message?: string } | null };
 
-export async function toastNotifications(
+export async function authToastNotifications(
   action: () => Promise<AuthResult>,
   successMessage: string,
   fallbackErrorMessage = "Something went wrong.",

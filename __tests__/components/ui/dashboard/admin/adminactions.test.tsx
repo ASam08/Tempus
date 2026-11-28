@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AdminActions from "@/components/ui/dashboard/admin/adminactions";
 import { authClient } from "@/lib/auth-client";
-import { toastNotifications } from "@/components/general/toast-notifications";
+import { authToastNotifications } from "@/components/general/auth-toast-notifications";
 
 const mockRefresh = jest.fn();
 jest.mock("next/navigation", () => ({
@@ -20,8 +20,8 @@ jest.mock("@/lib/auth-client", () => ({
   },
 }));
 
-jest.mock("@/components/general/toast-notifications", () => ({
-  toastNotifications: jest.fn(),
+jest.mock("@/components/general/auth-toast-notifications", () => ({
+  authToastNotifications: jest.fn(),
 }));
 
 jest.mock("@/components/ui/dashboard/admin/edit-user-dialog", () => ({
@@ -79,7 +79,7 @@ const mockAuthClient = authClient as unknown as {
   };
 };
 
-const mockToastNotifications = toastNotifications as unknown as jest.Mock;
+const mockToastNotifications = authToastNotifications as unknown as jest.Mock;
 
 const baseUser = {
   id: "user-1",

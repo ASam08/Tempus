@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { toast } from "@/components/ui/toast";
+import { authToastNotifications } from "@/components/general/auth-toast-notifications";
 import { useSearchParams, useRouter } from "next/navigation";
 import { passwordSchema } from "@/lib/schema";
 import { PasswordRequirementsHover } from "@/components/general/password-requirements-hover";
@@ -29,29 +30,17 @@ export default function ResetPasswordForm() {
       setIsPending(false);
       return;
     } else {
-      const { data, error } = await authClient.resetPassword({
-        newPassword: newPassword,
-        token,
-      });
-      if (error) {
-        toast.add({
-          title: "Failed to reset password",
-          type: "error",
-          timeout: 5000,
-          description:
-            "The reset link may have expired. Please request a new one.",
-        });
-        setIsPending(false);
-        return;
-      }
+      const ok = await authToastNotifications(
+        () => authClient.resetPassword({ newPassword, token }),
+        "Password reset successful!",
+        "Failed to reset password",
+        "Your password has been reset. You can now log in.",
+        "The reset link may have expired. Please request a new one.",
+      );
       setIsPending(false);
-      toast.add({
-        title: "Password reset successful!",
-        type: "success",
-        timeout: 5000,
-        description: "Your password has been reset. You can now log in.",
-      });
-      router.push("/login");
+      if (ok) {
+        router.push("/login");
+      }
     }
   };
 

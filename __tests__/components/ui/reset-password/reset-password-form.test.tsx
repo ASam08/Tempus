@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import * as React from "react";
 import ResetPasswordForm from "@/components/ui/reset-password/reset-password-form";
 
 const mockPush = jest.fn();
 const mockGet = jest.fn();
+const mockAuthToastNotifications = jest.fn();
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(() => ({ push: mockPush })),
@@ -15,6 +15,11 @@ jest.mock("@/lib/auth-client", () => ({
   authClient: {
     resetPassword: jest.fn(),
   },
+}));
+
+jest.mock("@/components/general/auth-toast-notifications", () => ({
+  authToastNotifications: (...args: unknown[]) =>
+    mockAuthToastNotifications(...args),
 }));
 
 jest.mock(
@@ -57,6 +62,8 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "@/components/ui/toast";
 import { passwordSchema } from "@/lib/schema";
 
+const mockResetPassword = authClient.resetPassword as unknown as jest.Mock;
+
 function submitForm(newPassword: string, confirmPassword: string) {
   fireEvent.change(screen.getByLabelText(/new password/i), {
     target: { value: newPassword },
@@ -72,6 +79,13 @@ describe("ResetPasswordForm", () => {
     jest.clearAllMocks();
     mockGet.mockReturnValue("valid-token");
     (passwordSchema.safeParse as jest.Mock).mockReturnValue({ success: true });
+    mockResetPassword.mockResolvedValue({ data: {}, error: null });
+    mockAuthToastNotifications.mockImplementation(
+      async (action: () => Promise<unknown>) => {
+        await action();
+        return true;
+      },
+    );
   });
 
   describe("rendering", () => {
@@ -126,7 +140,8 @@ describe("ResetPasswordForm", () => {
       expect(
         screen.getAllByRole("listitem").map((item) => item.textContent),
       ).toEqual(["at least 8 characters", "at least one uppercase letter"]);
-      expect(authClient.resetPassword).not.toHaveBeenCalled();
+      expect(mockAuthToastNotifications).not.toHaveBeenCalled();
+      expect(mockResetPassword).not.toHaveBeenCalled();
     });
   });
 
@@ -139,7 +154,8 @@ describe("ResetPasswordForm", () => {
         title: "Passwords do not match.",
         type: "error",
       });
-      expect(authClient.resetPassword).not.toHaveBeenCalled();
+      expect(mockAuthToastNotifications).not.toHaveBeenCalled();
+      expect(mockResetPassword).not.toHaveBeenCalled();
     });
   });
 
@@ -158,7 +174,10 @@ describe("ResetPasswordForm", () => {
           type: "error",
         });
       });
-      expect(authClient.resetPassword).not.toHaveBeenCalled();
+      expect(toast.add).toHaveBeenCalledTimes(1);
+      expect(mockAuthToastNotifications).not.toHaveBeenCalled();
+      expect(mockResetPassword).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalled();
     });
 
     it("re-enables the submit button after the missing token error", async () => {
@@ -177,64 +196,52 @@ describe("ResetPasswordForm", () => {
   });
 
   describe("successful reset", () => {
-    it("calls resetPassword with the password and token, shows success toast, and redirects", async () => {
-      (authClient.resetPassword as any as jest.Mock).mockResolvedValue({
-        data: {},
-        error: null,
-      });
-
+    it("passes the messages to authToastNotifications, resets the password with the token, and redirects", async () => {
       render(<ResetPasswordForm />);
       submitForm("ValidPass1!", "ValidPass1!");
 
-      await waitFor(() => {
-        expect(authClient.resetPassword).toHaveBeenCalledWith({
-          newPassword: "ValidPass1!",
-          token: "valid-token",
-        });
-      });
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/login"));
 
-      await waitFor(() => {
-        expect(toast.add).toHaveBeenCalledWith({
-          title: "Password reset successful!",
-          type: "success",
-          timeout: 5000,
-          description: "Your password has been reset. You can now log in.",
-        });
+      expect(mockAuthToastNotifications).toHaveBeenCalledTimes(1);
+      expect(mockAuthToastNotifications).toHaveBeenCalledWith(
+        expect.any(Function),
+        "Password reset successful!",
+        "Failed to reset password",
+        "Your password has been reset. You can now log in.",
+        "The reset link may have expired. Please request a new one.",
+      );
+      expect(mockResetPassword).toHaveBeenCalledWith({
+        newPassword: "ValidPass1!",
+        token: "valid-token",
       });
-
-      expect(mockPush).toHaveBeenCalledWith("/login");
+      expect(mockPush).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("failed reset", () => {
-    it("shows error toast and does not redirect when resetPassword returns an error", async () => {
-      (authClient.resetPassword as any as jest.Mock).mockResolvedValue({
-        data: null,
-        error: { message: "Token expired" },
-      });
+    it("does not redirect when authToastNotifications reports a failure", async () => {
+      mockAuthToastNotifications.mockResolvedValue(false);
 
       render(<ResetPasswordForm />);
       submitForm("ValidPass1!", "ValidPass1!");
 
-      await waitFor(() => {
-        expect(toast.add).toHaveBeenCalledWith({
-          title: "Failed to reset password",
-          type: "error",
-          timeout: 5000,
-          description:
-            "The reset link may have expired. Please request a new one.",
-        });
-      });
-
+      await waitFor(() =>
+        expect(mockAuthToastNotifications).toHaveBeenCalledTimes(1),
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /set new password/i }),
+        ).not.toBeDisabled(),
+      );
       expect(mockPush).not.toHaveBeenCalled();
     });
   });
 
   describe("pending state", () => {
     it("disables button and shows pending label while reset is in progress", async () => {
-      let resolveReset!: (value: unknown) => void;
-      (authClient.resetPassword as any as jest.Mock).mockReturnValue(
-        new Promise((resolve) => {
+      let resolveReset!: (ok: boolean) => void;
+      mockAuthToastNotifications.mockReturnValue(
+        new Promise<boolean>((resolve) => {
           resolveReset = resolve;
         }),
       );
@@ -247,14 +254,16 @@ describe("ResetPasswordForm", () => {
           screen.getByRole("button", { name: /setting new password/i }),
         ).toBeDisabled();
       });
+      expect(mockPush).not.toHaveBeenCalled();
 
-      resolveReset({ data: {}, error: null });
+      resolveReset(true);
 
       await waitFor(() => {
         expect(
           screen.getByRole("button", { name: /set new password/i }),
         ).not.toBeDisabled();
       });
+      expect(mockPush).toHaveBeenCalledWith("/login");
     });
   });
 });

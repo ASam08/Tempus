@@ -1,4 +1,4 @@
-import { toastNotifications } from "@/components/general/toast-notifications";
+import { authToastNotifications } from "@/components/general/auth-toast-notifications";
 
 const mockToastAdd = jest.fn();
 
@@ -8,7 +8,7 @@ jest.mock("@/components/ui/toast", () => ({
   },
 }));
 
-describe("toastNotifications", () => {
+describe("authToastNotifications", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -17,7 +17,7 @@ describe("toastNotifications", () => {
     it("shows a success toast and returns true when error is undefined", async () => {
       const action = jest.fn().mockResolvedValue({});
 
-      const result = await toastNotifications(action, "Saved");
+      const result = await authToastNotifications(action, "Saved");
 
       expect(result).toBe(true);
       expect(action).toHaveBeenCalledTimes(1);
@@ -31,7 +31,7 @@ describe("toastNotifications", () => {
     it("shows a success toast and returns true when error is null", async () => {
       const action = jest.fn().mockResolvedValue({ error: null });
 
-      const result = await toastNotifications(action, "Saved", "Failed");
+      const result = await authToastNotifications(action, "Saved", "Failed");
 
       expect(result).toBe(true);
       expect(mockToastAdd).toHaveBeenCalledTimes(1);
@@ -46,7 +46,7 @@ describe("toastNotifications", () => {
     it("includes the description in the success toast", async () => {
       const action = jest.fn().mockResolvedValue({});
 
-      const result = await toastNotifications(
+      const result = await authToastNotifications(
         action,
         "Saved",
         "Failed",
@@ -67,7 +67,7 @@ describe("toastNotifications", () => {
         .fn()
         .mockResolvedValue({ error: { message: "Nope" } });
 
-      await toastNotifications(
+      await authToastNotifications(
         action,
         "Saved",
         "Failed",
@@ -89,7 +89,7 @@ describe("toastNotifications", () => {
         .fn()
         .mockResolvedValue({ error: { message: "Invalid password" } });
 
-      const result = await toastNotifications(
+      const result = await authToastNotifications(
         action,
         "Saved",
         "Failed",
@@ -111,7 +111,7 @@ describe("toastNotifications", () => {
         .fn()
         .mockResolvedValue({ error: { message: "Email already in use" } });
 
-      const result = await toastNotifications(action, "Saved", "Failed");
+      const result = await authToastNotifications(action, "Saved", "Failed");
 
       expect(result).toBe(false);
       expect(mockToastAdd).toHaveBeenCalledTimes(1);
@@ -129,7 +129,7 @@ describe("toastNotifications", () => {
       async (_label, error) => {
         const action = jest.fn().mockResolvedValue({ error });
 
-        const result = await toastNotifications(action, "Saved", "Failed");
+        const result = await authToastNotifications(action, "Saved", "Failed");
 
         expect(result).toBe(false);
         expect(mockToastAdd).toHaveBeenCalledTimes(1);
@@ -143,7 +143,7 @@ describe("toastNotifications", () => {
     it("falls back to the default message when none is provided", async () => {
       const action = jest.fn().mockResolvedValue({ error: {} });
 
-      const result = await toastNotifications(action, "Saved");
+      const result = await authToastNotifications(action, "Saved");
 
       expect(result).toBe(false);
       expect(mockToastAdd).toHaveBeenCalledTimes(1);
@@ -158,7 +158,7 @@ describe("toastNotifications", () => {
     it("shows the provided fallback message and returns false", async () => {
       const action = jest.fn().mockRejectedValue(new Error("network"));
 
-      const result = await toastNotifications(action, "Saved", "Failed");
+      const result = await authToastNotifications(action, "Saved", "Failed");
 
       expect(result).toBe(false);
       expect(mockToastAdd).toHaveBeenCalledTimes(1);
@@ -171,7 +171,7 @@ describe("toastNotifications", () => {
     it("shows the default fallback message when none is provided", async () => {
       const action = jest.fn().mockRejectedValue(new Error("network"));
 
-      const result = await toastNotifications(action, "Saved");
+      const result = await authToastNotifications(action, "Saved");
 
       expect(result).toBe(false);
       expect(mockToastAdd).toHaveBeenCalledTimes(1);
@@ -184,7 +184,7 @@ describe("toastNotifications", () => {
     it("includes the failure description in the error toast", async () => {
       const action = jest.fn().mockRejectedValue(new Error("network"));
 
-      const result = await toastNotifications(
+      const result = await authToastNotifications(
         action,
         "Saved",
         "Failed",
@@ -204,7 +204,7 @@ describe("toastNotifications", () => {
     it("does not show a success toast", async () => {
       const action = jest.fn().mockRejectedValue(new Error("network"));
 
-      await toastNotifications(action, "Saved", "Failed");
+      await authToastNotifications(action, "Saved", "Failed");
 
       expect(mockToastAdd).not.toHaveBeenCalledWith(
         expect.objectContaining({ type: "success" }),

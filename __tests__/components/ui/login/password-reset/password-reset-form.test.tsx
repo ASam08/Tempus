@@ -67,6 +67,13 @@ jest.mock(
 import { authClient } from "@/lib/auth-client";
 import { toast } from "@/components/ui/toast";
 
+const mockRequestPasswordReset = authClient.requestPasswordReset as jest.Mock;
+
+const successDescription =
+  "If an account with that email exists, we've sent you a link to reset your password.";
+const failureDescription =
+  "An error occurred while sending the password reset email. Please try again.";
+
 function submitForm(email: string) {
   fireEvent.change(screen.getByLabelText(/email/i), {
     target: { value: email },
@@ -133,7 +140,7 @@ describe("PasswordResetForm", () => {
     });
 
     it("calls requestPasswordReset with the email and redirectTo, shows success toast, and renders submitted message", async () => {
-      (authClient.requestPasswordReset as jest.Mock).mockResolvedValue({
+      mockRequestPasswordReset.mockResolvedValue({
         data: {},
         error: null,
       });
@@ -142,19 +149,18 @@ describe("PasswordResetForm", () => {
       submitForm("user@example.com");
 
       await waitFor(() => {
-        expect(authClient.requestPasswordReset).toHaveBeenCalledWith({
+        expect(mockRequestPasswordReset).toHaveBeenCalledWith({
           email: "user@example.com",
           redirectTo: expect.stringContaining("/reset-password"),
         });
       });
 
       await waitFor(() => {
-        expect(toast.add).toHaveBeenCalledWith(
-          expect.objectContaining({
-            title: "Password reset requested!",
-            type: "success",
-          }),
-        );
+        expect(toast.add).toHaveBeenCalledWith({
+          title: "Password reset requested!",
+          description: successDescription,
+          type: "success",
+        });
       });
 
       expect(
@@ -165,7 +171,7 @@ describe("PasswordResetForm", () => {
     it("uses NEXT_PUBLIC_TEMPUS_URL env var in the redirectTo URL when set", async () => {
       process.env.NEXT_PUBLIC_TEMPUS_URL = "https://mytempus.example.com";
 
-      (authClient.requestPasswordReset as jest.Mock).mockResolvedValue({
+      mockRequestPasswordReset.mockResolvedValue({
         data: {},
         error: null,
       });
@@ -174,7 +180,7 @@ describe("PasswordResetForm", () => {
       submitForm("user@example.com");
 
       await waitFor(() => {
-        expect(authClient.requestPasswordReset).toHaveBeenCalledWith({
+        expect(mockRequestPasswordReset).toHaveBeenCalledWith({
           email: "user@example.com",
           redirectTo: "https://mytempus.example.com/reset-password",
         });
@@ -184,7 +190,7 @@ describe("PasswordResetForm", () => {
     it("falls back to http://localhost:3000 in redirectTo when NEXT_PUBLIC_TEMPUS_URL is not set", async () => {
       delete process.env.NEXT_PUBLIC_TEMPUS_URL;
 
-      (authClient.requestPasswordReset as jest.Mock).mockResolvedValue({
+      mockRequestPasswordReset.mockResolvedValue({
         data: {},
         error: null,
       });
@@ -193,7 +199,7 @@ describe("PasswordResetForm", () => {
       submitForm("user@example.com");
 
       await waitFor(() => {
-        expect(authClient.requestPasswordReset).toHaveBeenCalledWith({
+        expect(mockRequestPasswordReset).toHaveBeenCalledWith({
           email: "user@example.com",
           redirectTo: "http://localhost:3000/reset-password",
         });
@@ -202,11 +208,53 @@ describe("PasswordResetForm", () => {
   });
 
   describe("failed submission", () => {
-    it("shows error toast and does not render submitted message when an error is returned", async () => {
-      (authClient.requestPasswordReset as jest.Mock).mockResolvedValue({
+    it("shows the server error message in the toast and does not render the submitted message", async () => {
+      mockRequestPasswordReset.mockResolvedValue({
         data: null,
         error: { message: "Server error" },
       });
+
+      render(<PasswordResetForm />);
+      submitForm("user@example.com");
+
+      await waitFor(() => {
+        expect(toast.add).toHaveBeenCalledWith({
+          title: "Server error",
+          description: failureDescription,
+          type: "error",
+        });
+      });
+
+      expect(toast.add).toHaveBeenCalledTimes(1);
+      expect(
+        screen.queryByText(/if an account with that email exists/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("falls back to the default error title when the error has no message", async () => {
+      mockRequestPasswordReset.mockResolvedValue({
+        data: null,
+        error: {},
+      });
+
+      render(<PasswordResetForm />);
+      submitForm("user@example.com");
+
+      await waitFor(() => {
+        expect(toast.add).toHaveBeenCalledWith({
+          title: "Password reset error!",
+          description: failureDescription,
+          type: "error",
+        });
+      });
+
+      expect(
+        screen.queryByText(/if an account with that email exists/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows the default error title when the request throws", async () => {
+      mockRequestPasswordReset.mockRejectedValue(new Error("network"));
 
       render(<PasswordResetForm />);
       submitForm("user@example.com");
@@ -220,16 +268,35 @@ describe("PasswordResetForm", () => {
         );
       });
 
+      expect(toast.add).toHaveBeenCalledTimes(1);
       expect(
         screen.queryByText(/if an account with that email exists/i),
       ).not.toBeInTheDocument();
+    });
+
+    it("re-enables the submit button after a failure", async () => {
+      mockRequestPasswordReset.mockResolvedValue({
+        data: null,
+        error: { message: "Server error" },
+      });
+
+      render(<PasswordResetForm />);
+      submitForm("user@example.com");
+
+      await waitFor(() => expect(toast.add).toHaveBeenCalled());
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: /reset password/i }),
+        ).not.toBeDisabled();
+      });
     });
   });
 
   describe("pending state", () => {
     it("disables the button and shows sending label while the request is in flight", async () => {
       let resolveReset!: (value: unknown) => void;
-      (authClient.requestPasswordReset as jest.Mock).mockReturnValue(
+      mockRequestPasswordReset.mockReturnValue(
         new Promise((resolve) => {
           resolveReset = resolve;
         }),
@@ -254,7 +321,7 @@ describe("PasswordResetForm", () => {
 
   describe("submitted state", () => {
     it("can submit again after a successful submission", async () => {
-      (authClient.requestPasswordReset as jest.Mock).mockResolvedValue({
+      mockRequestPasswordReset.mockResolvedValue({
         data: {},
         error: null,
       });
@@ -271,7 +338,7 @@ describe("PasswordResetForm", () => {
       submitForm("other@example.com");
 
       await waitFor(() => {
-        expect(authClient.requestPasswordReset).toHaveBeenCalledTimes(2);
+        expect(mockRequestPasswordReset).toHaveBeenCalledTimes(2);
       });
     });
   });

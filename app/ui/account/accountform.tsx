@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { passwordSchema } from "@/lib/schema";
 import { verifyUserPassword } from "@/lib/data";
-import { toastNotifications } from "@/components/general/toast-notifications";
+import { authToastNotifications } from "@/components/general/auth-toast-notifications";
 
 type FormType = { type: "personal" | "email" | "password" };
 type FormErrors = Partial<Record<FormType["type"], string>>;
@@ -56,7 +56,7 @@ async function handleOutcome(
   failureMessage: string,
   onSuccess?: () => void,
 ) {
-  const ok = await toastNotifications(
+  const ok = await authToastNotifications(
     () => action(),
     successMessage,
     failureMessage,

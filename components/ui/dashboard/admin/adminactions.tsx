@@ -30,7 +30,7 @@ import { defaultBanReasons } from "@/lib/defaults";
 import { UserRole } from "@/lib/definitions";
 import { useState } from "react";
 import { EditUserDialog } from "@/components/ui/dashboard/admin/edit-user-dialog";
-import { toastNotifications } from "@/components/general/toast-notifications";
+import { authToastNotifications } from "@/components/general/auth-toast-notifications";
 
 type AdminActionsProps = User & {
   currentUserId: string;
@@ -46,7 +46,7 @@ export default function AdminActions({ trigger, ...user }: AdminActionsProps) {
   const isSelf = user.id === user.currentUserId;
 
   async function enableUser() {
-    const ok = await toastNotifications(
+    const ok = await authToastNotifications(
       () => authClient.admin.unbanUser({ userId: user.id }),
       "User enabled",
       "Couldn't enable user",
@@ -55,7 +55,7 @@ export default function AdminActions({ trigger, ...user }: AdminActionsProps) {
   }
 
   async function banUser(banReason: string) {
-    const ok = await toastNotifications(
+    const ok = await authToastNotifications(
       () => authClient.admin.banUser({ userId: user.id, banReason }),
       "User banned",
       "Couldn't ban user",
@@ -65,7 +65,7 @@ export default function AdminActions({ trigger, ...user }: AdminActionsProps) {
 
   async function changeUserRole(newRole: UserRole) {
     setRoleDialogOpen(false);
-    const ok = await toastNotifications(
+    const ok = await authToastNotifications(
       () => authClient.admin.setRole({ userId: user.id, role: newRole }),
       "Role updated",
       "Couldn't change role",
@@ -75,7 +75,7 @@ export default function AdminActions({ trigger, ...user }: AdminActionsProps) {
 
   async function removeUser() {
     setRemoveUserDialogOpen(false);
-    const ok = await toastNotifications(
+    const ok = await authToastNotifications(
       () => authClient.admin.removeUser({ userId: user.id }),
       "User removed",
       "Couldn't remove user",

@@ -27,8 +27,9 @@ jest.mock("@/lib/auth-client", () => ({
   },
 }));
 
-jest.mock("@/components/general/toast-notifications", () => ({
-  toastNotifications: (...args: unknown[]) => mockToastNotifications(...args),
+jest.mock("@/components/general/auth-toast-notifications", () => ({
+  authToastNotifications: (...args: unknown[]) =>
+    mockToastNotifications(...args),
 }));
 
 const chosenUser = {

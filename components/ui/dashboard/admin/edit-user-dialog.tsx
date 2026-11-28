@@ -15,7 +15,7 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { editUserSchema, type EditUserValues } from "@/lib/schema";
-import { toastNotifications } from "@/components/general/toast-notifications";
+import { authToastNotifications } from "@/components/general/auth-toast-notifications";
 
 export function EditUserDialog({
   chosenUser,
@@ -65,7 +65,7 @@ export function EditUserDialog({
       }
     }
 
-    const ok = await toastNotifications(
+    const ok = await authToastNotifications(
       () =>
         authClient.admin.updateUser({
           userId: chosenUser.id,
